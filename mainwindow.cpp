@@ -5,6 +5,9 @@ using namespace enc;
 using namespace std;
 using namespace std::chrono;
 
+
+static int WholeNumOfSlices = 0;
+
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::MainWindow)
@@ -190,7 +193,7 @@ void MainWindow::startStopTransmisson(QDataStream & str)
     ui->textEdit->append("data transmission " + res);
     if(var == 1)
     {
-        QTimer::singleShot(5000, this, SLOT(startSlot())); /// not 5 sec, but some
+//        QTimer::singleShot(8000, this, SLOT(startSlot())); /// not 5 sec, but some
     }
 }
 
@@ -283,7 +286,7 @@ void MainWindow::readStartInfo(QDataStream & str)
 
 void MainWindow::dataSliceCame(QDataStream & str)
 {
-    cout << "slice came" << endl;
+//    cout << "slice came" << endl;
     if(fullDataFlag)
     {
         int sliceNumber;
@@ -292,11 +295,18 @@ void MainWindow::dataSliceCame(QDataStream & str)
         int numOfChans;
         str >> numOfChans;
 
-        long long numOfSlices;
+        qint32 numOfSlices; // not really 'long'
         str >> numOfSlices;
 
+        if(numOfSlices > 10) return;
+        else if(sliceNumber % 100 == 0)
+        {
+            cout << sliceNumber << endl;
+            return;
+        }
 
-        static std::vector<short> oneSlice(numOfChans);
+
+        std::vector<short> oneSlice(numOfChans);
         for(int i = 0; i < numOfSlices; ++i)
         {
             for(int j = 0; j < numOfChans; ++j)
@@ -304,11 +314,12 @@ void MainWindow::dataSliceCame(QDataStream & str)
                 str >> oneSlice[j];
             }
             eegData.push_back(oneSlice);
+//            ++WholeNumOfSlices;
         }
         /// test
         if(eegData.size() > 1000)
         {
-            socket->disconnectFromHost();
+//            socket->disconnectFromHost();
 //            std::ofstream ostr("/media/Files/Data/list.txt");
             std::ofstream ostr("D:\\MichaelAtanov\\Real-time\\TcpClient\\pew.txt");
             ostr << "NumOfSlices " << eegData.size();
@@ -317,9 +328,9 @@ void MainWindow::dataSliceCame(QDataStream & str)
             {
                 for(auto val : slice)
                 {
-                    cout << val << '\t';
+                    ostr << val << '\t';
                 }
-                cout << '\n';
+                ostr << '\n';
             }
             ostr.close();
             exit(0);
@@ -332,27 +343,33 @@ void MainWindow::dataSliceCame(QDataStream & str)
 void MainWindow::receiveDataSlot()
 {
 
-    cout << "ready to read" << endl;
+//    cout << "ready to read" << endl;
     QDataStream in(socket);
     in.setByteOrder(QDataStream::LittleEndian); // least significant bytes first
-    enc::Pack inPack;
+    static enc::Pack inPack; /// maybe bad with parallel slots
+//    this_thread::sleep_for(std::chrono::microseconds{500});
 
 
-    while(socket->bytesAvailable() < sizeof(inPack.packSize) && inPack.packSize == 0)
+//    cout << "start PacSize = " << inPack.packSize << endl;
+
+    if(inPack.packSize == 0)
     {
-        cout << "wait for size" << endl;
-        this_thread::sleep_for(std::chrono::microseconds{100});
-    }
+        while(socket->bytesAvailable() < sizeof(inPack.packSize))
+        {
+            cout << "wait for size" << endl;
+            return;
+//            this_thread::sleep_for(std::chrono::nanoseconds{100});
+        }
 
-    char tmp;
-    in.device()->peek(&tmp, 1);
-    in >> inPack.packSize;
-    if(int(tmp) == -1) /// initial data for not fullData
-    {
-        inPack.packSize = 259 - sizeof(inPack.packSize);
+        char tmp;
+        in.device()->peek(&tmp, 1);
+        in >> inPack.packSize;
+        if(int(tmp) == -1) /// initial data for not fullData
+        {
+            inPack.packSize = 259 - sizeof(inPack.packSize);
+        }
+//        cout << "packSize = " << inPack.packSize << endl;
     }
-    cout << "packSize = " << inPack.packSize << endl;
-
 //    }
 //    else
 //    {
@@ -362,23 +379,29 @@ void MainWindow::receiveDataSlot()
 //    }
 
 
-    while(socket->bytesAvailable() < sizeof(inPack.packId) && inPack.packId == 0)
+    if(inPack.packId == 0)
     {
-        cout << "wait for id" << endl;
-        this_thread::sleep_for(std::chrono::microseconds{100});
+        while(socket->bytesAvailable() < sizeof(inPack.packId))
+        {
+            cout << "wait for id" << endl;
+            return;
+//            this_thread::sleep_for(std::chrono::nanoseconds{100});
+        }
+        //    if(socket->bytesAvailable() >= inPack.packSize && inPack.packId == 0)
+
+        //    {
+        in >> inPack.packId;
+//        cout << "packId = " << inPack.packId << endl;
     }
 
-//    if(socket->bytesAvailable() >= inPack.packSize && inPack.packId == 0)
-
-//    {
-    in >> inPack.packId;
-    cout << "packId = " << inPack.packId << endl;
-
-
+//    cout << socket->bytesAvailable() << "\t" << inPack.packSize - sizeof(inPack.packId) << endl;
+//    exit(0);
     while(socket->bytesAvailable() < inPack.packSize - sizeof(inPack.packId))
     {
-        cout << "wait for data" << endl;
-        this_thread::sleep_for(std::chrono::microseconds{100});
+        cout << "wait for data\t";
+        cout << socket->bytesAvailable() << "\t" << inPack.packSize - sizeof(inPack.packId) << endl;
+        return;
+//        this_thread::sleep_for(std::chrono::nanoseconds{100});
     }
 
     /// protect against too many packets came - done
@@ -433,6 +456,7 @@ void MainWindow::receiveDataSlot()
         break;
     }
     }
+    inPack = enc::Pack();
 }
 
 void MainWindow::startSlot()
@@ -453,7 +477,7 @@ void MainWindow::startSlot()
 
     auto bytesWritten = socket->write(reinterpret_cast<char *>(&startPack),
                                       startPack.packSize + sizeof(DWORD));
-//    cout << "startSlot: written " << bytesWritten << " bytes" << endl;
+    cout << "startSlot: written " << bytesWritten << " bytes" << endl;
 
     /// get ready to have an answer
 //    socket->write(initialRequest);
