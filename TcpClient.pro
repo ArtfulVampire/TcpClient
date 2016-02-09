@@ -4,7 +4,7 @@
 #
 #-------------------------------------------------
 
-QT       += core gui
+QT       += core gui svg
 QT += network
 QT += serialport
 QMAKE_CXXFLAGS = -std=c++11
@@ -15,9 +15,11 @@ TEMPLATE = app
 
 
 SOURCES += main.cpp\
-        mainwindow.cpp
+        mainwindow.cpp \
+    datathread.cpp
 
 HEADERS  += mainwindow.h \
-    def.h
+    def.h \
+    datathread.h
 
 FORMS    += mainwindow.ui

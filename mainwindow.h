@@ -6,20 +6,26 @@
 #include <QSerialPort>
 #include <QSerialPortInfo>
 
-#include <iostream>
-#include <utility>
-#include <fstream>
 #include <ios>
-
+#include <iostream>
+#include <fstream>
+#include <ctime>
+#include <cstdlib>
+#include <cstdio>
+#include <cmath>
+#include <string>
+#include <vector>
 #include <valarray>
+#include <set>
 #include <list>
+#include <algorithm>
 #include <chrono>
+#include <random>
 #include <thread>
+#include <utility>
+
 
 #include "def.h"
-using namespace enc;
-using namespace std;
-using namespace std::chrono;
 
 namespace Ui {
 class MainWindow;

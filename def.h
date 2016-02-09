@@ -17,15 +17,11 @@ struct String
     char * str;
 };
 
-//static const DWORD buttonChecked = 0x0001;
-//static const DWORD buttonDisabled = 0x0002;
-
 struct Pack
 {
     int packSize = 0;
     DWORD packId = 0;
     QByteArray packArr{};
-//    char * packData = nullptr;
 };
 
 }

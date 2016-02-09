@@ -1,6 +1,10 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
 
+using namespace enc;
+using namespace std;
+using namespace std::chrono;
+
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::MainWindow)
@@ -334,7 +338,7 @@ void MainWindow::receiveDataSlot()
     cout << "ready to read" << endl;
     QDataStream in(socket);
     in.setByteOrder(QDataStream::LittleEndian); // least significant bytes first
-    static enc::Pack inPack;
+    enc::Pack inPack;
 
 
     while(socket->bytesAvailable() < sizeof(inPack.packSize) && inPack.packSize == 0)
@@ -432,7 +436,6 @@ void MainWindow::receiveDataSlot()
         break;
     }
     }
-    inPack = enc::Pack();
 }
 
 void MainWindow::startSlot()
