@@ -325,9 +325,6 @@ void MainWindow::dataSliceCame(QDataStream & str)
             exit(0);
         }
 
-
-
-
     }
 
 }
