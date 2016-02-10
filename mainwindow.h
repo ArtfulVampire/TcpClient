@@ -26,6 +26,7 @@
 
 
 #include "def.h"
+//#include "datathread.h"
 
 namespace Ui {
 class MainWindow;
@@ -39,9 +40,9 @@ public:
     explicit MainWindow(QWidget *parent = 0);
     ~MainWindow();
 
-    void readStartInfo(QDataStream & str);
-    void startStopTransmisson(QDataStream & str);
-    void dataSliceCame(QDataStream & str);
+    void readStartInfo();
+    void startStopTransmisson();
+    void dataSliceCame();
 
 signals:
 public slots:
@@ -63,6 +64,7 @@ public slots:
     void startSlot();
     void receiveDataSlot();
     void endSlot();
+    void dataReadThread();
 
 private:
     Ui::MainWindow *ui;
@@ -70,14 +72,16 @@ private:
     bool inProcess = false;
     bool fullDataFlag = false;
     QTcpSocket * socket = nullptr;
+    QDataStream socketDataStream;
     quint16 blockSize = 0;
 
-    QSerialPort * comPort;
+    std::thread dataThread{};
+    QSerialPort * comPort = nullptr;
 
     //
-    double bitWeight;
-    double samplingRate;
-    int numOfChannels;
+    double bitWeight{};
+    double samplingRate{};
+    int numOfChannels{};
     std::list<std::vector<short>> eegData{};
 };
 

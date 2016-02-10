@@ -3,6 +3,14 @@
 
 #include <QThread>
 #include <QtNetwork>
+#include <chrono>
+#include <thread>
+#include <ios>
+#include <iostream>
+#include <fstream>
+
+#include "def.h"
+
 
 class DataThread : public QThread
 {
@@ -10,10 +18,13 @@ public:
     DataThread();
     ~DataThread();
 
-    DataThread(QTcpSocket * inSocket);
+    DataThread(QTcpSocket * inSocket, bool fullData);
+    void run();
 
 private:
     QDataStream str;
+    bool fullDataFlag;
+    std::list<std::vector<short>> eegData;
 };
 
 #endif // DATATHREAD_H

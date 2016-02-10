@@ -53,6 +53,9 @@ MainWindow::MainWindow(QWidget *parent) :
 
     /// socket
     socket = new QTcpSocket(this);
+    socketDataStream.setDevice(socket);
+    socketDataStream.setByteOrder(QDataStream::LittleEndian); // least significant bytes first
+
     connect(socket, SIGNAL(error(QAbstractSocket::SocketError)),
             this, SLOT(socketErrorSlot(QAbstractSocket::SocketError)));
     connect(socket, SIGNAL(connected()),
@@ -67,8 +70,7 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(this->ui->startPushButton, SIGNAL(clicked()),
             this, SLOT(startSlot()));
 
-    connect(socket, SIGNAL(readyRead()),
-            this, SLOT(receiveDataSlot()));
+
 
 
 
@@ -77,6 +79,9 @@ MainWindow::MainWindow(QWidget *parent) :
 
     connect(this->ui->fullDataCheckBox, SIGNAL(stateChanged(int)),
             this, SLOT(changeFullDataFlag(int)));
+
+    connect(this->ui->startRealTimePushButton, SIGNAL(clicked()),
+            this, SLOT(dataReadThread()));
 
 //    cout << char(-1) << endl; exit(0);
 
@@ -155,6 +160,8 @@ void MainWindow::socketConnectedSlot()
 void MainWindow::disconnectSlot()
 {
     socket->disconnectFromHost();
+    disconnect(socket, SIGNAL(readyRead()),
+            this, SLOT(receiveDataSlot()));
 }
 
 void MainWindow::connectSlot()
@@ -162,9 +169,12 @@ void MainWindow::connectSlot()
 //    socket->abort();
     socket->connectToHost(QHostAddress(ui->serverAddressLineEdit->text()),
                           ui->serverPortSpinBox->value()); // const
+
     if(socket->isValid())
     {
         ui->connectToServerPushButton->setCheckable(false);
+        connect(socket, SIGNAL(readyRead()),
+                this, SLOT(receiveDataSlot()));
     }
     else
     {
@@ -183,18 +193,33 @@ void MainWindow::serverAddressSlot(int a)
 }
 
 
-void MainWindow::startStopTransmisson(QDataStream & str)
+void MainWindow::startStopTransmisson()
 {
     int var;
-    str >> var;
-    this->inProcess = var;
-    cout << var << endl;
+    socketDataStream >> var;
+
     QString res = (var==1)?"ON":"OFF";
     ui->textEdit->append("data transmission " + res);
+
     if(var == 1)
     {
-//        QTimer::singleShot(8000, this, SLOT(startSlot())); /// not 5 sec, but some
+        startSlot();
     }
+    else if(this->inProcess)
+    {
+        dataThread.detach();
+        connect(socket, SIGNAL(readyRead()),
+                this, SLOT(receiveDataSlot()));
+        if(!socketDataStream.atEnd())
+        {
+            socketDataStream.skipRawData(socketDataStream.device()->bytesAvailable());
+        }
+        if(!socketDataStream.atEnd())
+        {
+            cout << "still not at end" << endl;
+        }
+    }
+    this->inProcess = var;
 }
 
 std::string readString(QDataStream & in)
@@ -210,113 +235,122 @@ std::string readString(QDataStream & in)
     return res;
 }
 
-void MainWindow::readStartInfo(QDataStream & str)
+void MainWindow::readStartInfo()
 {
     if(fullDataFlag)
     {
-        std::string patientName = readString(str); // cyrillic "net pacienta"
+        std::string patientName = readString(socketDataStream); // cyrillic "net pacienta"
 //        cout << patientName << endl;
 
-        str >> numOfChannels;
+        socketDataStream >> numOfChannels;
 //        cout << numOfChannels << endl;
         for(int i = 0; i < numOfChannels; ++i)
         {
 //            cout << endl << "channel " << i << endl;
 
-            std::string channelName = readString(str);
+            std::string channelName = readString(socketDataStream);
 //            cout << channelName << endl;
 
-            double bitWeight; str >> bitWeight;
+            double bitWeight; socketDataStream >> bitWeight;
 //            cout << bitWeight << endl;
 
-            double samplingRate; str >> samplingRate;
+            double samplingRate; socketDataStream >> samplingRate;
 //            cout << samplingRate << endl;
 
-            std::string metrica = readString(str);
+            std::string metrica = readString(socketDataStream);
 //            cout << metrica << endl;
 
-            double LFF; str >> LFF;
+            double LFF; socketDataStream >> LFF;
 //            cout << LFF << endl;
 
-            double HFF; str >> HFF;
+            double HFF; socketDataStream >> HFF;
 //            cout << HFF << endl;
 
-            int levelHFF; str >> levelHFF;
+            int levelHFF; socketDataStream >> levelHFF;
 //            cout << levelHFF << endl;
 
-            double rejector; str >> rejector;
+            double rejector; socketDataStream >> rejector;
 //            cout << rejector << endl;
 
-            double defSans; str >> defSans;
+            double defSans; socketDataStream >> defSans;
 //            cout << defSans << endl;
         }
-        std::string scheme = readString(str);
+        std::string scheme = readString(socketDataStream);
 //        cout << scheme << endl;
 //        exit(0);
     }
     else
     {
 
-        std::string patientName = readString(str); // cyrillic "net pacienta"
+        std::string patientName = readString(socketDataStream); // cyrillic "net pacienta"
 //        cout << patientName << endl;
 
-        str >> numOfChannels;
+        socketDataStream >> numOfChannels;
 //        cout << numOfChannels << endl;
 
         for(int i = 0; i < numOfChannels; ++i)
         {
 //            cout << endl << "channel " << i << endl;
 
-            std::string channelName = readString(str);
+            std::string channelName = readString(socketDataStream);
 //            cout << channelName << endl;
 
         }
-        std::string scheme = readString(str);
+        std::string scheme = readString(socketDataStream);
 //        cout << scheme << endl;
 
-        str >> bitWeight;
+        socketDataStream >> bitWeight;
 //        cout << bitWeight << endl;
 
-        str >> samplingRate;
+        socketDataStream >> samplingRate;
 //        cout << samplingRate << endl;
 //        exit(0);
+    }
+    if(this->inProcess)
+    {
+        disconnect(socket, SIGNAL(readyRead()),
+                this, SLOT(receiveDataSlot()));
+        cout << "disconnected readyRead()" << endl;
     }
 }
 
 
-void MainWindow::dataSliceCame(QDataStream & str)
+void MainWindow::dataSliceCame()
 {
-//    cout << "slice came" << endl;
+//    cout << "slice came" << '\t';
     if(fullDataFlag)
     {
         int sliceNumber;
-        str >> sliceNumber;
+        socketDataStream >> sliceNumber;
 
         int numOfChans;
-        str >> numOfChans;
+        socketDataStream >> numOfChans;
 
         qint32 numOfSlices; // not really 'long'
-        str >> numOfSlices;
+        socketDataStream >> numOfSlices;
 
-        if(numOfSlices > 10) return;
-        else if(sliceNumber % 100 == 0)
-        {
-            cout << sliceNumber << endl;
-            return;
-        }
+        cout << sliceNumber << '\t'
+             << numOfChans << '\t'
+             << numOfSlices << endl;
+//        "\t{";
 
-
-        std::vector<short> oneSlice(numOfChans);
+//        std::vector<short> oneSlice(numOfChans);
+        short tmp;
         for(int i = 0; i < numOfSlices; ++i)
         {
             for(int j = 0; j < numOfChans; ++j)
             {
-                str >> oneSlice[j];
+//                socketDataStream >> oneSlice[j];
+                socketDataStream >> tmp;
+//                cout << tmp << '\t';
             }
-            eegData.push_back(oneSlice);
+//            eegData.push_back(oneSlice);
 //            ++WholeNumOfSlices;
         }
+//        cout << "}" << endl;
+
         /// test
+#if 0
         if(eegData.size() > 1000)
         {
 //            socket->disconnectFromHost();
@@ -335,6 +369,8 @@ void MainWindow::dataSliceCame(QDataStream & str)
             ostr.close();
             exit(0);
         }
+#endif
+
 
     }
 
@@ -342,80 +378,90 @@ void MainWindow::dataSliceCame(QDataStream & str)
 
 void MainWindow::receiveDataSlot()
 {
+//    this_thread::sleep_for(milliseconds{2.5});
+    this_thread::sleep_for(microseconds{3000});
 
-//    cout << "ready to read" << endl;
-    QDataStream in(socket);
-    in.setByteOrder(QDataStream::LittleEndian); // least significant bytes first
     static enc::Pack inPack; /// maybe bad with parallel slots
-//    this_thread::sleep_for(std::chrono::microseconds{500});
-
-
-//    cout << "start PacSize = " << inPack.packSize << endl;
+    static int waitCounter = 0;
 
     if(inPack.packSize == 0)
     {
-        while(socket->bytesAvailable() < sizeof(inPack.packSize))
+        if(socket->bytesAvailable() < sizeof(inPack.packSize))
         {
-            cout << "wait for size" << endl;
             return;
-//            this_thread::sleep_for(std::chrono::nanoseconds{100});
         }
 
         char tmp;
-        in.device()->peek(&tmp, 1);
-        in >> inPack.packSize;
+        socketDataStream.device()->peek(&tmp, 1);
+        socketDataStream >> inPack.packSize;
         if(int(tmp) == -1) /// initial data for not fullData
         {
             inPack.packSize = 259 - sizeof(inPack.packSize);
         }
-//        cout << "packSize = " << inPack.packSize << endl;
+        if(inPack.packSize > 2000 || inPack.packSize < 0)
+        {
+            cout << "bad pack size " << inPack.packSize << " , will exit" << endl;
+            exit(9);
+        }
     }
-//    }
-//    else
-//    {
-//        /// happens almost never
-//        cout << "pack not big enough 1" << endl;
-//        return;
-//    }
 
 
     if(inPack.packId == 0)
     {
-        while(socket->bytesAvailable() < sizeof(inPack.packId))
+        if(socket->bytesAvailable() < sizeof(inPack.packId))
         {
             cout << "wait for id" << endl;
+            ++waitCounter;
+//            if(waitCounter == 1000)
+//            {
+//                cout << "too much wait id" << endl;
+//                exit(7);
+//            }
             return;
-//            this_thread::sleep_for(std::chrono::nanoseconds{100});
         }
-        //    if(socket->bytesAvailable() >= inPack.packSize && inPack.packId == 0)
+
+        if(waitCounter != 0)
+        {
+            cout << "id waitCounter = " << waitCounter << endl;
+            waitCounter = 0;
+        }
 
         //    {
-        in >> inPack.packId;
-//        cout << "packId = " << inPack.packId << endl;
+        socketDataStream >> inPack.packId;
     }
 
-//    cout << socket->bytesAvailable() << "\t" << inPack.packSize - sizeof(inPack.packId) << endl;
-//    exit(0);
-    while(socket->bytesAvailable() < inPack.packSize - sizeof(inPack.packId))
+    cout << "packSize = " << inPack.packSize << "\t"
+         << "packId = " << inPack.packId << endl;
+    if(socket->bytesAvailable() < (inPack.packSize - sizeof(inPack.packId)))
     {
         cout << "wait for data\t";
         cout << socket->bytesAvailable() << "\t" << inPack.packSize - sizeof(inPack.packId) << endl;
+//        ++waitCounter;
+//        if(waitCounter == 1000)
+//        {
+//            cout << "too much wait data" << endl;
+//            exit(7);
+//        }
         return;
-//        this_thread::sleep_for(std::chrono::nanoseconds{100});
+    }
+    if(waitCounter != 0)
+    {
+        cout << "data waitCounter = " << waitCounter << endl;
+        waitCounter = 0;
     }
 
     /// protect against too many packets came - done
-    inPack.packArr = in.device()->read(inPack.packSize - sizeof(inPack.packId));
+//    inPack.packArr = socketDataStream(inPack.packSize - sizeof(inPack.packId));
 
-    QDataStream dataStream(inPack.packArr);
-    dataStream.setByteOrder(QDataStream::LittleEndian); // least significant bytes first
+//    QDataStream dataStream(inPack.packArr);
+//    dataStream.setByteOrder(QDataStream::LittleEndian); // least significant bytes first
 
     switch(inPack.packId)
     {
     case 2:
     {
         /// initial data
-        readStartInfo(dataStream);
+        readStartInfo();
         break;
     }
     case 3:
@@ -426,18 +472,18 @@ void MainWindow::receiveDataSlot()
     case 6:
     {
         /// start/stop data transmission
-        startStopTransmisson(dataStream);
-        break;
-    }
-    case 9:
-    {
-        /// FP marker
+        startStopTransmisson();
         break;
     }
     case 8:
     {
         /// data slice
-        dataSliceCame(dataStream);
+        dataSliceCame();
+        break;
+    }
+    case 9:
+    {
+        /// FP marker
         break;
     }
     case 10: // 0x000A
@@ -479,8 +525,35 @@ void MainWindow::startSlot()
                                       startPack.packSize + sizeof(DWORD));
     cout << "startSlot: written " << bytesWritten << " bytes" << endl;
 
+
+
     /// get ready to have an answer
 //    socket->write(initialRequest);
+}
+
+void MainWindow::dataReadThread()
+{
+//    DataThread * thr = new DataThread(this->socket, this->fullDataFlag);
+//    connect(thr, SIGNAL(finished()), thr, SLOT(deleteLater()));
+//    cout << "pew" << endl;
+//    /// reconnect again
+//    thr->start(QThread::TimeCriticalPriority); // highest priority
+
+
+    cout << "before thread start" << endl;
+
+    dataThread = std::thread([this]()
+    {
+        while(1)
+        {
+            this->receiveDataSlot();
+        }
+    });
+//    while(1)
+//    {
+//        this->receiveDataSlot();
+//    }
+    cout << "after thread start" << endl;
 }
 
 void MainWindow::endSlot()

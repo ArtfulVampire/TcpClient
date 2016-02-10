@@ -3,6 +3,7 @@
 
 #include <QByteArray>
 
+
 namespace enc
 {
 typedef quint32 DWORD;
