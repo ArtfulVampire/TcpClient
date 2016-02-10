@@ -159,9 +159,9 @@ void MainWindow::socketConnectedSlot()
 
 void MainWindow::disconnectSlot()
 {
-    socket->disconnectFromHost();
     disconnect(socket, SIGNAL(readyRead()),
             this, SLOT(receiveDataSlot()));
+    socket->disconnectFromHost();
 }
 
 void MainWindow::connectSlot()
@@ -207,7 +207,8 @@ void MainWindow::startStopTransmisson()
     }
     else if(this->inProcess)
     {
-        dataThread.detach();
+        dataThread.join();
+        dataThread.~thread();
         connect(socket, SIGNAL(readyRead()),
                 this, SLOT(receiveDataSlot()));
         if(!socketDataStream.atEnd())
@@ -218,6 +219,19 @@ void MainWindow::startStopTransmisson()
         {
             cout << "still not at end" << endl;
         }
+
+        std::ofstream ostr("D:\\MichaelAtanov\\Real-time\\TcpClient\\pew.txt");
+        ostr << "NumOfSlices " << eegData.size() << endl;
+        ostr << "NumOfChannels " << this->numOfChannels << endl;
+        for(auto slice : eegData)
+        {
+            for(auto val : slice)
+            {
+                ostr << val << '\t';
+            }
+            ostr << '\n';
+        }
+        ostr.close();
     }
     this->inProcess = var;
 }
@@ -320,21 +334,22 @@ void MainWindow::dataSliceCame()
 //    cout << "slice came" << '\t';
     if(fullDataFlag)
     {
-        int sliceNumber;
+        qint32 sliceNumber;
         socketDataStream >> sliceNumber;
 
-        int numOfChans;
+        qint32 numOfChans;
         socketDataStream >> numOfChans;
 
-        qint32 numOfSlices; // not really 'long'
+        qint32 numOfSlices;
         socketDataStream >> numOfSlices;
 
         cout << sliceNumber << '\t'
              << numOfChans << '\t'
-             << numOfSlices << endl;
-//        "\t{";
+             << numOfSlices
+             << endl;
+//               << "\t{";
 
-//        std::vector<short> oneSlice(numOfChans);
+//        static std::vector<short> oneSlice(numOfChans);
         short tmp;
         for(int i = 0; i < numOfSlices; ++i)
         {
@@ -347,11 +362,12 @@ void MainWindow::dataSliceCame()
 //            eegData.push_back(oneSlice);
 //            ++WholeNumOfSlices;
         }
-//        cout << "}" << endl;
+//        cout << "}";
+//        cout << endl;
 
         /// test
 #if 0
-        if(eegData.size() > 1000)
+        if(eegData.size() > 10000)
         {
 //            socket->disconnectFromHost();
 //            std::ofstream ostr("/media/Files/Data/list.txt");
@@ -379,16 +395,30 @@ void MainWindow::dataSliceCame()
 void MainWindow::receiveDataSlot()
 {
 //    this_thread::sleep_for(milliseconds{2.5});
-    this_thread::sleep_for(microseconds{3000});
+//    if(socket->bytesAvailable() < 68 && socket->bytesAvailable() != 12)
+//    {
+//        cout << "small size" << endl;
+//        this_thread::sleep_for(microseconds{500});
+//        return;
+//    }
+//    this_thread::sleep_for(microseconds{500});
 
     static enc::Pack inPack; /// maybe bad with parallel slots
+
     static int waitCounter = 0;
 
     if(inPack.packSize == 0)
     {
         if(socket->bytesAvailable() < sizeof(inPack.packSize))
         {
+            ++waitCounter;
             return;
+        }
+
+        if(waitCounter != 0)
+        {
+            cout << "size waitCounter = " << waitCounter << endl;
+            waitCounter = 0;
         }
 
         char tmp;
@@ -398,11 +428,7 @@ void MainWindow::receiveDataSlot()
         {
             inPack.packSize = 259 - sizeof(inPack.packSize);
         }
-        if(inPack.packSize > 2000 || inPack.packSize < 0)
-        {
-            cout << "bad pack size " << inPack.packSize << " , will exit" << endl;
-            exit(9);
-        }
+
     }
 
 
@@ -410,13 +436,7 @@ void MainWindow::receiveDataSlot()
     {
         if(socket->bytesAvailable() < sizeof(inPack.packId))
         {
-            cout << "wait for id" << endl;
             ++waitCounter;
-//            if(waitCounter == 1000)
-//            {
-//                cout << "too much wait id" << endl;
-//                exit(7);
-//            }
             return;
         }
 
@@ -430,18 +450,22 @@ void MainWindow::receiveDataSlot()
         socketDataStream >> inPack.packId;
     }
 
+
+
     cout << "packSize = " << inPack.packSize << "\t"
          << "packId = " << inPack.packId << endl;
+
+    if(inPack.packId > 12 || inPack.packId < 0 ||
+            inPack.packSize > 2000 || inPack.packSize < 0)
+    {
+        exit(9);
+    }
+
     if(socket->bytesAvailable() < (inPack.packSize - sizeof(inPack.packId)))
     {
         cout << "wait for data\t";
         cout << socket->bytesAvailable() << "\t" << inPack.packSize - sizeof(inPack.packId) << endl;
-//        ++waitCounter;
-//        if(waitCounter == 1000)
-//        {
-//            cout << "too much wait data" << endl;
-//            exit(7);
-//        }
+        ++waitCounter;
         return;
     }
     if(waitCounter != 0)
@@ -540,19 +564,18 @@ void MainWindow::dataReadThread()
 //    thr->start(QThread::TimeCriticalPriority); // highest priority
 
 
-    cout << "before thread start" << endl;
+//    cout << "before thread start" << endl;
 
+    cout << "before thread start" << endl;
     dataThread = std::thread([this]()
     {
         while(1)
         {
+            this_thread::sleep_for(microseconds{1500});
             this->receiveDataSlot();
         }
     });
-//    while(1)
-//    {
-//        this->receiveDataSlot();
-//    }
+    dataThread.detach();
     cout << "after thread start" << endl;
 }
 

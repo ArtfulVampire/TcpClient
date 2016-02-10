@@ -26,7 +26,7 @@
 
 
 #include "def.h"
-//#include "datathread.h"
+#include "datathread.h"
 
 namespace Ui {
 class MainWindow;

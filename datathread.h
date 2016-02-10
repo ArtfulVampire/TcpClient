@@ -14,6 +14,7 @@
 
 class DataThread : public QThread
 {
+    Q_OBJECT
 public:
     DataThread();
     ~DataThread();

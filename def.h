@@ -22,7 +22,7 @@ struct Pack
 {
     int packSize = 0;
     DWORD packId = 0;
-    QByteArray packArr{};
+    //QByteArray packArr{};
 };
 
 }

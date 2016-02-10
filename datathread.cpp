@@ -37,14 +37,16 @@ void DataThread::run()
         DWORD packId;
         str >> packId;
 
-        cout << "thread: enough data" << endl;
-        static int sliceNumber;
+        cout << "packSize = " << packSize << "\t"
+             << "packId = " << packId << endl;
+
+        qint32 sliceNumber;
         str >> sliceNumber;
 
-        static int numOfChans;
+        qint32 numOfChans;
         str >> numOfChans;
 
-        static qint32 numOfSlices; // not really 'long'
+        qint32 numOfSlices; // not really 'long'
         str >> numOfSlices;
 
         static std::chrono::high_resolution_clock::time_point t1;
@@ -55,17 +57,17 @@ void DataThread::run()
         cout << numOfChans << '\t';
         cout << numOfSlices << endl;
 
-//        if(numOfSlices == 1000)
-//        {
-//            t1 = std::chrono::high_resolution_clock::now();
-//        }
-//        else if(numOfSlices == 2000)
-//        {
-//            t2 = std::chrono::high_resolution_clock::now();
-//            cout << "time difference(msec) = " <<
-//                    duration_cast<milliseconds>(t2-t1).count() << endl;
-//            exit(0);
-//        }
+        if(numOfSlices == 1000)
+        {
+            t1 = std::chrono::high_resolution_clock::now();
+        }
+        else if(numOfSlices == 2000)
+        {
+            t2 = std::chrono::high_resolution_clock::now();
+            cout << "time difference(msec) = " <<
+                    duration_cast<milliseconds>(t2-t1).count() << endl;
+            exit(0);
+        }
 
 //        else if(sliceNumber % 100 == 0)
 //        {
