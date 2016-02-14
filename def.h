@@ -3,6 +3,27 @@
 
 #include <QByteArray>
 
+#include <QtNetwork>
+#include <QSerialPort>
+#include <QSerialPortInfo>
+
+#include <ios>
+#include <iostream>
+#include <fstream>
+#include <ctime>
+#include <cstdlib>
+#include <cstdio>
+#include <cmath>
+#include <string>
+#include <vector>
+#include <valarray>
+#include <set>
+#include <list>
+#include <algorithm>
+#include <chrono>
+#include <random>
+#include <thread>
+#include <utility>
 
 namespace enc
 {
@@ -18,11 +39,14 @@ struct String
     char * str;
 };
 
+
+std::string readString(QDataStream & in);
+
+
 struct Pack
 {
     int packSize = 0;
     DWORD packId = 0;
-    //QByteArray packArr{};
 };
 
 }

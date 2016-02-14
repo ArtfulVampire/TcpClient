@@ -2,31 +2,13 @@
 #define MAINWINDOW_H
 
 #include <QMainWindow>
-#include <QtNetwork>
-#include <QSerialPort>
-#include <QSerialPortInfo>
 
-#include <ios>
-#include <iostream>
-#include <fstream>
-#include <ctime>
-#include <cstdlib>
-#include <cstdio>
-#include <cmath>
-#include <string>
-#include <vector>
-#include <valarray>
-#include <set>
-#include <list>
-#include <algorithm>
-#include <chrono>
-#include <random>
-#include <thread>
-#include <utility>
 
 
 #include "def.h"
-#include "datathread.h"
+#include "datareader.h"
+
+#define DATA_READER 1
 
 namespace Ui {
 class MainWindow;
@@ -40,49 +22,56 @@ public:
     explicit MainWindow(QWidget *parent = 0);
     ~MainWindow();
 
-    void readStartInfo();
-    void startStopTransmisson();
-    void dataSliceCame();
+
 
 signals:
 public slots:
-    void react();
-    void askServer();
-
-    void changeFullDataFlag(int);
 
     void socketErrorSlot(QAbstractSocket::SocketError);
     void serialPortErrorSlot(QSerialPort::SerialPortError);
-    void connectSlot();
-    void disconnectSlot();
+
     void socketConnectedSlot();
     void socketDisconnectedSlot();
 
+    // ui slots
+    void connectSlot();
+    void disconnectSlot();
     void serverAddressSlot(int a);
+    void startSlot();
+    void endSlot(); /// is needed?
     void comPortSlot();
 
-    void startSlot();
-    void receiveDataSlot();
-    void endSlot();
-    void dataReadThread();
+    void startStopSlot(int var); /// from dataReader
 
 private:
-    Ui::MainWindow *ui;
+    Ui::MainWindow * ui;
+    QTcpSocket * socket = nullptr;
+    QSerialPort * comPort = nullptr;
+    DataReaderHandler * myDataReaderHandler = nullptr;
+
+
+    /// moved to DataReader
+#if !DATA_READER
+private:
+
+    QDataStream socketDataStream;
 
     bool inProcess = false;
     bool fullDataFlag = false;
-    QTcpSocket * socket = nullptr;
-    QDataStream socketDataStream;
-    quint16 blockSize = 0;
 
-    std::thread dataThread{};
-    QSerialPort * comPort = nullptr;
-
-    //
     double bitWeight{};
     double samplingRate{};
     int numOfChannels{};
     std::list<std::vector<short>> eegData{};
+
+public slots:
+    void receiveDataSlot();
+
+public:
+    void readStartInfo();
+    void startStopTransmisson();
+    void dataSliceCame();
+#endif
 };
 
 #endif // MAINWINDOW_H

@@ -16,10 +16,11 @@ TEMPLATE = app
 
 SOURCES += main.cpp\
         mainwindow.cpp \
-    datathread.cpp
+    datareader.cpp \
+    def.cpp
 
 HEADERS  += mainwindow.h \
     def.h \
-    datathread.h
+    datareader.h
 
 FORMS    += mainwindow.ui

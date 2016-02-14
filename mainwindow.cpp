@@ -16,7 +16,7 @@ MainWindow::MainWindow(QWidget *parent) :
 
 
     // defaults
-    ui->fullDataCheckBox->setChecked(this->fullDataFlag);
+//    ui->fullDataCheckBox->setChecked(this->fullDataFlag);
 
     /// server
     ui->serverPortSpinBox->setMaximum(65535);
@@ -50,11 +50,19 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(ui->connectComPortPushButton, SIGNAL(clicked()),
             this, SLOT(comPortSlot()));
 
+    comPort = new QSerialPort(this);
+    connect(comPort, SIGNAL(error(QSerialPort::SerialPortError)),
+            this, SLOT(serialPortErrorSlot(QSerialPort::SerialPortError)));
+
+
 
     /// socket
     socket = new QTcpSocket(this);
+#if !DATA_READER
     socketDataStream.setDevice(socket);
     socketDataStream.setByteOrder(QDataStream::LittleEndian); // least significant bytes first
+
+#endif
 
     connect(socket, SIGNAL(error(QAbstractSocket::SocketError)),
             this, SLOT(socketErrorSlot(QAbstractSocket::SocketError)));
@@ -69,53 +77,15 @@ MainWindow::MainWindow(QWidget *parent) :
 
     connect(this->ui->startPushButton, SIGNAL(clicked()),
             this, SLOT(startSlot()));
-
-
-
-
-
     connect(this->ui->endPushButton, SIGNAL(clicked()),
             this, SLOT(endSlot()));
-
-    connect(this->ui->fullDataCheckBox, SIGNAL(stateChanged(int)),
-            this, SLOT(changeFullDataFlag(int)));
-
-    connect(this->ui->startRealTimePushButton, SIGNAL(clicked()),
-            this, SLOT(dataReadThread()));
-
-//    cout << char(-1) << endl; exit(0);
-
-
     ui->fullDataCheckBox->setChecked(true);
+
+    /// DataReader
+    myDataReaderHandler = new DataReaderHandler(this);
+
     connectSlot();
     startSlot();
-
-
-    /// custom
-
-
-
-//    comPort = new QSerialPort(this);
-//    connect(comPort, SIGNAL(error(QSerialPort::SerialPortError)),
-//            this, SLOT(serialPortErrorSlot(QSerialPort::SerialPortError)));
-//    comPort->setPortName(ui->comPortComboBox->currentText());
-//    comPort->open(QIODevice::WriteOnly);
-//    // cout comPortInfo
-//    if(comPort->isOpen())
-//    {
-//        cout << "portName: " << comPort->portName().toStdString() << endl;
-//        cout << "dataBits: " << comPort->dataBits() << endl;
-//        cout << "baudRate: " << comPort->baudRate() << endl;
-//        cout << "dataTerminalReady: " << comPort->isDataTerminalReady() << endl;
-//        cout << "flowControl: " << comPort->flowControl() << endl;
-//        cout << "requestToSend: " << comPort->isRequestToSend() << endl;
-//        cout << "stopBits: " << comPort->stopBits() << endl;
-//    }
-//    char ch(1);
-//    const char * tmp = &ch;
-//    comPort->write(tmp);
-
-
 }
 
 MainWindow::~MainWindow()
@@ -125,10 +95,12 @@ MainWindow::~MainWindow()
 //    delete socket;
 }
 
-void MainWindow::changeFullDataFlag(int a)
+void MainWindow::startStopSlot(int var)
 {
-    this->fullDataFlag = a;
+    QString res = (var == 1) ? "ON" : "OFF";
+    ui->textEdit->append("data transmission " + res);
 }
+
 
 void MainWindow::serialPortErrorSlot(QSerialPort::SerialPortError)
 {
@@ -192,6 +164,51 @@ void MainWindow::serverAddressSlot(int a)
 
 }
 
+void MainWindow::startSlot()
+{
+    /// Data reader
+    QThread * myThread = new QThread;
+    myThread->setPriority(QThread::TimeCriticalPriority); // veru fast
+    myDataReaderHandler->moveToThread(myThread);
+    connect(myThread, SIGNAL(started()),
+            myDataReaderHandler, SLOT(startReadData()));
+    connect(myDataReaderHandler, SIGNAL(finishReadData()),
+            myThread, SLOT(quit()));
+    connect(ui->endPushButton, SIGNAL(clicked()),
+            myDataReaderHandler, SLOT(stopReadData()));
+    connect(myDataReaderHandler, SIGNAL(finishReadData()),
+            myDataReaderHandler, SLOT(deleteLater()));
+    connect(myDataReaderHandler, SIGNAL(finishReadData()),
+            myThread, SLOT(deleteLater()));
+    myThread->start();
+}
+
+void MainWindow::endSlot()
+{
+
+}
+
+void MainWindow::comPortSlot()
+{
+    comPort->setPortName(ui->comPortComboBox->currentText());
+    comPort->open(QIODevice::WriteOnly);
+    // cout comPortInfo
+    if(comPort->isOpen())
+    {
+        cout << "portName: " << comPort->portName().toStdString() << endl;
+        cout << "dataBits: " << comPort->dataBits() << endl;
+        cout << "baudRate: " << comPort->baudRate() << endl;
+        cout << "dataTerminalReady: " << comPort->isDataTerminalReady() << endl;
+        cout << "flowControl: " << comPort->flowControl() << endl;
+        cout << "requestToSend: " << comPort->isRequestToSend() << endl;
+        cout << "stopBits: " << comPort->stopBits() << endl;
+        char ch(1);
+        const char * tmp = &ch;
+        comPort->write(tmp);
+    }
+}
+
+#if !DATA_READER
 
 void MainWindow::startStopTransmisson()
 {
@@ -207,8 +224,8 @@ void MainWindow::startStopTransmisson()
     }
     else if(this->inProcess)
     {
-        dataThread.join();
-        dataThread.~thread();
+//        dataThread.join();
+//        dataThread.~thread();
         connect(socket, SIGNAL(readyRead()),
                 this, SLOT(receiveDataSlot()));
         if(!socketDataStream.atEnd())
@@ -234,19 +251,6 @@ void MainWindow::startStopTransmisson()
         ostr.close();
     }
     this->inProcess = var;
-}
-
-std::string readString(QDataStream & in)
-{
-    int numOfChars;
-    in >> numOfChars;
-    std::string res;
-    res.resize(numOfChars);
-    for(int i = 0; i < numOfChars; ++i)
-    {
-        in.readRawData(&(res[i]), 1);
-    }
-    return res;
 }
 
 void MainWindow::readStartInfo()
@@ -394,15 +398,6 @@ void MainWindow::dataSliceCame()
 
 void MainWindow::receiveDataSlot()
 {
-//    this_thread::sleep_for(milliseconds{2.5});
-//    if(socket->bytesAvailable() < 68 && socket->bytesAvailable() != 12)
-//    {
-//        cout << "small size" << endl;
-//        this_thread::sleep_for(microseconds{500});
-//        return;
-//    }
-//    this_thread::sleep_for(microseconds{500});
-
     static enc::Pack inPack; /// maybe bad with parallel slots
 
     static int waitCounter = 0;
@@ -529,105 +524,8 @@ void MainWindow::receiveDataSlot()
     inPack = enc::Pack();
 }
 
-void MainWindow::startSlot()
-{
-//    QByteArray initialRequest;
-//    QDataStream out(&initialRequest, QIODevice::WriteOnly);
-
-    enc::Pack startPack;
-    startPack.packSize = sizeof(DWORD);
-    if(ui->fullDataCheckBox->isChecked())
-    {
-        startPack.packId = 0x000C;
-    }
-    else
-    {
-        startPack.packId = 0x0001;
-    }
-
-    auto bytesWritten = socket->write(reinterpret_cast<char *>(&startPack),
-                                      startPack.packSize + sizeof(DWORD));
-    cout << "startSlot: written " << bytesWritten << " bytes" << endl;
 
 
-
-    /// get ready to have an answer
-//    socket->write(initialRequest);
-}
-
-void MainWindow::dataReadThread()
-{
-//    DataThread * thr = new DataThread(this->socket, this->fullDataFlag);
-//    connect(thr, SIGNAL(finished()), thr, SLOT(deleteLater()));
-//    cout << "pew" << endl;
-//    /// reconnect again
-//    thr->start(QThread::TimeCriticalPriority); // highest priority
+#endif
 
 
-//    cout << "before thread start" << endl;
-
-    cout << "before thread start" << endl;
-    dataThread = std::thread([this]()
-    {
-        while(1)
-        {
-            this_thread::sleep_for(microseconds{1500});
-            this->receiveDataSlot();
-        }
-    });
-    dataThread.detach();
-    cout << "after thread start" << endl;
-}
-
-void MainWindow::endSlot()
-{
-
-}
-
-void MainWindow::comPortSlot()
-{
-
-}
-
-void MainWindow::askServer()
-{
-    cout << "ask" << endl;
-    blockSize = 0;
-    socket->abort();
-    socket->connectToHost(ui->serverAddressLineEdit->text(),
-                          ui->serverPortSpinBox->value());
-}
-
-void MainWindow::react()
-{
-    cout << "react" << endl;
-    QDataStream in(socket);
-
-    if (blockSize == 0)
-    {
-        cout << "blockSize == 0" << endl;
-        if (socket->bytesAvailable() < (int)sizeof(quint16))
-        {
-            cout << "wait for size" << endl;
-            return;
-        }
-        in >> blockSize;
-        cout << "blockSize = " << blockSize << endl;
-    }
-
-    if (socket->bytesAvailable() < blockSize)
-    {
-        cout << "wait for data" << endl;
-        return;
-    }
-
-//    QString gotString;
-//    in >> gotString;
-//    cout << gotString.toStdString() << endl;
-
-    char * gotString = new char[blockSize + 2];
-    uint amountReadBytes;
-    in.readBytes(gotString, amountReadBytes);
-    cout << amountReadBytes << "\t" << gotString << endl;
-    delete[] gotString;
-}
