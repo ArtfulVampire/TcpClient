@@ -19,6 +19,9 @@ public:
    void dataSliceCame();
    void sendStartRequest();
 
+protected:
+   void timerEvent(QTimerEvent *event);
+
 signals:
    void sliceReady(std::vector<short> slice);
    void startStopSignal(int var);
@@ -34,7 +37,8 @@ private:
    double samplingRate{};
    int numOfChannels{};
 
-   QDataStream socketDataStream;    bool inProcess = true;
+   QDataStream socketDataStream;
+   bool inProcess = false;
 
    QTcpSocket * socket = nullptr;
 };
@@ -43,22 +47,26 @@ class DataReaderHandler : public QObject
 {
     Q_OBJECT
 public:
-    DataReaderHandler(QObject * inParent = nullptr,
-                      QTcpSocket * inSocket = nullptr,
+    DataReaderHandler(QTcpSocket * inSocket = nullptr,
                       bool inFullDataFlag = true);
     ~DataReaderHandler();
 private:
     DataReader * myReader;
+
+
+protected:
+   void timerEvent(QTimerEvent *event);
 
 public slots:
     void startReadData();
     void stopReadData();
 
     void receiveSlice(const std::vector<short> & slice);
-//    void startStopSlot(int var);
+    void startStopSlot(int var);
 
 signals:
     void finishReadData(); /// optional?private:
+    void startStopSignal(int var);
 
 private:
     bool fullDataFlag = true;

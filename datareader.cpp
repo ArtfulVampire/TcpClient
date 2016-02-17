@@ -7,8 +7,7 @@ using namespace enc;
 
 
 
-DataReader::DataReader(QObject * inParent,
-                       QTcpSocket * inSocket,
+DataReader::DataReader(QObject * inParent, QTcpSocket * inSocket,
                        bool inFullDataFlag)
 {
     this->setParent(inParent);
@@ -16,14 +15,17 @@ DataReader::DataReader(QObject * inParent,
     this->fullDataFlag = inFullDataFlag;
     this->socketDataStream.setDevice(this->socket);
     this->socketDataStream.setByteOrder(QDataStream::LittleEndian);
-
     connect(socket, SIGNAL(readyRead()),
             this, SLOT(receiveData()));
-
 }
 
 
 DataReader::~DataReader()
+{
+
+}
+
+void DataReader::timerEvent(QTimerEvent *event)
 {
 
 }
@@ -43,12 +45,13 @@ void DataReader::sendStartRequest()
 
     auto bytesWritten = socket->write(reinterpret_cast<char *>(&startPack),
                                       startPack.packSize + sizeof(DWORD));
-    cout << "startSlot: written " << bytesWritten << " bytes" << endl;
+    cout << "sendStartRequest: written " << bytesWritten << " bytes" << endl;
+//    receiveData();
 }
 
 void DataReader::receiveData()
 {
-    static enc::Pack inPack; /// maybe bad with parallel slots
+    static enc::Pack inPack;
 
     static int waitCounter = 0;
 
@@ -62,7 +65,7 @@ void DataReader::receiveData()
 
         if(waitCounter != 0)
         {
-            cout << "size waitCounter = " << waitCounter << endl;
+//            cout << "size waitCounter = " << waitCounter << endl;
             waitCounter = 0;
         }
 
@@ -73,7 +76,6 @@ void DataReader::receiveData()
         {
             inPack.packSize = 259 - sizeof(inPack.packSize);
         }
-
     }
 
 
@@ -87,7 +89,7 @@ void DataReader::receiveData()
 
         if(waitCounter != 0)
         {
-            cout << "id waitCounter = " << waitCounter << endl;
+//            cout << "id waitCounter = " << waitCounter << endl;
             waitCounter = 0;
         }
 
@@ -97,27 +99,34 @@ void DataReader::receiveData()
 
 
 
-    cout << "packSize = " << inPack.packSize << "\t"
-         << "packId = " << inPack.packId << endl;
+//    cout << "packSize = " << inPack.packSize << "\t"
+//         << "packId = " << inPack.packId << endl;
 
     if(inPack.packId > 12 || inPack.packId < 0 ||
             inPack.packSize > 2000 || inPack.packSize < 0)
     {
-        exit(9);
+        cout << "BAD PACK: "
+             << "packSize = " << inPack.packSize << "\t"
+             << "packId = " << inPack.packId << endl;
+        inPack = enc::Pack();
+        return;
     }
 
     if(socket->bytesAvailable() < (inPack.packSize - sizeof(inPack.packId)))
     {
-        cout << "wait for data\t";
-        cout << socket->bytesAvailable() << "\t" << inPack.packSize - sizeof(inPack.packId) << endl;
+//        cout << "wait for data\t";
+//        cout << socket->bytesAvailable() << "\t" << inPack.packSize - sizeof(inPack.packId) << endl;
         ++waitCounter;
         return;
     }
     if(waitCounter != 0)
     {
-        cout << "data waitCounter = " << waitCounter << endl;
+//        cout << "data waitCounter = " << waitCounter << endl;
         waitCounter = 0;
     }
+
+//    cout << "packSize = " << inPack.packSize << "\t" << "packId = " << inPack.packId << endl;
+
     switch(inPack.packId)
     {
     case 2:
@@ -185,28 +194,35 @@ void DataReader::readStartInfo()
             std::string channelName = readString(socketDataStream);
 //            cout << channelName << endl;
 
-            double bitWeight; socketDataStream >> bitWeight;
+            double bitWeight;
+            socketDataStream >> bitWeight;
 //            cout << bitWeight << endl;
 
-            double samplingRate; socketDataStream >> samplingRate;
+            double samplingRate;
+            socketDataStream >> samplingRate;
 //            cout << samplingRate << endl;
 
             std::string metrica = readString(socketDataStream);
 //            cout << metrica << endl;
 
-            double LFF; socketDataStream >> LFF;
+            double LFF;
+            socketDataStream >> LFF;
 //            cout << LFF << endl;
 
-            double HFF; socketDataStream >> HFF;
+            double HFF;
+            socketDataStream >> HFF;
 //            cout << HFF << endl;
 
-            int levelHFF; socketDataStream >> levelHFF;
+            int levelHFF;
+            socketDataStream >> levelHFF;
 //            cout << levelHFF << endl;
 
-            double rejector; socketDataStream >> rejector;
+            double rejector;
+            socketDataStream >> rejector;
 //            cout << rejector << endl;
 
-            double defSans; socketDataStream >> defSans;
+            double defSans;
+            socketDataStream >> defSans;
 //            cout << defSans << endl;
         }
         std::string scheme = readString(socketDataStream);
@@ -240,10 +256,11 @@ void DataReader::readStartInfo()
 //        cout << samplingRate << endl;
 //        exit(0);
     }
+    cout << "start info was read" << endl;
     if(this->inProcess)
     {
-        disconnect(socket, SIGNAL(readyRead()),
-                this, SLOT(receiveDataSlot()));
+//        disconnect(socket, SIGNAL(readyRead()),
+//                   this, SLOT(receiveData()));
         cout << "disconnected readyRead()" << endl;
     }
 }
@@ -254,19 +271,31 @@ void DataReader::startStopTransmisson()
 {
     int var;
     socketDataStream >> var;
+    emit startStopSignal(var);
+    this->inProcess = var;
 
-    QString res = (var == 1)?"ON":"OFF";
+//    QString res = (var == 1)?"ON":"OFF";
 //    ui->textEdit->append("data transmission " + res);
+
 
     if(var == 1) /// real-time ON signal came - should send datarequest again
     {
-        std::this_thread::sleep_for(std::chrono::milliseconds{200});
+
+        this->thread()->msleep(500);
         this->sendStartRequest();
+
+
+        this->thread()->msleep(2000);
+
+
+        while(this->inProcess)
+        {
+            this->thread()->usleep(2000);
+            receiveData();
+        }
     }
-    else if(this->inProcess) /// finish all job
+    else //if(this->inProcess) /// finish all job
     {
-        disconnect(socket, SIGNAL(readyRead()),
-                   this, SLOT(receiveData()));
 
         if(!socketDataStream.atEnd())
         {
@@ -276,10 +305,10 @@ void DataReader::startStopTransmisson()
         {
             cout << "still not at end" << endl;
         }
-        this->~DataReader();
+//        connect(socket, SIGNAL(readyRead()),
+//                this, SLOT(receiveData()));
+//        this->~DataReader();
     }
-    this->inProcess = var;
-    emit startStopSignal(var);
 }
 
 void DataReader::dataSliceCame()
@@ -295,10 +324,14 @@ void DataReader::dataSliceCame()
         qint32 numOfSlices;
         socketDataStream >> numOfSlices;
 
+//        if(sliceNumber%100 == 0)
+        cout << sliceNumber << endl;
+#if 0
         cout << sliceNumber << '\t'
              << numOfChans << '\t'
              << numOfSlices
              << endl;
+#endif
 
         static std::vector<short> oneSlice(numOfChans);
         for(int i = 0; i < numOfSlices; ++i)
@@ -307,18 +340,16 @@ void DataReader::dataSliceCame()
             {
                 socketDataStream >> oneSlice[j];
             }
-            emit sliceReady(oneSlice);
+//            emit sliceReady(oneSlice);
         }
     }
 }
 
 
 /// DataReaderHandler
-DataReaderHandler::DataReaderHandler(QObject * inParent,
-                                     QTcpSocket * inSocket,
+DataReaderHandler::DataReaderHandler(QTcpSocket * inSocket,
                                      bool inFullDataFlag)
 {
-    this->setParent(inParent);
     this->socket = inSocket;
     this->fullDataFlag = inFullDataFlag;
 }
@@ -328,19 +359,32 @@ DataReaderHandler::~DataReaderHandler()
 
 }
 
+void DataReaderHandler::timerEvent(QTimerEvent *event)
+{
+
+}
+
 void DataReaderHandler::startReadData()
 {
-    myReader = new DataReader(this->parent(), this->socket, this->fullDataFlag);
+    myReader = new DataReader(this,
+                              this->socket,
+                              this->fullDataFlag);
     connect(myReader, SIGNAL(destroyed()), this, SLOT(stopReadData()));
+    connect(myReader, SIGNAL(startStopSignal(int)), this, SLOT(startStopSlot(int)));
     myReader->sendStartRequest();
 }
 
 void DataReaderHandler::stopReadData()
 {
-    emit this->finishReadData();
+//    emit finishReadData();
 }
 
 void DataReaderHandler::receiveSlice(const std::vector<short> & slice)
 {
     eegData.push_back(slice);
+}
+
+void DataReaderHandler::startStopSlot(int var)
+{
+    emit this->startStopSignal(var);
 }

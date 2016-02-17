@@ -82,7 +82,8 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->fullDataCheckBox->setChecked(true);
 
     /// DataReader
-    myDataReaderHandler = new DataReaderHandler(this);
+    myDataReaderHandler = new DataReaderHandler(socket,
+                                                ui->fullDataCheckBox->isChecked());
 
     connectSlot();
     startSlot();
@@ -131,8 +132,8 @@ void MainWindow::socketConnectedSlot()
 
 void MainWindow::disconnectSlot()
 {
-    disconnect(socket, SIGNAL(readyRead()),
-            this, SLOT(receiveDataSlot()));
+//    disconnect(socket, SIGNAL(readyRead()),
+//            this, SLOT(receiveDataSlot()));
     socket->disconnectFromHost();
 }
 
@@ -145,8 +146,8 @@ void MainWindow::connectSlot()
     if(socket->isValid())
     {
         ui->connectToServerPushButton->setCheckable(false);
-        connect(socket, SIGNAL(readyRead()),
-                this, SLOT(receiveDataSlot()));
+//        connect(socket, SIGNAL(readyRead()),
+//                this, SLOT(receiveDataSlot()));
     }
     else
     {
@@ -168,7 +169,6 @@ void MainWindow::startSlot()
 {
     /// Data reader
     QThread * myThread = new QThread;
-    myThread->setPriority(QThread::TimeCriticalPriority); // veru fast
     myDataReaderHandler->moveToThread(myThread);
     connect(myThread, SIGNAL(started()),
             myDataReaderHandler, SLOT(startReadData()));
@@ -180,12 +180,15 @@ void MainWindow::startSlot()
             myDataReaderHandler, SLOT(deleteLater()));
     connect(myDataReaderHandler, SIGNAL(finishReadData()),
             myThread, SLOT(deleteLater()));
-    myThread->start();
+    connect(myDataReaderHandler, SIGNAL(startStopSignal(int)),
+            this, SLOT(startStopSlot(int)));
+
+//    myThread->start(QThread::TimeCriticalPriority); // veru fast
+    myThread->start(QThread::HighestPriority); // veru fast
 }
 
 void MainWindow::endSlot()
 {
-
 }
 
 void MainWindow::comPortSlot()
