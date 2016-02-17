@@ -33,6 +33,9 @@ public slots:
     void socketConnectedSlot();
     void socketDisconnectedSlot();
 
+    void sendOne();
+    void sendTwo();
+
     // ui slots
     void connectSlot();
     void disconnectSlot();
@@ -47,7 +50,10 @@ private:
     Ui::MainWindow * ui;
     QTcpSocket * socket = nullptr;
     QSerialPort * comPort = nullptr;
+    QDataStream comPortDataStream{};
+
     DataReaderHandler * myDataReaderHandler = nullptr;
+
 
 
     /// moved to DataReader

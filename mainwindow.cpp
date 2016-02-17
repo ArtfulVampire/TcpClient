@@ -47,12 +47,17 @@ MainWindow::MainWindow(QWidget *parent) :
     {
         ui->comPortComboBox->addItem("COM"+QString::number(i+1));
     }
+    ui->comPortComboBox->setCurrentText("COM5");
     connect(ui->connectComPortPushButton, SIGNAL(clicked()),
             this, SLOT(comPortSlot()));
 
     comPort = new QSerialPort(this);
     connect(comPort, SIGNAL(error(QSerialPort::SerialPortError)),
             this, SLOT(serialPortErrorSlot(QSerialPort::SerialPortError)));
+    connect(this->ui->comPortSendOnePushButton, SIGNAL(clicked()),
+            this, SLOT(sendOne()));
+    connect(this->ui->comPortSendTwoPushButton, SIGNAL(clicked()),
+            this, SLOT(sendTwo()));
 
 
 
@@ -85,8 +90,8 @@ MainWindow::MainWindow(QWidget *parent) :
     myDataReaderHandler = new DataReaderHandler(socket,
                                                 ui->fullDataCheckBox->isChecked());
 
-    connectSlot();
-    startSlot();
+//    connectSlot();
+//    startSlot();
 }
 
 MainWindow::~MainWindow()
@@ -105,9 +110,44 @@ void MainWindow::startStopSlot(int var)
 
 void MainWindow::serialPortErrorSlot(QSerialPort::SerialPortError)
 {
-    ui->textEdit->append("serialPort error: "
-                         + QString::number(comPort->error())
-                         + " " + comPort->errorString());
+    if(comPort->error() != 0)
+    {
+        ui->textEdit->append("serialPort error: "
+                             + QString::number(comPort->error())
+                             + " " + comPort->errorString());
+    }
+}
+
+void MainWindow::comPortSlot()
+{
+    comPort->setPortName(ui->comPortComboBox->currentText());
+    comPort->open(QIODevice::WriteOnly);
+    comPortDataStream.setDevice(comPort);
+    // cout comPortInfo
+    if(comPort->isOpen())
+    {
+        ui->textEdit->append("serialPort opened: "
+                             + ui->comPortComboBox->currentText());
+        cout << "portName: " << comPort->portName().toStdString() << endl;
+        cout << "dataBits: " << comPort->dataBits() << endl;
+        cout << "baudRate: " << comPort->baudRate() << endl;
+        cout << "dataTerminalReady: " << comPort->isDataTerminalReady() << endl;
+        cout << "flowControl: " << comPort->flowControl() << endl;
+        cout << "requestToSend: " << comPort->isRequestToSend() << endl;
+        cout << "stopBits: " << comPort->stopBits() << endl << endl;
+//        char ch(1);
+//        const char * tmp = &ch;
+//        comPort->write(tmp);
+    }
+}
+
+void MainWindow::sendOne()
+{
+    comPortDataStream << qint8(1);
+}
+void MainWindow::sendTwo()
+{
+    comPortDataStream << qint8(2);
 }
 
 void MainWindow::socketErrorSlot(QAbstractSocket::SocketError)
@@ -191,25 +231,7 @@ void MainWindow::endSlot()
 {
 }
 
-void MainWindow::comPortSlot()
-{
-    comPort->setPortName(ui->comPortComboBox->currentText());
-    comPort->open(QIODevice::WriteOnly);
-    // cout comPortInfo
-    if(comPort->isOpen())
-    {
-        cout << "portName: " << comPort->portName().toStdString() << endl;
-        cout << "dataBits: " << comPort->dataBits() << endl;
-        cout << "baudRate: " << comPort->baudRate() << endl;
-        cout << "dataTerminalReady: " << comPort->isDataTerminalReady() << endl;
-        cout << "flowControl: " << comPort->flowControl() << endl;
-        cout << "requestToSend: " << comPort->isRequestToSend() << endl;
-        cout << "stopBits: " << comPort->stopBits() << endl;
-        char ch(1);
-        const char * tmp = &ch;
-        comPort->write(tmp);
-    }
-}
+
 
 #if !DATA_READER
 
