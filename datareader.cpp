@@ -17,6 +17,8 @@ DataReader::DataReader(QObject * inParent, QTcpSocket * inSocket,
     this->socketDataStream.setByteOrder(QDataStream::LittleEndian);
     connect(socket, SIGNAL(readyRead()),
             this, SLOT(receiveData()));
+
+    oneSlice.resize(24); /// pewpewpew
 }
 
 
@@ -57,7 +59,7 @@ void DataReader::receiveData()
 
     if(inPack.packSize == 0)
     {
-        if(socket->bytesAvailable() < sizeof(inPack.packSize))
+        if(socket->bytesAvailable() < sizeof(inPack.packSize) + sizeof(inPack.packId))
         {
             ++waitCounter;
             return;
@@ -69,33 +71,104 @@ void DataReader::receiveData()
             waitCounter = 0;
         }
 
-        char tmp;
-        socketDataStream.device()->peek(&tmp, 1);
-        socketDataStream >> inPack.packSize;
-        if(int(tmp) == -1) /// initial data for not fullData
+//        char tmp;
+//        socketDataStream.device()->peek(&tmp, 1);
+
+//        socketDataStream >> inPack.packSize;
+        QByteArray arr = socket->peek(8); // try read int + uint
+        QDataStream str(&arr, QIODevice::ReadOnly);
+        str.setByteOrder(QDataStream::LittleEndian);
+        str >> inPack.packSize;
+        str >> inPack.packId;
+
+        if(!(inPack.packSize == 1618 && inPack.packId == 2) &&
+           !(inPack.packSize == 64 && inPack.packId == 8) &&
+           !(inPack.packSize == 8 && inPack.packId == 6))
         {
-            inPack.packSize = 259 - sizeof(inPack.packSize);
-        }
-    }
+            cout << "BAD PACK: "
+                 << "packSize = " << inPack.packSize << "\t"
+                 << "packId = " << inPack.packId << endl;
+
+            inPack.packSize = 0;
+            inPack.packId = 0;
 
 
-    if(inPack.packId == 0)
-    {
-        if(socket->bytesAvailable() < sizeof(inPack.packId))
-        {
-            ++waitCounter;
+            if(int sk = socketDataStream.skipRawData(2) != 2)
+            {
+                cout << "sk != 2, sk == " << sk << endl;
+            }
             return;
         }
-
-        if(waitCounter != 0)
+        else
         {
-//            cout << "id waitCounter = " << waitCounter << endl;
-            waitCounter = 0;
+            if(int sk = socketDataStream.skipRawData(8) != 8)
+            {
+                cout << "sk != 8, sk == " << sk << endl;
+            }
+
+            if(inPack.packSize == 8 && inPack.packId == 6)
+            {
+
+                QByteArray arr = socket->peek(8); // try read int + uint
+                QDataStream str(&arr, QIODevice::ReadOnly);
+                str.setByteOrder(QDataStream::LittleEndian);
+                qint32 a;
+                str >> a;
+                quint32 b;
+                str >> b;
+                if(a == 8 && b == 6)
+                {
+                    if(int sk = socketDataStream.skipRawData(8) != 8)
+                    {
+                        cout << "DOUBLE KILL: sk != 8, sk == " << sk << endl;
+                    }
+                }
+            }
+
+
+#if 0
+            if(inPack.packId == 8)
+            {
+                qint32 sliceNum;
+                socketDataStream >> sliceNum;
+                cout << sliceNum << endl;
+            }
+            else
+            {
+                socketDataStream.skipRawData(4);
+            }
+            socketDataStream.skipRawData(inPack.packSize - sizeof(inPack.packId) - 4); // skip for peek
+            inPack.packSize = 0;
+            inPack.packId = 0;
+            return;
+#endif
         }
 
-        //    {
-        socketDataStream >> inPack.packId;
+        /// deprecate
+//        if(int(tmp) == -1) /// initial data for not fullData
+//        {
+//            inPack.packSize = 259 - sizeof(inPack.packSize);
+//        }
     }
+
+#if 1
+//    if(inPack.packId == 0)
+//    {
+//        if(socket->bytesAvailable() < sizeof(inPack.packId))
+//        {
+//            ++waitCounter;
+//            return;
+//        }
+
+//        if(waitCounter != 0)
+//        {
+////            cout << "id waitCounter = " << waitCounter << endl;
+//            waitCounter = 0;
+//        }
+
+//        //    {
+//        socketDataStream >> inPack.packId;
+//    }
 
 
 
@@ -124,8 +197,29 @@ void DataReader::receiveData()
 //        cout << "data waitCounter = " << waitCounter << endl;
         waitCounter = 0;
     }
+#else
+    if(socket->bytesAvailable() < inPack.packSize)
+    {
+        ++waitCounter;
+        return;
+    }
+    else
+    {
+        socketDataStream >> inPack.packId;
 
-//    cout << "packSize = " << inPack.packSize << "\t" << "packId = " << inPack.packId << endl;
+
+        inPack.packData = socket->read(inPack.packSize);
+        myBuffer = new QBuffer(&(inPack.packData));
+        myBuffer->open(QIODevice::ReadOnly);
+
+        socketDataStream.unsetDevice();
+        socketDataStream.setDevice(myBuffer);
+        socketDataStream.setByteOrder(QDataStream::LittleEndian);
+    }
+    cout << "packSize = " << inPack.packSize << "\t" << "packId = " << inPack.packId << endl;
+#endif
+
+    cout << inPack.packSize << '\t' << inPack.packId << '\t';
 
     switch(inPack.packId)
     {
@@ -169,10 +263,16 @@ void DataReader::receiveData()
     }
     default:
     {
-        cout << "unknown data-pack came, OMG" << endl;
+        cout << "unknown data-pack came, OMG " << inPack.packId << endl;
         break;
     }
     }
+#if 0
+    delete myBuffer;
+    socketDataStream.unsetDevice();
+    socketDataStream.setDevice(socket);
+    socketDataStream.setByteOrder(QDataStream::LittleEndian);
+#endif
     inPack = enc::Pack();
 }
 
@@ -282,15 +382,13 @@ void DataReader::startStopTransmisson()
     {
 
         this->thread()->msleep(500);
-        this->sendStartRequest();
-
-
-        this->thread()->msleep(2000);
+//        this->sendStartRequest();
+//        this->thread()->msleep(2000);
 
 
         while(this->inProcess)
         {
-            this->thread()->usleep(2000);
+            this->thread()->usleep(1200);
             receiveData();
         }
     }
@@ -317,6 +415,10 @@ void DataReader::dataSliceCame()
     {
         qint32 sliceNumber;
         socketDataStream >> sliceNumber;
+        if(sliceNumberPrevious == 0)
+        {
+            sliceNumberPrevious = sliceNumber;
+        }
 
         qint32 numOfChans;
         socketDataStream >> numOfChans;
@@ -324,24 +426,30 @@ void DataReader::dataSliceCame()
         qint32 numOfSlices;
         socketDataStream >> numOfSlices;
 
-//        if(sliceNumber%100 == 0)
-        cout << sliceNumber << endl;
-#if 0
+        for(int i = sliceNumberPrevious + 1; i < sliceNumber; ++i)
+        {
+            emit sliceReady(std::vector<qint16>(numOfChans, 0));
+        }
+
+
+#if 1
         cout << sliceNumber << '\t'
              << numOfChans << '\t'
              << numOfSlices
              << endl;
 #endif
+//        socketDataStream.skipRawData(numOfSlices * numOfChans * sizeof(qint16));
 
-        static std::vector<short> oneSlice(numOfChans);
         for(int i = 0; i < numOfSlices; ++i)
         {
             for(int j = 0; j < numOfChans; ++j)
             {
                 socketDataStream >> oneSlice[j];
             }
-//            emit sliceReady(oneSlice);
+            emit sliceReady(oneSlice);
         }
+        sliceNumberPrevious = sliceNumber;
+
     }
 }
 
@@ -371,6 +479,9 @@ void DataReaderHandler::startReadData()
                               this->fullDataFlag);
     connect(myReader, SIGNAL(destroyed()), this, SLOT(stopReadData()));
     connect(myReader, SIGNAL(startStopSignal(int)), this, SLOT(startStopSlot(int)));
+    connect(myReader, SIGNAL(sliceReady(std::vector<qint16>)),
+            this, SLOT(receiveSlice(std::vector<qint16>)));
+
     myReader->sendStartRequest();
 }
 
@@ -379,9 +490,31 @@ void DataReaderHandler::stopReadData()
 //    emit finishReadData();
 }
 
-void DataReaderHandler::receiveSlice(const std::vector<short> & slice)
+void DataReaderHandler::receiveSlice(std::vector<qint16> slice)
 {
     eegData.push_back(slice);
+#if 0
+    int timeShift = 125;
+    if(eegData.size() % timeShift == 0 &&  eegData.size() > 1000)
+    {
+        cout << "fileNum = "
+             << QString::number(eegData.size() / timeShift).toStdString() << endl;
+        const QString str = "/media/Files/Data/RealTime/data_" +
+                            QString::number(eegData.size() / timeShift) +
+                            ".txt";
+        ofstream ostr(str.toStdString());
+        ostr << "NumOfSlices 1000\t" << "ns 24" << endl;
+        for(uint i = eegData.size() - 1000; i < eegData.size(); ++i)
+        {
+            for(int j = 0; j < 24; ++j)
+            {
+                ostr << eegData[i][j] << '\t';
+            }
+            ostr << endl;
+        }
+        ostr.close();
+    }
+#endif
 }
 
 void DataReaderHandler::startStopSlot(int var)

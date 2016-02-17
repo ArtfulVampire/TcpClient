@@ -14,10 +14,6 @@ MainWindow::MainWindow(QWidget *parent) :
 {
     ui->setupUi(this);
 
-
-    // defaults
-//    ui->fullDataCheckBox->setChecked(this->fullDataFlag);
-
     /// server
     ui->serverPortSpinBox->setMaximum(65535);
     int hostCounter = 0;
@@ -35,12 +31,13 @@ MainWindow::MainWindow(QWidget *parent) :
 
     ui->serverAddressComboBox->addItem("pew");
     ui->serverAddressComboBox->setItemData(hostCounter++,
-                                           QVariant("127.0.0.1:35577"));
+                                           QVariant("192.168.0.104:120"));
     connect(ui->serverAddressComboBox, SIGNAL(highlighted(int)),
             this, SLOT(serverAddressSlot(int)));
     connect(ui->serverAddressComboBox, SIGNAL(currentIndexChanged(int)),
             this, SLOT(serverAddressSlot(int)));
-    ui->serverAddressComboBox->setCurrentText("Enceph");
+//    ui->serverAddressComboBox->setCurrentText("Enceph");
+    ui->serverAddressComboBox->setCurrentText("pew");
 
     /// com
     for(int i = 0; i < 10; ++i)
@@ -90,7 +87,7 @@ MainWindow::MainWindow(QWidget *parent) :
     myDataReaderHandler = new DataReaderHandler(socket,
                                                 ui->fullDataCheckBox->isChecked());
 
-//    connectSlot();
+    connectSlot();
 //    startSlot();
 }
 
