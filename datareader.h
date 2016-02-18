@@ -23,7 +23,7 @@ protected:
    void timerEvent(QTimerEvent *event);
 
 signals:
-   void sliceReady(std::vector<qint16> slice);
+   void sliceReady(eegSliceType slice);
    void startStopSignal(int var);
 
 public slots:
@@ -39,7 +39,7 @@ private:
 
    QDataStream socketDataStream;
 
-   std::vector<qint16> oneSlice;
+   eegSliceType oneSlice;
    qint32 sliceNumberPrevious = 0;
 
    QBuffer * myBuffer;
@@ -66,17 +66,17 @@ public slots:
     void startReadData();
     void stopReadData();
 
-    void receiveSlice(std::vector<qint16> slice);
+    void receiveSlice(eegSliceType slice);
     void startStopSlot(int var);
 
 signals:
     void finishReadData(); /// optional?private:
     void startStopSignal(int var);
+    void dataSend(eegDataType::iterator);
 
 private:
     bool fullDataFlag = true;
     QTcpSocket * socket = nullptr;
-    std::vector<std::vector<qint16>> eegData; /// make ring-style container
 
 
 };

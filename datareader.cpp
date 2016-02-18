@@ -24,7 +24,14 @@ DataReader::DataReader(QObject * inParent, QTcpSocket * inSocket,
 
 DataReader::~DataReader()
 {
-
+    if(!socketDataStream.atEnd())
+    {
+        socketDataStream.skipRawData(socketDataStream.device()->bytesAvailable());
+    }
+    if(!socketDataStream.atEnd())
+    {
+        cout << "still not at end" << endl;
+    }
 }
 
 void DataReader::timerEvent(QTimerEvent *event)
@@ -381,14 +388,14 @@ void DataReader::startStopTransmisson()
     if(var == 1) /// real-time ON signal came - should send datarequest again
     {
 
-        this->thread()->msleep(500);
+//        this->thread()->msleep(500);
 //        this->sendStartRequest();
 //        this->thread()->msleep(2000);
 
 
         while(this->inProcess)
         {
-            this->thread()->usleep(1200);
+            this->thread()->usleep(200);
             receiveData();
         }
     }
@@ -428,7 +435,7 @@ void DataReader::dataSliceCame()
 
         for(int i = sliceNumberPrevious + 1; i < sliceNumber; ++i)
         {
-            emit sliceReady(std::vector<qint16>(numOfChans, 0));
+            emit sliceReady(eegSliceType(numOfChans, 0));
         }
 
 
@@ -479,8 +486,9 @@ void DataReaderHandler::startReadData()
                               this->fullDataFlag);
     connect(myReader, SIGNAL(destroyed()), this, SLOT(stopReadData()));
     connect(myReader, SIGNAL(startStopSignal(int)), this, SLOT(startStopSlot(int)));
-    connect(myReader, SIGNAL(sliceReady(std::vector<qint16>)),
-            this, SLOT(receiveSlice(std::vector<qint16>)));
+    connect(myReader, SIGNAL(sliceReady(eegSliceType)),
+            this, SLOT(receiveSlice(eegSliceType)));
+    connect(this, SIGNAL(finishReadData()), myReader, SLOT(deleteLater()));
 
     myReader->sendStartRequest();
 }
@@ -490,9 +498,13 @@ void DataReaderHandler::stopReadData()
 //    emit finishReadData();
 }
 
-void DataReaderHandler::receiveSlice(std::vector<qint16> slice)
+void DataReaderHandler::receiveSlice(eegSliceType slice)
 {
     eegData.push_back(slice);
+    if(eegData.size() % timeShift == 0 &&  eegData.size() > windowLength)
+    {
+        emit dataSend(eegData.end() - windowLength);
+    }
 #if 0
     int timeShift = 125;
     if(eegData.size() % timeShift == 0 &&  eegData.size() > 1000)

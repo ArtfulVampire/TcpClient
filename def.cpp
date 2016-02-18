@@ -12,3 +12,9 @@ std::string enc::readString(QDataStream &in)
     }
     return res;
 }
+
+
+eegDataType enc::eegData{}; /// make ring-style container
+int currentType = -1;
+QString currentName = QString();
+int currentMarker = 200;

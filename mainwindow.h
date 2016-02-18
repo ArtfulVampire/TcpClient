@@ -7,6 +7,7 @@
 
 #include "def.h"
 #include "datareader.h"
+#include "classifier.h"
 
 #define DATA_READER 1
 
@@ -52,7 +53,11 @@ private:
     QSerialPort * comPort = nullptr;
     QDataStream comPortDataStream{};
 
+    QThread * myDataThread = nullptr;
     DataReaderHandler * myDataReaderHandler = nullptr;
+
+    QThread * myNetThread = nullptr;
+    NetHandler * myNetHandler = nullptr;
 
 
 

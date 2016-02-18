@@ -25,6 +25,10 @@
 #include <thread>
 #include <utility>
 
+template <typename T> class eegContType : public std::list<T>{}; /// Type Of Container
+typedef std::vector<qint16> eegSliceType;
+typedef eegContType<eegSliceType> eegDataType;
+
 namespace enc
 {
 typedef quint32 DWORD;
@@ -42,13 +46,27 @@ struct String
 
 std::string readString(QDataStream & in);
 
-
 struct Pack
 {
     int packSize = 0;
     DWORD packId = 0;
     QByteArray packData;
 };
+
+/// non-consts
+extern eegDataType eegData; /// make ring-style container
+extern int currentType;
+extern QString currentName;
+extern int currentMarker;
+
+/// consts
+const int ns = 19;
+const int timeShift = 125;
+const int windowLength = 1000;
+const QString spectraPath = "/media/Files/Data/RealTime/SpectraSmooth/windows";
+const QString netLogPath = "/media/Files/Data/RealTime/log.txt";
+const QString netResPath = "/media/Files/Data/RealTime/results.txt";
+const QString netBadPath = "/media/Files/Data/RealTime/badFiles.txt";
 
 }
 

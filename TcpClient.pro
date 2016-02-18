@@ -17,10 +17,16 @@ TEMPLATE = app
 SOURCES += main.cpp\
         mainwindow.cpp \
     datareader.cpp \
-    def.cpp
+    def.cpp \
+    classifier.cpp \
+    lib.cpp \
+    matrix.cpp
 
 HEADERS  += mainwindow.h \
     def.h \
-    datareader.h
+    datareader.h \
+    classifier.h \
+    lib.h \
+    matrix.h
 
 FORMS    += mainwindow.ui

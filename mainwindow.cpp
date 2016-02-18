@@ -83,19 +83,48 @@ MainWindow::MainWindow(QWidget *parent) :
             this, SLOT(endSlot()));
     ui->fullDataCheckBox->setChecked(true);
 
-    /// DataReader
-    myDataReaderHandler = new DataReaderHandler(socket,
-                                                ui->fullDataCheckBox->isChecked());
 
-    connectSlot();
+    /// DataProcessor
+
+    if(1)
+    {
+        myNetThread = new QThread;
+        myNetHandler = new NetHandler();
+
+        myNetHandler->moveToThread(myNetThread);
+        connect(myNetThread, SIGNAL(started()),
+                myNetHandler, SLOT(startWork()));
+
+        connect(myNetHandler, SIGNAL(finishWork()),
+                myNetThread, SLOT(quit()));
+
+        connect(myNetHandler, SIGNAL(finishWork()),
+                myNetHandler, SLOT(deleteLater()));
+
+        connect(myNetHandler, SIGNAL(finishWork()),
+                myNetThread, SLOT(deleteLater()));
+
+
+    //    myNetThread->start(QThread::TimeCriticalPriority); // veru fast
+        myNetThread->start(QThread::HighestPriority); // veru fast
+
+    }
+    if(0)
+    {
+        myNetHandler->finishWork();
+        myNetThread->wait();
+        delete myNetThread;
+    }
+
+
+
+//    connectSlot();
 //    startSlot();
 }
 
 MainWindow::~MainWindow()
 {
     delete ui;
-//    socket->close();
-//    delete socket;
 }
 
 void MainWindow::startStopSlot(int var)
@@ -204,28 +233,51 @@ void MainWindow::serverAddressSlot(int a)
 
 void MainWindow::startSlot()
 {
-    /// Data reader
-    QThread * myThread = new QThread;
-    myDataReaderHandler->moveToThread(myThread);
-    connect(myThread, SIGNAL(started()),
+    if(!socket->isOpen())
+    {
+        ui->textEdit->append("socket not opened!");
+        return;
+    }
+    myDataThread = new QThread;
+    myDataReaderHandler = new DataReaderHandler(socket,
+                                                ui->fullDataCheckBox->isChecked());
+
+    myDataReaderHandler->moveToThread(myDataThread);
+
+//    connect(myDataReaderHandler, SIGNAL(finishReadData()),
+//            myNetHandler, SLOT(finishSlot())); /// finish, when data read finishes;
+//    connect(myDataReaderHandler, SIGNAL(dataSend(eegDataType::iterator)),
+//            myNetHandler, SLOT(dataReceive(eegDataType::iterator)));
+
+
+    connect(myDataThread, SIGNAL(started()),
             myDataReaderHandler, SLOT(startReadData()));
     connect(myDataReaderHandler, SIGNAL(finishReadData()),
-            myThread, SLOT(quit()));
+            myDataThread, SLOT(quit()));
     connect(ui->endPushButton, SIGNAL(clicked()),
             myDataReaderHandler, SLOT(stopReadData()));
     connect(myDataReaderHandler, SIGNAL(finishReadData()),
             myDataReaderHandler, SLOT(deleteLater()));
     connect(myDataReaderHandler, SIGNAL(finishReadData()),
-            myThread, SLOT(deleteLater()));
+            myDataThread, SLOT(deleteLater()));
     connect(myDataReaderHandler, SIGNAL(startStopSignal(int)),
             this, SLOT(startStopSlot(int)));
 
-//    myThread->start(QThread::TimeCriticalPriority); // veru fast
-    myThread->start(QThread::HighestPriority); // veru fast
+//    myDataThread->start(QThread::TimeCriticalPriority); // veru fast
+    myDataThread->start(QThread::HighestPriority); // veru fast
 }
 
-void MainWindow::endSlot()
+void MainWindow::endSlot() /// dont click twice anyway
 {
+    if(myDataReaderHandler)
+    {
+        myDataReaderHandler->finishReadData();
+    }
+    if(myDataThread)
+    {
+        myDataThread->wait();
+        delete myDataThread;
+    }
 }
 
 
