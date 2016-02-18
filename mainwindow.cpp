@@ -5,7 +5,6 @@ using namespace enc;
 using namespace std;
 using namespace std::chrono;
 
-
 static int WholeNumOfSlices = 0;
 
 MainWindow::MainWindow(QWidget *parent) :
