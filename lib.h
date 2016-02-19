@@ -1,36 +1,10 @@
 #ifndef SMALLFUNCS_H
 #define SMALLFUNCS_H
 
-#include <set>
-#include <vector>
-#include <valarray>
-#include <string>
-#include <list>
-#include <utility>
 
-#include <algorithm>
-#include <numeric>
-#include <cmath>
-#include <ctime>
-
-#include <cstdlib>
-#include <iostream>
-#include <cstdio>
-#include <ios>
-#include <fstream>
-
-//#include <boost/filesystem.hpp>
 
 #include "def.h"
 
-#define CPP_11 1
-#define MY_QT 1
-
-#if MY_QT
-#include <QtCore>
-#include <QDir>
-#include <QFile>
-#endif
 
 
 typedef std::vector<double> vectType;
@@ -60,10 +34,10 @@ const std::vector<std::vector<std::string> > defaultFilters = {{"_241"}, {"_247"
 //std::vector<std::string> defaultFilters = makeDefFilters();
 #endif
 
-bool fileExists(const QString & filePath);
+//bool fileExists(const QString & filePath);
 
-std::string slash();
-QString qslash();
+//std::string slash();
+//QString qslash();
 
 inline double doubleRound(const double & in, const int & numSigns)
 {
@@ -172,40 +146,122 @@ inline double distance(const lineType & in1,
     }
     return norma(in1 - in2);
 }
-
-template <typename signalType>
-void readFileInLine(const std::string & filePath,
-                    signalType & result);
-
 template <typename T>
 void eraseItems(std::vector<T> & inVect,
-                const std::vector<int> & indices);
+                const std::vector<int> & indices)
+{
+#if CPP_11
+    const int initSize = inVect.size();
+    std::set<int, std::less<int> > excludeSet; // less first
+    for(auto item : indices)
+    {
 
-std::vector<std::string> contents(const std::string & dirPath,
-                                  const std::string & filter);
-std::vector<std::vector<std::string> > contents(const std::string & dirPath,
-                                  const std::vector<std::vector<std::string> > & filtersList);
+        excludeSet.emplace(item);
+    }
+    std::vector<int> excludeVector;
+    for(auto a : excludeSet)
+    {
+        excludeVector.push_back(a);
+    }
+    excludeVector.push_back(initSize); // for the last elements' shift
 
-std::vector<std::vector<std::string> > contents(const std::string & dirPath,
-                                  const std::vector<std::string> & filtersList);
-bool endsWith(const std::string & inStr,
-              const std::string & filter);
-bool contains(const std::string & inStr,
-              const std::string & filter);
-bool contains(const std::string & inStr,
-              const std::vector<std::string> & filters);
-
-int typeOfFileName(const std::string & filePath);
-
-void myIota(std::vector<int> & in);
-void myShuffle(std::vector<int> & in);
-int myLess(int a, int b); // for sort in eraseItems
-
-void four1(double * dataF, int nn, int isign);
-
-template <typename signalType = lineType, typename retType = lineType>
-retType spectre(const signalType & data);
+    for(int i = 0; i < excludeVector.size() - 1; ++i)
+    {
+        for(int j = excludeVector[i] - i; j < excludeVector[i + 1] - i - 1; ++j)
+        {
+            inVect[j] = std::move(inVect[j + 1 + i]);
+        }
+    }
+    inVect.resize(initSize - excludeSet.size());
 
 
+#else
+    const int initSize = inVect.size();
+    std::set<int> excludeSet; // less first
+
+    for(std::vector<int>::const_iterator it = indices.begin();
+        it != indices.end();
+        ++it)
+    {
+        excludeSet.insert(*it);
+    }
+    /// check size
+//    std::sort(excludeSet.begin(), excludeSet.end()); // default: less first
+
+    std::vector<int> excludeVector(excludeSet.size());
+    std::copy(excludeSet.begin(), excludeSet.end(), excludeVector.begin());
+
+    std::sort(excludeVector.begin(), excludeVector.end()); // default: less first
+
+    excludeVector.push_back(initSize); // for the last elements' shift
+
+    for(int i = 0; i < excludeVector.size() - 1; ++i)
+    {
+        for(int j = excludeVector[i] - i; j < excludeVector[i + 1] - i - 1; ++j)
+        {
+#if CPP_11
+            inVect[j] = std::move(inVect[j + 1 + i]);
+#else
+            inVect[j] = inVect[j + 1 + i];
+#endif
+        }
+    }
+    inVect.resize(initSize - excludeSet.size());
+#endif
+}
+template void eraseItems(std::vector<lineType> & inVect, const std::vector<int> & indices);
+template void eraseItems(std::vector<int> & inVect, const std::vector<int> & indices);
+template void eraseItems(std::vector<double> & inVect, const std::vector<int> & indices);
+template void eraseItems(std::vector<std::string> & inVect, const std::vector<int> & indices);
+
+//template <typename signalType>
+//void readFileInLine(const std::string & filePath,
+//                    signalType & result);
+
+//template <typename T>
+//void eraseItems(std::vector<T> & inVect,
+//                const std::vector<int> & indices);
+
+//std::vector<std::string> contents(const std::string & dirPath,
+//                                  const std::string & filter);
+//std::vector<std::vector<std::string> > contents(const std::string & dirPath,
+//                                  const std::vector<std::vector<std::string> > & filtersList);
+
+//std::vector<std::vector<std::string> > contents(const std::string & dirPath,
+//                                  const std::vector<std::string> & filtersList);
+//bool endsWith(const std::string & inStr,
+//              const std::string & filter);
+//bool contains(const std::string & inStr,
+//              const std::string & filter);
+//bool contains(const std::string & inStr,
+//              const std::vector<std::string> & filters);
+
+//int typeOfFileName(const std::string & filePath);
+
+//void myIota(std::vector<int> & in);
+//void myShuffle(std::vector<int> & in);
+//int myLess(int a, int b); // for sort in eraseItems
+
+//void four1(double * dataF, int nn, int isign);
+
+//void readMatrixFile(const QString & filePath,
+//                     matrix & outData,
+//                     int rows,
+//                     int cols);
+
+//template <typename signalType = lineType, typename retType = lineType>
+//retType spectre(const signalType & data);
+
+//template <typename signalType = lineType>
+//void calcSpectre(const signalType & inSignal,
+//                 signalType & outSpectre,
+//                 const int & fftLength = def::fftLength,
+//                 const int & NumOfSmooth = 5.,
+//                 const int & Eyes = 0.,
+//                 const double & powArg = 1.);
+
+
+//template <typename signalType = lineType>
+//signalType four2(const signalType & inRealData, int nn = def::fftLength, int isign = 1);
 
 #endif // SMALLFUNCS_H

@@ -18,12 +18,12 @@ net::~net()
 void net::startOperate()
 {
     ExpName = "GAS_train";
-    successivePreclean(enc::spectraPath.toStdString());
+    successivePreclean(def::spectraPath.toStdString());
 
 
     ExpName = "GAS_test";
     Mode = myMode::train_test;
-    successiveProcessing(enc::spectraPath.toStdString());
+    successiveProcessing(def::spectraPath.toStdString());
     cout << "classifier waits for work" << endl;
 
 }
@@ -177,7 +177,7 @@ void net::autoClassification(const std::string & spectraDir)
 {
 //    std::string helpString = this->workPath + slash() + "log.txt";
 //    remove(helpString.c_str());
-    QFile::remove(enc::netLogPath);
+    QFile::remove(def::netLogPath);
 
     loadData(spectraDir);
 
@@ -256,7 +256,7 @@ void net::averageClassification()
 
 //    std::string helpString = this->workPath + slash() + "results.txt";
     std::ofstream res;
-    res.open(enc::netResPath.toStdString(), std::ios_base::app);
+    res.open(def::netResPath.toStdString(), std::ios_base::app);
 
     for(int i = 0; i < this->numOfClasses; ++i)
     {
@@ -409,7 +409,7 @@ void net::tallNetIndices(const std::vector<int> & indices)
 {
 //    std::string helpString = this->workPath + slash() + "badFiles.txt";
     std::ofstream badFilesStr;
-    badFilesStr.open(enc::netBadPath.toStdString(), std::ios_base::app);
+    badFilesStr.open(def::netBadPath.toStdString(), std::ios_base::app);
 
     matrix localConfusionMatrix(this->numOfClasses, this->numOfClasses);
     for(int i = 0; i < indices.size(); ++i)
@@ -420,7 +420,7 @@ void net::tallNetIndices(const std::vector<int> & indices)
             badFilesStr << fileNames[ indices[i] ] << endl;
             if(tallCleanFlag)
             {
-                remove((enc::spectraPath.toStdString() +
+                remove((def::spectraPath.toStdString() +
                        slash() + fileNames[ indices[i] ]).c_str());
 
                 /// pewpew
@@ -450,7 +450,7 @@ void net::tallNetIndices(const std::vector<int> & indices)
 //    helpString = this->workPath + slash() + "log.txt";
     std::ofstream logStream;
 //    logStream.open(helpString.c_str(), std::ios_base::app);
-    logStream.open(enc::netLogPath.toStdString(), std::ios_base::app);
+    logStream.open(def::netLogPath.toStdString(), std::ios_base::app);
 
     for(int i = 0; i < this->numOfClasses; ++i)
     {
@@ -625,27 +625,69 @@ void net::successiveProcessing(const std::string & spectraPath)
 #endif
 }
 
-void net::dataCame(eegDataType::iterator a)
+void net::dataCame(eegDataType::iterator a, eegDataType::iterator b)
 {
-    lineType newSpectre = successiveDataToSpectre(a);
+    TIME(lineType newSpectre = successiveDataToSpectre(a, b)); ///
 
     std::string name = "pew";
-//    int type = typeOfFileName(enc::currentName.toStdString());
-//    successiveLearning(newSpectre, type, name);
+//    int type = typeOfFileName(def::currentName.toStdString());
+//    successiveLearning(res, type, name);
 }
 
 lineType net::successiveDataToSpectre(
-        const eegDataType::iterator eegDataStart)
+        const eegDataType::iterator eegDataStart,
+        const eegDataType::iterator eegDataEnd)
 {
-    matrix tmpMat(enc::ns, enc::windowLength);
-    auto it = eegDataStart;
-    for(int j = 0; j < enc::windowLength; ++j, ++it)
+    matrix tmpMat(def::ns, def::windowLength);
+    matrix specMat(def::ns, 0);
+    /// readData
     {
-        for(int i = 0; i < enc::ns; ++i) // 19 EEG channels
+        auto it = eegDataStart;
+        for(int j = 0; j < def::windowLength; ++j, ++it)
         {
-            tmpMat[i][j] = (*it)[i];
+            auto itt = (*it).begin();
+            for(int i = 0; i < def::ns; ++i, ++itt)
+            {
+                tmpMat[i][j] = (*itt);
+            }
         }
     }
+    /// clean from eyes
+    {
+//        writePlainData(def::workPath + "testFile1.txt",
+//                       tmpMat);
+        matrix coeff(def::eegNs, 2); // 2 eog channels
+        readMatrixFile(def::eyesFilePath,
+                       coeff,
+                       def::eegNs,
+                       2); // num eog channels
+        auto it = tmpMat.begin();
+        for(int i = 0; i < def::eegNs; ++i, ++it)
+        {
+            (*it) -= tmpMat[def::eog1] * coeff[i][0] +
+                    tmpMat[def::eog2] * coeff[i][1];
+        }
+//        writePlainData(def::workPath + "testFile2.txt",
+//                       tmpMat);
+        //exit(0);
+    }
+
+    lineType res(def::ns * def::spLength());
+    /// count spectra, take 5-20 HZ only
+    {
+        for(int i = 0; i < def::eegNs; ++i)
+        {
+            calcSpectre(tmpMat[i],
+                        specMat[i],
+                        1024, /// fftLength consts
+                        5 /// numOfSmooth consts
+                        );
+            std::copy(std::begin(specMat[i]) + def::left(),
+                      std::end(specMat[i]) + def::right(),
+                      std::begin(res) + i * def::spLength());
+        }
+    }
+    return res;
 }
 
 void net::successiveLearning(const lineType & newSpectre,

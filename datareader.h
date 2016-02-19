@@ -72,7 +72,7 @@ public slots:
 signals:
     void finishReadData(); /// optional?private:
     void startStopSignal(int var);
-    void dataSend(eegDataType::iterator);
+    void dataSend(eegDataType::iterator, eegDataType::iterator);
 
 private:
     bool fullDataFlag = true;

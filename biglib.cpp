@@ -1,7 +1,27 @@
-#include "lib.h"
+#include "biglib.h"
 
 using namespace std;
 //namespace fs = boost::filesystem;
+
+std::string funcName(std::string in)
+{
+    in.resize(in.find('('));
+    for(char a : {' ', '='})
+    {
+        auto b = in.rfind(a);
+        if(b >= 0)
+        {
+            in = in.substr(b + 1);
+        }
+    }
+    return in;
+}
+
+std::ostream & operator << (std::ostream &os, QString toOut)
+{
+    os << toOut.toStdString();
+    return os;
+}
 
 bool fileExists(const QString & filePath)
 {
@@ -245,74 +265,69 @@ int myLess(int a, int b)
     return (a<b)?a:b;
 }
 
-template <typename T>
-void eraseItems(std::vector<T> & inVect,
-                const std::vector<int> & indices)
-{
-#if CPP_11
-    const int initSize = inVect.size();
-    std::set<int, std::less<int> > excludeSet; // less first
-    for(auto item : indices)
-    {
+//template <typename T>
+//void eraseItems(std::vector<T> & inVect,
+//                const std::vector<int> & indices)
+//{
+//#if CPP_11
+//    const int initSize = inVect.size();
+//    std::set<int, std::less<int> > excludeSet; // less first
+//    for(auto item : indices)
+//    {
 
-        excludeSet.emplace(item);
-    }
-    std::vector<int> excludeVector;
-    for(auto a : excludeSet)
-    {
-        excludeVector.push_back(a);
-    }
-    excludeVector.push_back(initSize); // for the last elements' shift
+//        excludeSet.emplace(item);
+//    }
+//    std::vector<int> excludeVector;
+//    for(auto a : excludeSet)
+//    {
+//        excludeVector.push_back(a);
+//    }
+//    excludeVector.push_back(initSize); // for the last elements' shift
 
-    for(int i = 0; i < excludeVector.size() - 1; ++i)
-    {
-        for(int j = excludeVector[i] - i; j < excludeVector[i + 1] - i - 1; ++j)
-        {
-            inVect[j] = std::move(inVect[j + 1 + i]);
-        }
-    }
-    inVect.resize(initSize - excludeSet.size());
+//    for(int i = 0; i < excludeVector.size() - 1; ++i)
+//    {
+//        for(int j = excludeVector[i] - i; j < excludeVector[i + 1] - i - 1; ++j)
+//        {
+//            inVect[j] = std::move(inVect[j + 1 + i]);
+//        }
+//    }
+//    inVect.resize(initSize - excludeSet.size());
 
 
-#else
-    const int initSize = inVect.size();
-    std::set<int> excludeSet; // less first
+//#else
+//    const int initSize = inVect.size();
+//    std::set<int> excludeSet; // less first
 
-    for(std::vector<int>::const_iterator it = indices.begin();
-        it != indices.end();
-        ++it)
-    {
-        excludeSet.insert(*it);
-    }
-    /// check size
-//    std::sort(excludeSet.begin(), excludeSet.end()); // default: less first
+//    for(std::vector<int>::const_iterator it = indices.begin();
+//        it != indices.end();
+//        ++it)
+//    {
+//        excludeSet.insert(*it);
+//    }
+//    /// check size
+////    std::sort(excludeSet.begin(), excludeSet.end()); // default: less first
 
-    std::vector<int> excludeVector(excludeSet.size());
-    std::copy(excludeSet.begin(), excludeSet.end(), excludeVector.begin());
+//    std::vector<int> excludeVector(excludeSet.size());
+//    std::copy(excludeSet.begin(), excludeSet.end(), excludeVector.begin());
 
-    std::sort(excludeVector.begin(), excludeVector.end()); // default: less first
+//    std::sort(excludeVector.begin(), excludeVector.end()); // default: less first
 
-    excludeVector.push_back(initSize); // for the last elements' shift
+//    excludeVector.push_back(initSize); // for the last elements' shift
 
-    for(int i = 0; i < excludeVector.size() - 1; ++i)
-    {
-        for(int j = excludeVector[i] - i; j < excludeVector[i + 1] - i - 1; ++j)
-        {
-#if CPP_11
-            inVect[j] = std::move(inVect[j + 1 + i]);
-#else
-            inVect[j] = inVect[j + 1 + i];
-#endif
-        }
-    }
-    inVect.resize(initSize - excludeSet.size());
-#endif
-}
-template void eraseItems(std::vector<std::string> & inVect, const std::vector<int> & indices);
-template void eraseItems(std::vector<lineType> & inVect, const std::vector<int> & indices);
-template void eraseItems(std::vector<int> & inVect, const std::vector<int> & indices);
-template void eraseItems(std::vector<double> & inVect, const std::vector<int> & indices);
-
+//    for(int i = 0; i < excludeVector.size() - 1; ++i)
+//    {
+//        for(int j = excludeVector[i] - i; j < excludeVector[i + 1] - i - 1; ++j)
+//        {
+//#if CPP_11
+//            inVect[j] = std::move(inVect[j + 1 + i]);
+//#else
+//            inVect[j] = inVect[j + 1 + i];
+//#endif
+//        }
+//    }
+//    inVect.resize(initSize - excludeSet.size());
+//#endif
+//}
 
 template <typename signalType>
 void readFileInLine(const std::string & filePath,
@@ -354,6 +369,129 @@ void readFileInLine(const std::string & filePath,
 #endif
 
 }
+
+void readMatrixFile(const QString & filePath,
+                     matrix & outData,
+                     int rows,
+                     int cols)
+{
+    ifstream file(filePath.toStdString());
+    if(!file.good())
+    {
+        cout << "readSpectreFile: bad input file " << filePath << endl;
+        return;
+    }
+    outData.resize(rows, cols);
+
+    for(int i = 0; i < rows; ++i)
+    {
+        for(int j = 0; j < cols; ++j)
+        {
+            file >> outData[i][j];
+        }
+    }
+    file.close();
+}
+
+void writeMatrixFile(const QString & filePath,
+                      const matrix & outData,
+                      int rows,
+                      int cols)
+
+{
+    if(rows > outData.rows() ||
+       cols > outData.cols())
+    {
+        cout << "bad inputs while writing matrix" << endl;
+        return;
+    }
+
+    ofstream file(filePath.toStdString());
+    if(!file.good())
+    {
+        cout << "bad output file:\n" << filePath.toStdString() << endl;
+        return;
+    }
+
+    for(int i = 0; i < rows; ++i)
+    {
+        for(int j = 0; j < cols; ++j)
+        {
+            file << doubleRound(outData[i][j], 4) << '\t';
+        }
+        file << endl;
+    }
+    file.close();
+}
+
+
+void writePlainData(const QString outPath,
+                    const matrix & data,
+                    const int & ns,
+                    int numOfSlices,
+                    const int & start)
+{
+    numOfSlices = min(numOfSlices,
+                      data.cols() - start);
+
+//    if(numOfSlices < 250) return; /// used for sliceWindFromReal() but Cut::cut() ...
+
+    ofstream outStr;
+    outStr.open(outPath.toStdString());
+    outStr << "NumOfSlices " << numOfSlices;
+    outStr << "\tNumOfChannels " << ns;
+    outStr << endl;
+    for (int i = 0; i < numOfSlices; ++i)
+    {
+        for(int j = 0; j < ns; ++j)
+        {
+            outStr << doubleRound(data[j][i + start], 3) << '\t';
+        }
+        outStr << '\n';
+    }
+    outStr.flush();
+    outStr.close();
+}
+
+
+void readPlainData(const QString & inPath,
+                   matrix & data,
+                   const int & ns,
+                   int & numOfSlices,
+                   const int & start)
+{
+    ifstream inStr;
+    inStr.open(inPath.toStdString());
+    if(!inStr.good())
+    {
+        cout << "readPlainData: cannot open file" << endl;
+        return;
+    }
+    int inNs = -1;
+    inStr.ignore(64, ' '); // "NumOfSlices "
+    inStr >> numOfSlices;
+    inStr.ignore(64, ' '); // "NumOfChannels N\n"
+    inStr >> inNs;
+    inStr.ignore(64, '\n');
+    if(inNs != -1 && inNs != ns)
+    {
+        cout << "readPlainData: not real ns" << endl;
+    }
+
+    data.resize(ns, numOfSlices + start);
+
+    for (int i = 0; i < numOfSlices; ++i)
+    {
+        for(int j = 0; j < ns; ++j)
+        {
+            inStr >> data[j][i + start];
+        }
+    }
+    inStr.close();
+}
+
+
+
 
 
 #define SWAP(a,b) tempr=(a);(a)=(b);(b)=tempr
@@ -461,13 +599,97 @@ retType smoothSpectre(const signalType & inSpectre, const int numOfSmooth)
 }
 
 
+template <typename signalType>
+signalType four2(const signalType & inRealData, int fftLen, int isign)
+{
+    double * pew = new double [2 * fftLen];
+    for(int i = 0; i < fftLen; ++i)
+    {
+        pew[2 * i] = inRealData[i];
+        pew[2 * i + 1] = 0.;
+    }
+//    for(int i = inRealData.size(); i < 2 * fftLen; ++i)
+//    {
+//        pew[i] = 0.;
+//    }
+
+    four1(pew - 1, fftLen, isign);
+
+    signalType res(fftLen);
+    for(int i = 0; i < fftLen; ++i)
+    {
+        res[i] = (pew[2 * i] * pew[2 * i] + pew[2 * i + 1] * pew[2 * i + 1]);
+    }
+    delete []pew;
+    return res;
+}
+
+template <typename signalType = lineType>
+void calcSpectre(const signalType & inSignal,
+                 signalType & outSpectre,
+                 const int & fftLength,
+                 const int & NumOfSmooth,
+                 const int & Eyes,
+                 const double & powArg)
+{
+    if(inSignal.size() != fftLength)
+    {
+        cout << "calcSpectre: inappropriate signal length" << endl;
+        return;
+    }
+
+    const double norm1 = sqrt(fftLength / double(fftLength - Eyes));
+#if 0
+    const double norm2 = 2. / (def::freq * fftLength);
+    vector<double> spectre (fftLength * 2, 0.); // can be valarray, but not important
+    for(int i = 0; i < fftLength; ++i)
+    {
+        spectre[ i * 2 ] = inSignal[ i ] * norm1;
+    }
+    four1(spectre, fftLength, 1);
+    for(int i = 0; i < fftLength / 2; ++i )
+    {
+        outSpectre[ i ] = (pow(spectre[ i * 2 ], 2) + pow(spectre[ i * 2 + 1 ], 2)) * norm2;
+//        outSpectre[ i ] = pow ( outSpectre[ i ], powArg );
+    }
+#else
+    const double nrm = 2. / (double(fftLength - Eyes) * def::freq);
+    outSpectre = four2(inSignal, fftLength, 1) * nrm;
+#endif
+//    outSpectre = pow(four2(inSignal, fftLength, 1) * nrm, powArg);
+
+
+
+    //smooth spectre
+    const int leftSmoothLimit = 1;
+    const int rightSmoothLimit = fftLength / 2 - 1;
+    double help1, help2;
+    for(int a = 0; a < (int)(NumOfSmooth / norm1); ++a)
+    {
+        help1 = outSpectre[leftSmoothLimit - 1];
+        for(int k = leftSmoothLimit; k < rightSmoothLimit; ++k)
+        {
+            help2 = outSpectre[k];
+            outSpectre[k] = (help1 + help2 + outSpectre[k+1]) / 3.;
+            help1 = help2;
+        }
+    }
+}
+
+//template void eraseItems(std::vector<std::string> & inVect, const std::vector<int> & indices);
+//template void eraseItems(std::vector<lineType> & inVect, const std::vector<int> & indices);
+//template void eraseItems(std::vector<int> & inVect, const std::vector<int> & indices);
+//template void eraseItems(std::vector<double> & inVect, const std::vector<int> & indices);
+
 template lineType smoothSpectre(const lineType & inSpectre, const int numOfSmooth);
 
 template void readFileInLine(const std::string & filePath, lineType & outData);
 template void readFileInLine(const std::string & filePath, vectType & outData);
 
-
 template lineType spectre(const vectType & data);
 template lineType spectre(const lineType & data);
 
+template void calcSpectre(const lineType & inSignal, lineType & outSpectre,
+const int & fftLength, const int & NumOfSmooth, const int & Eyes, const double & powArg);
 
+template lineType four2(const lineType & inRealData, int fftLen, int isign);

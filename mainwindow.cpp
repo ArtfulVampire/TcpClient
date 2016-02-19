@@ -87,6 +87,7 @@ MainWindow::MainWindow(QWidget *parent) :
 
     if(1)
     {
+        def::eegData.resize(10 * def::windowLength);
         myNetThread = new QThread;
         myNetHandler = new NetHandler();
 
@@ -245,8 +246,8 @@ void MainWindow::startSlot()
 
 //    connect(myDataReaderHandler, SIGNAL(finishReadData()),
 //            myNetHandler, SLOT(finishSlot())); /// finish, when data read finishes;
-//    connect(myDataReaderHandler, SIGNAL(dataSend(eegDataType::iterator)),
-//            myNetHandler, SLOT(dataReceive(eegDataType::iterator)));
+    connect(myDataReaderHandler, SIGNAL(dataSend(eegDataType::iterator, eegDataType::iterator)),
+            myNetHandler, SLOT(dataReceive(eegDataType::iterator, eegDataType::iterator)));
 
 
     connect(myDataThread, SIGNAL(started()),

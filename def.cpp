@@ -14,7 +14,20 @@ std::string enc::readString(QDataStream &in)
 }
 
 
-eegDataType enc::eegData{}; /// make ring-style container
+
+
+namespace def
+{
+eegDataType eegData{}; /// make ring-style container
 int currentType = -1;
 QString currentName = QString();
 int currentMarker = 200;
+//double freq = 250.;
+//int fftLength = 1024;
+//double leftFreq = 5.;
+//double rightFreq = 20.;
+QStringList fileMarkers{"_241", "_247", "_254"};
+
+int left()  {return fftLimit(def::leftFreq);}
+int right() {return fftLimit(def::rightFreq) + 1;}
+}

@@ -19,14 +19,15 @@ SOURCES += main.cpp\
     datareader.cpp \
     def.cpp \
     classifier.cpp \
-    lib.cpp \
-    matrix.cpp
+    matrix.cpp \
+    biglib.cpp
 
 HEADERS  += mainwindow.h \
     def.h \
     datareader.h \
     classifier.h \
     lib.h \
-    matrix.h
+    matrix.h \
+    biglib.h
 
 FORMS    += mainwindow.ui
