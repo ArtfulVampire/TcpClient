@@ -3,7 +3,7 @@
 
 #define DRAWS 0
 
-#include "matrix.h"
+#include "biglib.h"
 
 #if CPP_11
 #include <chrono>
@@ -44,8 +44,8 @@ private:
     const int maxEpoch = 250;
 
 #if CPP_11
-    enum  class myMode {N_fold, k_fold, train_test,  half_half};
-    enum  class source {winds, reals, pca, bayes};
+    enum class myMode {N_fold, k_fold, train_test,  half_half};
+    enum class source {winds, reals, pca, bayes};
 
     myMode Mode = myMode::N_fold;
     source Source = source::winds;
@@ -81,7 +81,7 @@ signals:
     void finish();
 
 public slots:
-    void dataCame(eegDataType::iterator a);
+    void dataCame(eegDataType::iterator a, eegDataType::iterator b);
 
 public:
     void startOperate();
@@ -147,8 +147,8 @@ public:
 
     void successiveProcessing(const std::string & spectraPath = std::string());
 
-    lineType successiveDataToSpectre(
-            const eegDataType::iterator eegDataStart);
+    lineType successiveDataToSpectre(const eegDataType::iterator eegDataStart,
+                                     const eegDataType::iterator eegDataEnd);
 
     void successiveLearning(const lineType & newSpectre,
                             const int newType,
@@ -183,19 +183,19 @@ public slots:
         myNet = new net();
         connect(myNet, SIGNAL(finish()),
                 this, SLOT(finishSlot()));
-        connect(this, SIGNAL(toProcess(eegDataType::iterator)),
-                myNet, SLOT(dataCame(eegDataType::iterator)));
+        connect(this, SIGNAL(toProcess(eegDataType::iterator, eegDataType::iterator)),
+                myNet, SLOT(dataCame(eegDataType::iterator, eegDataType::iterator)));
         myNet->startOperate();
     }
-    void dataReceive(eegDataType::iterator a)
+    void dataReceive(eegDataType::iterator a, eegDataType::iterator b)
     {
-        emit toProcess(a);
+        emit toProcess(a, b);
     }
 
 
 signals:
     void finishWork();
-    void toProcess(eegDataType::iterator);
+    void toProcess(eegDataType::iterator, eegDataType::iterator);
 
 private:
     net * myNet;

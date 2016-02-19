@@ -8,6 +8,7 @@
 #include "def.h"
 #include "datareader.h"
 #include "classifier.h"
+#include "biglib.h"
 
 #define DATA_READER 1
 

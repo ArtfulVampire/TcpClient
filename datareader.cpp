@@ -453,7 +453,9 @@ void DataReader::dataSliceCame()
             {
                 socketDataStream >> oneSlice[j];
             }
+            /// global eegData
             emit sliceReady(oneSlice);
+
         }
         sliceNumberPrevious = sliceNumber;
 
@@ -486,8 +488,10 @@ void DataReaderHandler::startReadData()
                               this->fullDataFlag);
     connect(myReader, SIGNAL(destroyed()), this, SLOT(stopReadData()));
     connect(myReader, SIGNAL(startStopSignal(int)), this, SLOT(startStopSlot(int)));
+    /// global eegData
     connect(myReader, SIGNAL(sliceReady(eegSliceType)),
             this, SLOT(receiveSlice(eegSliceType)));
+
     connect(this, SIGNAL(finishReadData()), myReader, SLOT(deleteLater()));
 
     myReader->sendStartRequest();
@@ -500,11 +504,21 @@ void DataReaderHandler::stopReadData()
 
 void DataReaderHandler::receiveSlice(eegSliceType slice)
 {
-    eegData.push_back(slice);
-    if(eegData.size() % timeShift == 0 &&  eegData.size() > windowLength)
+#if 1
+    static int slicesCame = 0;
+
+    /// global eegData
+    def::eegData.push_back(slice); ++slicesCame;
+    def::eegData.pop_front();
+    if(slicesCame % def::timeShift == 0 && slicesCame > def::windowLength)
     {
-        emit dataSend(eegData.end() - windowLength);
+        eegDataType::iterator windowStartIterator = def::eegData.end();
+        eegDataType::iterator windowEndIterator = --def::eegData.end();
+        for(int i = 0; i < def::windowLength; ++i, --windowStartIterator)
+        emit dataSend(windowStartIterator, windowEndIterator);
     }
+#endif
+
 #if 0
     int timeShift = 125;
     if(eegData.size() % timeShift == 0 &&  eegData.size() > 1000)

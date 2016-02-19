@@ -53,21 +53,55 @@ struct Pack
     QByteArray packData;
 };
 
+}
+namespace def
+{
 /// non-consts
 extern eegDataType eegData; /// make ring-style container
 extern int currentType;
 extern QString currentName;
 extern int currentMarker;
 
-/// consts
-const int ns = 19;
-const int timeShift = 125;
-const int windowLength = 1000;
-const QString spectraPath = "/media/Files/Data/RealTime/SpectraSmooth/windows";
-const QString netLogPath = "/media/Files/Data/RealTime/log.txt";
-const QString netResPath = "/media/Files/Data/RealTime/results.txt";
-const QString netBadPath = "/media/Files/Data/RealTime/badFiles.txt";
+extern QStringList fileMarkers;
 
+/// consts
+const int ns = 24;
+const int eog1 = 22;
+const int eog2 = 23;
+
+const double freq = 250.;
+const int fftLength = 1024;
+const int timeShift = 125;
+const int windowLength = 1024;
+
+const double leftFreq = 5.;
+const double rightFreq = 20.;
+
+const QString workPath = "/media/Files/Data/RealTime/";
+const QString spectraPath = workPath + "SpectraSmooth/windows";
+const QString netLogPath = workPath + "log.txt";
+const QString netResPath = workPath + "results.txt";
+const QString netBadPath = workPath + "badFiles.txt";
+const QString eyesFilePath = workPath + "eyes.txt";
+
+
+//const bool withMarkersFlag = true; /// should check everywhere if changed to false
+
+/// funcs
+///
+extern int right();
+extern int left();
+inline int numOfClasses() {return def::fileMarkers.length();}
+inline int spLength() {return def::right() - def::left();}
+inline double spStep() {return def::freq / def::fftLength;}
 }
+
+inline int fftLimit(const double & inFreq,
+                    const double & sampleFreq = def::freq,
+                    const int & fftL = def::fftLength)
+{
+    return ceil(inFreq / sampleFreq * fftL - 0.5);
+}
+
 
 #endif // DEF_H
