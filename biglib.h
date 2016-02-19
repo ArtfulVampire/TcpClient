@@ -3,6 +3,8 @@
 
 #include "matrix.h"
 
+
+
 #define TIME(arg)\
     do{\
         auto t0 = std::chrono::high_resolution_clock::now();\
@@ -14,6 +16,7 @@
         << " msec" << std::endl;\
     }while(false)
 
+std::string funcName(std::string in);
 
 std::ostream & operator<< (std::ostream &os, QString toOut);
 
@@ -52,6 +55,23 @@ void readMatrixFile(const QString & filePath,
                      matrix & outData,
                      int rows,
                      int cols);
+
+void writeMatrixFile(const QString & filePath,
+                      const matrix & outData,
+                      int rows,
+                      int cols);
+
+void readPlainData(const QString & inPath,
+                   matrix & data,
+                   const int & ns,
+                   int & numOfSlices,
+                   const int & start = 0);
+
+void writePlainData(const QString outPath,
+                    const matrix &data,
+                    const int & ns,
+                    int numOfSlices,
+                    const int & start = 0);
 
 template <typename signalType = lineType, typename retType = lineType>
 retType spectre(const signalType & data);

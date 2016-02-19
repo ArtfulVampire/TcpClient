@@ -646,7 +646,7 @@ lineType net::successiveDataToSpectre(
         for(int j = 0; j < def::windowLength; ++j, ++it)
         {
             auto itt = (*it).begin();
-            for(int i = 0; i < def::ns; ++i, ++itt) // 19 EEG channels
+            for(int i = 0; i < def::ns; ++i, ++itt)
             {
                 tmpMat[i][j] = (*itt);
             }
@@ -654,30 +654,38 @@ lineType net::successiveDataToSpectre(
     }
     /// clean from eyes
     {
-        matrix coeff(19, 2);
+//        writePlainData(def::workPath + "testFile1.txt",
+//                       tmpMat);
+        matrix coeff(def::eegNs, 2); // 2 eog channels
         readMatrixFile(def::eyesFilePath,
                        coeff,
-                       19,
-                       2);
+                       def::eegNs,
+                       2); // num eog channels
         auto it = tmpMat.begin();
-        for(int i = 0; i < 19; ++i, ++it) // 19 eeg channels
+        for(int i = 0; i < def::eegNs; ++i, ++it)
         {
             (*it) -= tmpMat[def::eog1] * coeff[i][0] +
                     tmpMat[def::eog2] * coeff[i][1];
         }
+//        writePlainData(def::workPath + "testFile2.txt",
+//                       tmpMat);
+        //exit(0);
     }
 
     lineType res(def::ns * def::spLength());
-    for(int i = 0; i < def::ns; ++i) // 19 EEG channels
+    /// count spectra, take 5-20 HZ only
     {
-        calcSpectre(tmpMat[i],
-                    specMat[i],
-                    1024, /// fftLength consts
-                    5 /// numOfSmooth consts
-                    );
-        std::copy(std::begin(specMat[i]) + def::left(),
-                  std::end(specMat[i]) + def::right(),
-                  std::begin(res) + i * def::spLength());
+        for(int i = 0; i < def::eegNs; ++i)
+        {
+            calcSpectre(tmpMat[i],
+                        specMat[i],
+                        1024, /// fftLength consts
+                        5 /// numOfSmooth consts
+                        );
+            std::copy(std::begin(specMat[i]) + def::left(),
+                      std::end(specMat[i]) + def::right(),
+                      std::begin(res) + i * def::spLength());
+        }
     }
     return res;
 }

@@ -1,36 +1,10 @@
 #ifndef SMALLFUNCS_H
 #define SMALLFUNCS_H
 
-#include <set>
-#include <vector>
-#include <valarray>
-#include <string>
-#include <list>
-#include <utility>
 
-#include <algorithm>
-#include <numeric>
-#include <cmath>
-#include <ctime>
-
-#include <cstdlib>
-#include <iostream>
-#include <cstdio>
-#include <ios>
-#include <fstream>
-
-//#include <boost/filesystem.hpp>
 
 #include "def.h"
 
-#define CPP_11 1
-#define MY_QT 1
-
-#if MY_QT
-#include <QtCore>
-#include <QDir>
-#include <QFile>
-#endif
 
 
 typedef std::vector<double> vectType;

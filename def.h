@@ -1,29 +1,39 @@
 #ifndef DEF_H
 #define DEF_H
 
-#include <QByteArray>
-
-#include <QtNetwork>
-#include <QSerialPort>
-#include <QSerialPortInfo>
-
-#include <ios>
-#include <iostream>
-#include <fstream>
-#include <ctime>
-#include <cstdlib>
-#include <cstdio>
-#include <cmath>
-#include <string>
+#include <set>
 #include <vector>
 #include <valarray>
-#include <set>
+#include <string>
 #include <list>
-#include <algorithm>
+#include <utility>
+
 #include <chrono>
 #include <random>
 #include <thread>
-#include <utility>
+#include <algorithm>
+#include <numeric>
+#include <cmath>
+#include <ctime>
+
+#include <cstdlib>
+#include <iostream>
+#include <cstdio>
+#include <ios>
+#include <fstream>
+
+#define CPP_11 1
+#define MY_QT 1
+
+#if MY_QT
+#include <QtCore>
+#include <QDir>
+#include <QFile>
+#include <QByteArray>
+#include <QtNetwork>
+#include <QSerialPort>
+#include <QSerialPortInfo>
+#endif
 
 template <typename T> class eegContType : public std::list<T>{}; /// Type Of Container
 typedef std::vector<qint16> eegSliceType;
@@ -65,6 +75,7 @@ extern int currentMarker;
 extern QStringList fileMarkers;
 
 /// consts
+const int eegNs = 19;
 const int ns = 24;
 const int eog1 = 22;
 const int eog2 = 23;

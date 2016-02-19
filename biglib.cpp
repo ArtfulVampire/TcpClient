@@ -3,14 +3,25 @@
 using namespace std;
 //namespace fs = boost::filesystem;
 
-
+std::string funcName(std::string in)
+{
+    in.resize(in.find('('));
+    for(char a : {' ', '='})
+    {
+        auto b = in.rfind(a);
+        if(b >= 0)
+        {
+            in = in.substr(b + 1);
+        }
+    }
+    return in;
+}
 
 std::ostream & operator << (std::ostream &os, QString toOut)
 {
     os << toOut.toStdString();
     return os;
 }
-
 
 bool fileExists(const QString & filePath)
 {
@@ -382,7 +393,102 @@ void readMatrixFile(const QString & filePath,
     file.close();
 }
 
+void writeMatrixFile(const QString & filePath,
+                      const matrix & outData,
+                      int rows,
+                      int cols)
 
+{
+    if(rows > outData.rows() ||
+       cols > outData.cols())
+    {
+        cout << "bad inputs while writing matrix" << endl;
+        return;
+    }
+
+    ofstream file(filePath.toStdString());
+    if(!file.good())
+    {
+        cout << "bad output file:\n" << filePath.toStdString() << endl;
+        return;
+    }
+
+    for(int i = 0; i < rows; ++i)
+    {
+        for(int j = 0; j < cols; ++j)
+        {
+            file << doubleRound(outData[i][j], 4) << '\t';
+        }
+        file << endl;
+    }
+    file.close();
+}
+
+
+void writePlainData(const QString outPath,
+                    const matrix & data,
+                    const int & ns,
+                    int numOfSlices,
+                    const int & start)
+{
+    numOfSlices = min(numOfSlices,
+                      data.cols() - start);
+
+//    if(numOfSlices < 250) return; /// used for sliceWindFromReal() but Cut::cut() ...
+
+    ofstream outStr;
+    outStr.open(outPath.toStdString());
+    outStr << "NumOfSlices " << numOfSlices;
+    outStr << "\tNumOfChannels " << ns;
+    outStr << endl;
+    for (int i = 0; i < numOfSlices; ++i)
+    {
+        for(int j = 0; j < ns; ++j)
+        {
+            outStr << doubleRound(data[j][i + start], 3) << '\t';
+        }
+        outStr << '\n';
+    }
+    outStr.flush();
+    outStr.close();
+}
+
+
+void readPlainData(const QString & inPath,
+                   matrix & data,
+                   const int & ns,
+                   int & numOfSlices,
+                   const int & start)
+{
+    ifstream inStr;
+    inStr.open(inPath.toStdString());
+    if(!inStr.good())
+    {
+        cout << "readPlainData: cannot open file" << endl;
+        return;
+    }
+    int inNs = -1;
+    inStr.ignore(64, ' '); // "NumOfSlices "
+    inStr >> numOfSlices;
+    inStr.ignore(64, ' '); // "NumOfChannels N\n"
+    inStr >> inNs;
+    inStr.ignore(64, '\n');
+    if(inNs != -1 && inNs != ns)
+    {
+        cout << "readPlainData: not real ns" << endl;
+    }
+
+    data.resize(ns, numOfSlices + start);
+
+    for (int i = 0; i < numOfSlices; ++i)
+    {
+        for(int j = 0; j < ns; ++j)
+        {
+            inStr >> data[j][i + start];
+        }
+    }
+    inStr.close();
+}
 
 
 

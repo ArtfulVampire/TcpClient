@@ -18,7 +18,7 @@ DataReader::DataReader(QObject * inParent, QTcpSocket * inSocket,
     connect(socket, SIGNAL(readyRead()),
             this, SLOT(receiveData()));
 
-    oneSlice.resize(24); /// pewpewpew
+    oneSlice.resize(def::ns); /// pewpewpew
 }
 
 
