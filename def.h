@@ -64,6 +64,8 @@ struct Pack
 };
 
 }
+
+
 namespace def
 {
 /// non-consts
@@ -72,46 +74,46 @@ extern int currentType;
 extern QString currentName;
 extern int currentMarker;
 
-extern QStringList fileMarkers;
+
 
 /// consts
-const int eegNs = 19;
-const int ns = 24;
-const int eog1 = 22;
-const int eog2 = 23;
+constexpr int eegNs = 19;
+constexpr int ns = 24;
+constexpr int markerChannel = 22;
+constexpr int eog1 = 22;
+constexpr int eog2 = 23;
 
-const double freq = 250.;
-const int fftLength = 1024;
-const int timeShift = 125;
-const int windowLength = 1024;
+const std::vector<qint16> markers{241, 247, 254};
+const QStringList fileMarkers{"_241", "_247", "_254"}; /// needed?
 
-const double leftFreq = 5.;
-const double rightFreq = 20.;
+constexpr double freq = 250.;
+constexpr int fftLength = 1024;
+constexpr int timeShift = 125;
+constexpr int windowLength = 1024;
 
+constexpr double leftFreq = 5.;
+constexpr double rightFreq = 20.;
+
+const QString ExpName = "PEW";
 const QString workPath = "/media/Files/Data/RealTime/";
+/// to read
 const QString spectraPath = workPath + "SpectraSmooth/windows";
+const QString eyesFilePath = workPath + "eyes.txt";
+/// to write
 const QString netLogPath = workPath + "log.txt";
 const QString netResPath = workPath + "results.txt";
 const QString netBadPath = workPath + "badFiles.txt";
-const QString eyesFilePath = workPath + "eyes.txt";
 
-
-//const bool withMarkersFlag = true; /// should check everywhere if changed to false
-
-/// funcs
-///
-extern int right();
-extern int left();
-inline int numOfClasses() {return def::fileMarkers.length();}
-inline int spLength() {return def::right() - def::left();}
-inline double spStep() {return def::freq / def::fftLength;}
-}
-
-inline int fftLimit(const double & inFreq,
-                    const double & sampleFreq = def::freq,
-                    const int & fftL = def::fftLength)
+/// funcs (ORDER is important, or extern+cpp)
+constexpr int fftLimit(const double & inFreq)
 {
-    return ceil(inFreq / sampleFreq * fftL - 0.5);
+    return ceil(inFreq / def::freq * def::fftLength - 0.5);
+}
+inline int numOfClasses() {return def::fileMarkers.length();}
+constexpr double spStep() {return def::freq / def::fftLength;}
+constexpr int left()  {return fftLimit(def::leftFreq);}
+constexpr int right() {return fftLimit(def::rightFreq) + 1;}
+constexpr int spLength() {return (def::right() - def::left());}
 }
 
 

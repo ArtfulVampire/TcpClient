@@ -104,6 +104,9 @@ MainWindow::MainWindow(QWidget *parent) :
         connect(myNetHandler, SIGNAL(finishWork()),
                 myNetThread, SLOT(deleteLater()));
 
+        connect(myNetHandler, SIGNAL(sendSignal(int)),
+                this, SLOT(comPortSend(int)));
+
 
     //    myNetThread->start(QThread::TimeCriticalPriority); // veru fast
         myNetThread->start(QThread::HighestPriority); // veru fast
@@ -131,6 +134,11 @@ void MainWindow::startStopSlot(int var)
 {
     QString res = (var == 1) ? "ON" : "OFF";
     ui->textEdit->append("data transmission " + res);
+}
+
+void MainWindow::comPortSend(int a)
+{
+    comPortDataStream << qint8(a);
 }
 
 

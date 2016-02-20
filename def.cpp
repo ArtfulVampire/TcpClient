@@ -26,8 +26,8 @@ int currentMarker = 200;
 //int fftLength = 1024;
 //double leftFreq = 5.;
 //double rightFreq = 20.;
-QStringList fileMarkers{"_241", "_247", "_254"};
+//QStringList fileMarkers{"_241", "_247", "_254"};
 
-int left()  {return fftLimit(def::leftFreq);}
-int right() {return fftLimit(def::rightFreq) + 1;}
+//int left()  {return fftLimit(def::leftFreq);}
+//int right() {return fftLimit(def::rightFreq) + 1;}
 }

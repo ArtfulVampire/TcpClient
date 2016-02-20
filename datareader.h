@@ -55,9 +55,8 @@ public:
     DataReaderHandler(QTcpSocket * inSocket = nullptr,
                       bool inFullDataFlag = true);
     ~DataReaderHandler();
-private:
-    DataReader * myReader;
 
+    void dealWithMarkers(const eegSliceType & slic, int & slicesCam);
 
 protected:
    void timerEvent(QTimerEvent *event);
@@ -78,6 +77,7 @@ private:
     bool fullDataFlag = true;
     QTcpSocket * socket = nullptr;
 
+    DataReader * myReader;
 
 };
 

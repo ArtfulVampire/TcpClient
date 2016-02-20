@@ -627,11 +627,16 @@ void net::successiveProcessing(const std::string & spectraPath)
 
 void net::dataCame(eegDataType::iterator a, eegDataType::iterator b)
 {
-    TIME(lineType newSpectre = successiveDataToSpectre(a, b)); ///
+    static int windowNum = 0;
+    ++windowNum;
+    const int type = def::currentType;
+    const std::string name = def::ExpName.toStdString() +
+                             def::fileMarkers[type].toStdString() +
+                             "." + std::to_string(windowNum);
 
-    std::string name = "pew";
-//    int type = typeOfFileName(def::currentName.toStdString());
-//    successiveLearning(res, type, name);
+    lineType newSpectre;
+    TIME(newSpectre = successiveDataToSpectre(a, b)); ///
+    successiveLearning(newSpectre, type, name);
 }
 
 lineType net::successiveDataToSpectre(
@@ -707,20 +712,39 @@ void net::successiveLearning(const lineType & newSpectre,
 
     const std::pair<int, double> outType = classifyDatum(dataMatrix.rows() - 1); // take the last
     confusionMatrix[newType][outType.first] += 1.;
-    if(outType.first == newType && outType.second < errorThreshold) /// if good coincidence
+    if(outType.first == newType) /// if good coincidence
     {
-        const int num = std::find(types.begin(), types.end(), newType) - types.begin();
-        eraseDatum(num);
-        ++numGoodNew;
+        if(newType == 1 ||
+           newType == 2)
+        {
+            emit sendSignal(1);
+        }
+
+        if(outType.second < errorThreshold)
+        {
+            const int num = std::find(types.begin(), types.end(), newType) - types.begin();
+            eraseDatum(num);
+            ++numGoodNew;
+        }
+        else
+        {
+            popBackDatum();
+        }
+
     }
     else
     {
+        if(newType == 1 ||
+           newType == 2)
+        {
+            emit sendSignal(2);
+        }
         popBackDatum();
     }
 
     if(numGoodNew == this->numGoodNewLimit)
     {
-        successiveRelearn();
+        TIME(successiveRelearn());
         numGoodNew = 0;
     }
 }

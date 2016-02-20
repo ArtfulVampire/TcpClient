@@ -502,18 +502,56 @@ void DataReaderHandler::stopReadData()
 //    emit finishReadData();
 }
 
-void DataReaderHandler::receiveSlice(eegSliceType slice)
+void DataReaderHandler::dealWithMarkers(const eegSliceType & slic,
+                                        int & slicesCam)
+{
+    if(slic[def::markerChannel] != 0)
+    {
+//        def::currentMarker = slice[def::markerChannel];
+        switch(slic[def::markerChannel])
+        {
+//        case def::markers[0]:
+        case 241:
+        {
+            def::currentType = 0;
+            break;
+        }
+//        case def::markers[1]:
+        case 247:
+        {
+            def::currentType = 1;
+        }
+//        case def::markers[2]:
+        case 254:
+        {
+            def::currentType = 2;
+        }
+        default:
+        {
+            def::currentType = -1;
+            break;
+        }
+        }
+        slicesCam = 0;
+    }
+}
+
+void DataReaderHandler::receiveSlice(eegSliceType slic)
 {
 #if 1
     static int slicesCame = 0;
-
     /// global eegData
-    def::eegData.push_back(slice); ++slicesCame;
+    dealWithMarkers(slic, slicesCame);
+
+    def::eegData.push_back(slic); ++slicesCame;
     def::eegData.pop_front();
-    if(slicesCame % def::timeShift == 0 && slicesCame > def::windowLength)
+
+
+    if(slicesCame % def::timeShift == 0 &&
+       slicesCame > def::windowLength)
     {
         eegDataType::iterator windowStartIterator = def::eegData.end();
-        eegDataType::iterator windowEndIterator = --def::eegData.end();
+        eegDataType::iterator windowEndIterator = --def::eegData.end(); /// really unused
         for(int i = 0; i < def::windowLength; ++i, --windowStartIterator)
         emit dataSend(windowStartIterator, windowEndIterator);
     }

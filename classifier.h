@@ -61,11 +61,13 @@ private:
     // softmax
     double errCrit = 0.05;
     double learnRate = 0.05;
+
     static const int lowLimit = 70;
     static const int highLimit = 110;
-    static const int learnSetStay = 80;
-    static const int numGoodNewLimit = 4;
-    static constexpr double decayRate = 0.005;
+
+    static const int learnSetStay = 100;
+    static const int numGoodNewLimit = 5;
+    static constexpr double decayRate = 0.01;
 
 
     int numOfPairs = 15;
@@ -79,6 +81,7 @@ private:
 
 signals:
     void finish();
+    void sendSignal(int);
 
 public slots:
     void dataCame(eegDataType::iterator a, eegDataType::iterator b);
@@ -173,6 +176,10 @@ public:
     }
 
 public slots:
+    void rethrowSlot(int a)
+    {
+        emit sendSignal(a);
+    }
     void finishSlot()
     {
         std::cout << "finishSlot()" << std::endl;
@@ -183,6 +190,8 @@ public slots:
         myNet = new net();
         connect(myNet, SIGNAL(finish()),
                 this, SLOT(finishSlot()));
+        connect(myNet, SIGNAL(sendSignal(int)),
+                this, SLOT(rethrowSlot(int)));
         connect(this, SIGNAL(toProcess(eegDataType::iterator, eegDataType::iterator)),
                 myNet, SLOT(dataCame(eegDataType::iterator, eegDataType::iterator)));
         myNet->startOperate();
@@ -194,6 +203,7 @@ public slots:
 
 
 signals:
+    void sendSignal(int);
     void finishWork();
     void toProcess(eegDataType::iterator, eegDataType::iterator);
 

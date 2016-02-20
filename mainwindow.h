@@ -47,6 +47,7 @@ public slots:
     void comPortSlot();
 
     void startStopSlot(int var); /// from dataReader
+    void comPortSend(int); /// from classifier
 
 private:
     Ui::MainWindow * ui;
