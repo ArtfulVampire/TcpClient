@@ -17,8 +17,9 @@ net::~net()
 
 void net::startOperate()
 {
+//    return;
     ExpName = "GAS_train";
-    successivePreclean(def::spectraPath.toStdString());
+//    successivePreclean(def::spectraPath.toStdString());
 
 
     ExpName = "GAS_test";
@@ -643,6 +644,7 @@ lineType net::successiveDataToSpectre(
         const eegDataType::iterator eegDataStart,
         const eegDataType::iterator eegDataEnd)
 {
+    cout << "successiveDataToSpectre" << endl;
     matrix tmpMat(def::ns, def::windowLength);
     matrix specMat(def::ns, 0);
     /// readData

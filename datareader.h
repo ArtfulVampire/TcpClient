@@ -3,6 +3,7 @@
 
 #include <QObject>
 #include "def.h"
+#include "biglib.h"
 
 class DataReader : public QObject
 {

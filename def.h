@@ -7,6 +7,7 @@
 #include <string>
 #include <list>
 #include <utility>
+#include <bitset>
 
 #include <chrono>
 #include <random>
@@ -24,6 +25,7 @@
 
 #define CPP_11 1
 #define MY_QT 1
+#define USE_DATA_STREAM 1
 
 #if MY_QT
 #include <QtCore>

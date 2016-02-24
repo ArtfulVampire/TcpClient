@@ -676,6 +676,54 @@ void calcSpectre(const signalType & inSignal,
     }
 }
 
+template <typename Typ>
+Typ peekFromSocket(QTcpSocket * inSocket)
+{
+    int siz = sizeof(Typ);
+    char * tmp = new char[siz];
+    inSocket->peek(tmp, siz);
+    Typ res = *(reinterpret_cast<Typ*>(tmp));
+    delete[] tmp;
+    return res;
+}
+template <typename Typ>
+Typ readFromSocket(QTcpSocket * inSocket)
+{
+    int siz = sizeof(Typ);
+    char * tmp = new char[siz];
+    inSocket->read(tmp, siz);
+    Typ res = *(reinterpret_cast<Typ*>(tmp));
+    delete[] tmp;
+    return res;
+}
+
+template <typename Typ>
+std::bitset<8 * sizeof(Typ)> bits(Typ in)
+{
+    return std::bitset<8 * sizeof(Typ)>(in);
+}
+
+template qint8 readFromSocket(QTcpSocket * inSocket);
+template quint8 readFromSocket(QTcpSocket * inSocket);
+template qint16 readFromSocket(QTcpSocket * inSocket);
+template quint16 readFromSocket(QTcpSocket * inSocket);
+template qint32 readFromSocket(QTcpSocket * inSocket);
+template quint32 readFromSocket(QTcpSocket * inSocket);
+
+template qint8 peekFromSocket(QTcpSocket * inSocket);
+template quint8 peekFromSocket(QTcpSocket * inSocket);
+template qint16 peekFromSocket(QTcpSocket * inSocket);
+template quint16 peekFromSocket(QTcpSocket * inSocket);
+template qint32 peekFromSocket(QTcpSocket * inSocket);
+template quint32 peekFromSocket(QTcpSocket * inSocket);
+
+template std::bitset<8> bits(qint8 in);
+template std::bitset<8> bits(quint8 in);
+template std::bitset<16> bits(qint16 in);
+template std::bitset<16> bits(quint16 in);
+template std::bitset<32> bits(qint32 in);
+template std::bitset<32> bits(quint32 in);
+
 //template void eraseItems(std::vector<std::string> & inVect, const std::vector<int> & indices);
 //template void eraseItems(std::vector<lineType> & inVect, const std::vector<int> & indices);
 //template void eraseItems(std::vector<int> & inVect, const std::vector<int> & indices);

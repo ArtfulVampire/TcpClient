@@ -12,8 +12,8 @@
         auto t1 = std::chrono::high_resolution_clock::now();\
         std::cout << funcName(#arg) \
         << ": time elapsed = "\
-        << std::chrono::duration_cast<std::chrono::milliseconds>(t1-t0).count()/1000.\
-        << " msec" << std::endl;\
+        << std::chrono::duration_cast<std::chrono::microseconds>(t1-t0).count()\
+        << " mcsec" << std::endl;\
     } while(false)
 
 std::string funcName(std::string in);
@@ -88,8 +88,13 @@ void calcSpectre(const signalType & inSignal,
 template <typename signalType = lineType>
 signalType four2(const signalType & inRealData, int nn = def::fftLength, int isign = 1);
 
-
 bool fileExists(const QString & filePath);
+
+template <typename Typ>
+Typ readFromSocket(QTcpSocket * inSocket);
+
+template <typename Typ>
+std::bitset<8 * sizeof(Typ)> bits(Typ in);
 
 std::string slash();
 QString qslash();

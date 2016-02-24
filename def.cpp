@@ -18,7 +18,7 @@ std::string enc::readString(QDataStream &in)
 
 namespace def
 {
-eegDataType eegData{}; /// make ring-style container
+eegDataType eegData{}; /// make ring-style container OR NOT
 int currentType = -1;
 QString currentName = QString();
 int currentMarker = 200;

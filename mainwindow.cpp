@@ -119,8 +119,6 @@ MainWindow::MainWindow(QWidget *parent) :
         delete myNetThread;
     }
 
-
-
 //    connectSlot();
 //    startSlot();
 }

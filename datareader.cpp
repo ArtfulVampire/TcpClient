@@ -4,7 +4,16 @@ using namespace std;
 using namespace std::chrono;
 using namespace enc;
 
-
+//template <typename Typ>
+//Typ readFromSocket(QTcpSocket * inSocket)
+//{
+//    int siz = sizeof(Typ);
+//    char * tmp = new char[siz];
+//    inSocket->read(tmp, siz);
+//    Typ res = *(reinterpret_cast<Typ*>(tmp));
+//    delete[] tmp;
+//    return res;
+//}
 
 
 DataReader::DataReader(QObject * inParent, QTcpSocket * inSocket,
@@ -82,7 +91,13 @@ void DataReader::receiveData()
 //        socketDataStream.device()->peek(&tmp, 1);
 
 //        socketDataStream >> inPack.packSize;
-        QByteArray arr = socket->peek(8); // try read int + uint
+#if !USE_DATA_STREAM
+
+        inPack.packSize = readFromSocket<qint32>(socket);
+        inPack.packId = readFromSocket<quint32>(socket);
+
+#else
+        QByteArray arr = socket->peek(8); // try read int + uint = 8 bytes
         QDataStream str(&arr, QIODevice::ReadOnly);
         str.setByteOrder(QDataStream::LittleEndian);
         str >> inPack.packSize;
@@ -93,8 +108,14 @@ void DataReader::receiveData()
            !(inPack.packSize == 8 && inPack.packId == 6))
         {
             cout << "BAD PACK: "
-                 << "packSize = " << inPack.packSize << "\t"
-                 << "packId = " << inPack.packId << endl;
+                 << "packSize = " << inPack.packSize
+                 << "\t"
+                 << "packId = " << inPack.packId
+//                 << '\t'
+//                 << "packSize = " << bits(inPack.packSize)
+//                 << "\t"
+//                 << "packId = " << bits(inPack.packId)
+                 << endl;
 
             inPack.packSize = 0;
             inPack.packId = 0;
@@ -113,10 +134,12 @@ void DataReader::receiveData()
                 cout << "sk != 8, sk == " << sk << endl;
             }
 
+            /// prevent some seldom situations
             if(inPack.packSize == 8 && inPack.packId == 6)
             {
 
                 QByteArray arr = socket->peek(8); // try read int + uint
+
                 QDataStream str(&arr, QIODevice::ReadOnly);
                 str.setByteOrder(QDataStream::LittleEndian);
                 qint32 a;
@@ -156,6 +179,7 @@ void DataReader::receiveData()
 //        {
 //            inPack.packSize = 259 - sizeof(inPack.packSize);
 //        }
+#endif
     }
 
 #if 1
@@ -226,7 +250,13 @@ void DataReader::receiveData()
     cout << "packSize = " << inPack.packSize << "\t" << "packId = " << inPack.packId << endl;
 #endif
 
-    cout << inPack.packSize << '\t' << inPack.packId << '\t';
+
+
+//    cout << inPack.packSize << '\t' << inPack.packId << endl;
+//    socket->read(inPack.packSize - 4);
+//    return;
+
+//    cout << socket->bytesAvailable() << endl;
 
     switch(inPack.packId)
     {
@@ -281,6 +311,10 @@ void DataReader::receiveData()
     socketDataStream.setByteOrder(QDataStream::LittleEndian);
 #endif
     inPack = enc::Pack();
+    if(socket->bytesAvailable() >= 64)
+    {
+        receiveData();
+    }
 }
 
 
@@ -299,7 +333,7 @@ void DataReader::readStartInfo()
 //            cout << endl << "channel " << i << endl;
 
             std::string channelName = readString(socketDataStream);
-//            cout << channelName << endl;
+            cout << channelName << endl;
 
             double bitWeight;
             socketDataStream >> bitWeight;
@@ -368,7 +402,7 @@ void DataReader::readStartInfo()
     {
 //        disconnect(socket, SIGNAL(readyRead()),
 //                   this, SLOT(receiveData()));
-        cout << "disconnected readyRead()" << endl;
+//        cout << "disconnected readyRead()" << endl;
     }
 }
 
@@ -376,6 +410,8 @@ void DataReader::readStartInfo()
 
 void DataReader::startStopTransmisson()
 {
+
+
     int var;
     socketDataStream >> var;
     emit startStopSignal(var);
@@ -387,17 +423,17 @@ void DataReader::startStopTransmisson()
 
     if(var == 1) /// real-time ON signal came - should send datarequest again
     {
-
-//        this->thread()->msleep(500);
-//        this->sendStartRequest();
-//        this->thread()->msleep(2000);
-
-
+//        cout << "pew" << endl;
+        QObject::disconnect(socket, SIGNAL(readyRead()),
+                            this, SLOT(receiveData()));
+        this->thread()->sleep(8);
+        this->sendStartRequest();
+//        std::thread p([this](){
         while(this->inProcess)
         {
-            this->thread()->usleep(200);
             receiveData();
         }
+//        }); p.detach();
     }
     else //if(this->inProcess) /// finish all job
     {
@@ -421,18 +457,36 @@ void DataReader::dataSliceCame()
     if(fullDataFlag)
     {
         qint32 sliceNumber;
+#if USE_DATA_STREAM
         socketDataStream >> sliceNumber;
+#else
+        sliceNumber = readFromSocket<qint32>(socket);
+#endif
         if(sliceNumberPrevious == 0)
         {
             sliceNumberPrevious = sliceNumber;
         }
 
         qint32 numOfChans;
+#if USE_DATA_STREAM
         socketDataStream >> numOfChans;
+#else
+        numOfChans = readFromSocket<qint32>(socket);
+#endif
+
+
 
         qint32 numOfSlices;
+#if USE_DATA_STREAM
         socketDataStream >> numOfSlices;
+#else
+        numOfSlices = readFromSocket<qint32>(socket);
+#endif
 
+
+
+
+        /// fill the lost slices with zeros
         for(int i = sliceNumberPrevious + 1; i < sliceNumber; ++i)
         {
             emit sliceReady(eegSliceType(numOfChans, 0));
@@ -440,6 +494,7 @@ void DataReader::dataSliceCame()
 
 
 #if 1
+        if(sliceNumber % 250 == 0)
         cout << sliceNumber << '\t'
              << numOfChans << '\t'
              << numOfSlices
@@ -451,14 +506,17 @@ void DataReader::dataSliceCame()
         {
             for(int j = 0; j < numOfChans; ++j)
             {
+#if USE_DATA_STREAM
                 socketDataStream >> oneSlice[j];
+#else
+                oneSlice[j] = readFromSocket<qint16>(socket);
+#endif
             }
             /// global eegData
             emit sliceReady(oneSlice);
 
         }
         sliceNumberPrevious = sliceNumber;
-
     }
 }
 
@@ -507,6 +565,7 @@ void DataReaderHandler::dealWithMarkers(const eegSliceType & slic,
 {
     if(slic[def::markerChannel] != 0)
     {
+//        cout << slic[def::markerChannel] << endl;
 //        def::currentMarker = slice[def::markerChannel];
         switch(slic[def::markerChannel])
         {
@@ -546,6 +605,8 @@ void DataReaderHandler::receiveSlice(eegSliceType slic)
     def::eegData.push_back(slic); ++slicesCame;
     def::eegData.pop_front();
 
+//    cout << slicesCame << endl;
+
 
     if(slicesCame % def::timeShift == 0 &&
        slicesCame > def::windowLength)
@@ -553,6 +614,8 @@ void DataReaderHandler::receiveSlice(eegSliceType slic)
         eegDataType::iterator windowStartIterator = def::eegData.end();
         eegDataType::iterator windowEndIterator = --def::eegData.end(); /// really unused
         for(int i = 0; i < def::windowLength; ++i, --windowStartIterator)
+        {}
+        cout << "receiveSlice: emit dataSend()" << endl;
         emit dataSend(windowStartIterator, windowEndIterator);
     }
 #endif
