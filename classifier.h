@@ -67,6 +67,12 @@ private:
 
     static const int learnSetStay = 100;
     static const int numGoodNewLimit = 5;
+    int numGoodNew = 0;
+#if CPP_11
+    std::vector<int> exIndices{};
+#else
+    std::vector<int> exIndices;
+#endif
     static constexpr double decayRate = 0.01;
 
 

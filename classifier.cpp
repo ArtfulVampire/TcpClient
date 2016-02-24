@@ -529,12 +529,8 @@ void net::successivePreclean(const std::string & spectraPath)
 }
 
 
-#if CPP_11
-std::vector<int> exIndices{};
-#else
-std::vector<int> exIndices;
-#endif
-int numGoodNew;
+
+
 
 void net::successiveProcessing(const std::string & spectraPath)
 {
@@ -720,6 +716,7 @@ void net::successiveLearning(const lineType & newSpectre,
 {
     /// consider loaded wts
     /// dataMatrix is learning matrix
+
 
 
 //    const double errorThreshold = 0.8; /// add to learning set or not - logistic
