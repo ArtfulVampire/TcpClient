@@ -198,6 +198,7 @@ public slots:
     }
     void dataReceive(eegDataType::iterator a, eegDataType::iterator b)
     {
+//        std::cout << "dataReceive" << std::endl;
         emit toProcess(a, b);
     }
 

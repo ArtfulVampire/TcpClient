@@ -91,7 +91,7 @@ void DataReader::receiveData()
 //        socketDataStream.device()->peek(&tmp, 1);
 
 //        socketDataStream >> inPack.packSize;
-#if !USE_DATA_STREAM ||1
+#if !USE_DATA_STREAM
 
         inPack.packSize = readFromSocket<qint32>(socket);
         inPack.packId = readFromSocket<quint32>(socket);
@@ -103,12 +103,13 @@ void DataReader::receiveData()
         str >> inPack.packSize;
         str >> inPack.packId;
 
-#if 1 //
+#if 0
         socketDataStream.skipRawData(8);
 #else
         if(!(inPack.packSize == 1618 && inPack.packId == 2) &&
-           !(inPack.packSize == 64 && inPack.packId == 8) &&
-           !(inPack.packSize == 8 && inPack.packId == 6))
+           !(inPack.packId == 8) &&
+           !(inPack.packSize == 8 && inPack.packId == 6) &&
+           !(inPack.packId == 9))
         {
             cout << "BAD PACK: "
                  << "packSize = " << inPack.packSize
@@ -290,6 +291,7 @@ void DataReader::receiveData()
     case 9:
     {
         /// FP marker
+//        cout << 9 << '\t';
         markerCame();
         break;
     }
@@ -301,6 +303,8 @@ void DataReader::receiveData()
     case 11: // 0x000B
     {
         /// presentation marker
+//        cout << 11 << '\t';
+        markerCame();
         break;
     }
     default:
@@ -480,23 +484,29 @@ void DataReader::markerCame()
     case 241:
     {
         def::currentType = 0;
+        def::slicesCame = 0;
         break;
     }
     case 247:
     {
         def::currentType = 1;
+        def::slicesCame = 0;
+        break;
     }
     case 254:
     {
         def::currentType = 2;
+        def::slicesCame = 0;
+        break;
     }
     default:
     {
-        def::currentType = -1;
+//        def::currentType = -1;
         break;
     }
     }
-    def::slicesCame = 0;
+//    cout << "Marker: " << name << ", " << def::currentMarker << endl;
+
 }
 
 void DataReader::dataSliceCame()
@@ -540,14 +550,13 @@ void DataReader::dataSliceCame()
         }
 
 
-#if 1
+#if 0
         if(sliceNumber % 250 == 0)
         cout << sliceNumber << '\t'
              << numOfChans << '\t'
              << numOfSlices
              << endl;
 #endif
-//        socketDataStream.skipRawData(numOfSlices * numOfChans * sizeof(qint16));
 
         for(int i = 0; i < numOfSlices; ++i)
         {
@@ -616,7 +625,7 @@ void DataReaderHandler::receiveSlice(eegSliceType slic)
     def::eegData.push_back(slic); ++def::slicesCame;
     def::eegData.pop_front();
 
-//    cout << slicesCame << endl;
+//    cout << def::slicesCame << endl;
 
 
     if(def::slicesCame % def::timeShift == 0 &&
@@ -626,7 +635,7 @@ void DataReaderHandler::receiveSlice(eegSliceType slic)
         eegDataType::iterator windowEndIterator = --def::eegData.end(); /// really unused
         for(int i = 0; i < def::windowLength; ++i, --windowStartIterator)
         {}
-        cout << "receiveSlice: emit dataSend()" << endl;
+//        cout << "receiveSlice: emit dataSend()" << endl;
         emit dataSend(windowStartIterator, windowEndIterator);
     }
 #endif

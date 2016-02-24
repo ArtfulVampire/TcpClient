@@ -41,6 +41,7 @@ template <typename T> class eegContType : public std::list<T>{}; /// Type Of Con
 typedef std::vector<qint16> eegSliceType;
 typedef eegContType<eegSliceType> eegDataType;
 
+
 namespace enc
 {
 typedef quint32 DWORD;

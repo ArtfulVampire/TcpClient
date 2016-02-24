@@ -13,6 +13,9 @@ MainWindow::MainWindow(QWidget *parent) :
 {
     ui->setupUi(this);
 
+
+    qRegisterMetaType<eegDataType::iterator>("eegDataType::iterator");
+
     /// server
     ui->serverPortSpinBox->setMaximum(65535);
     int hostCounter = 0;

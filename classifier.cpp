@@ -631,24 +631,36 @@ void net::dataCame(eegDataType::iterator a, eegDataType::iterator b)
     static int windowNum = 0;
     ++windowNum;
     const int type = def::currentType;
+    if(type < 0)
+    {
+//        cout << "return of type " << type << endl;
+        return;
+    }
+    else
+    {
+//        cout << "process type " << type << endl;
+    }
+
+
+    lineType newSpectre;
+    successiveDataToSpectre(a, b);
+
     const std::string name = def::ExpName.toStdString() +
                              def::fileMarkers[type].toStdString() +
                              "." + std::to_string(windowNum);
-
-    lineType newSpectre;
-    TIME(newSpectre = successiveDataToSpectre(a, b)); ///
+//    return;
     successiveLearning(newSpectre, type, name);
+
 }
 
 lineType net::successiveDataToSpectre(
         const eegDataType::iterator eegDataStart,
         const eegDataType::iterator eegDataEnd)
 {
-    cout << "successiveDataToSpectre" << endl;
+//    cout << "successiveDataToSpectre" << endl;
     matrix tmpMat(def::ns, def::windowLength);
-    matrix specMat(def::ns, 0);
     /// readData
-    {
+
         auto it = eegDataStart;
         for(int j = 0; j < def::windowLength; ++j, ++it)
         {
@@ -658,9 +670,10 @@ lineType net::successiveDataToSpectre(
                 tmpMat[i][j] = (*itt);
             }
         }
-    }
+
+//    cout << 1 << endl;
     /// clean from eyes
-    {
+
 //        writePlainData(def::workPath + "testFile1.txt",
 //                       tmpMat);
         matrix coeff(def::eegNs, 2); // 2 eog channels
@@ -668,32 +681,36 @@ lineType net::successiveDataToSpectre(
                        coeff,
                        def::eegNs,
                        2); // num eog channels
-        auto it = tmpMat.begin();
-        for(int i = 0; i < def::eegNs; ++i, ++it)
+        auto it2 = tmpMat.begin();
+        for(int i = 0; i < def::eegNs; ++i, ++it2)
         {
-            (*it) -= tmpMat[def::eog1] * coeff[i][0] +
+            (*it2) -= tmpMat[def::eog1] * coeff[i][0] +
                     tmpMat[def::eog2] * coeff[i][1];
         }
 //        writePlainData(def::workPath + "testFile2.txt",
 //                       tmpMat);
         //exit(0);
-    }
 
-    lineType res(def::ns * def::spLength());
+
+    lineType res(def::eegNs * def::spLength());
     /// count spectra, take 5-20 HZ only
-    {
+
+        lineType tmpSpec;
         for(int i = 0; i < def::eegNs; ++i)
         {
             calcSpectre(tmpMat[i],
-                        specMat[i],
+                        tmpSpec,
                         1024, /// fftLength consts
                         5 /// numOfSmooth consts
                         );
-            std::copy(std::begin(specMat[i]) + def::left(),
-                      std::end(specMat[i]) + def::right(),
+//            cout << i << endl;
+            std::copy(std::begin(tmpSpec) + def::left(),
+                      std::begin(tmpSpec) + def::right(),
                       std::begin(res) + i * def::spLength());
+//            cout << i << endl;
         }
-    }
+//        cout << 3 << endl;
+
     return res;
 }
 
@@ -719,6 +736,7 @@ void net::successiveLearning(const lineType & newSpectre,
         if(newType == 1 ||
            newType == 2)
         {
+            cout << "emit 1" << endl;
             emit sendSignal(1);
         }
 
@@ -739,6 +757,7 @@ void net::successiveLearning(const lineType & newSpectre,
         if(newType == 1 ||
            newType == 2)
         {
+            cout << "emit 2" << endl;
             emit sendSignal(2);
         }
         popBackDatum();

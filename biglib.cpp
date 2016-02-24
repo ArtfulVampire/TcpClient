@@ -670,7 +670,7 @@ void calcSpectre(const signalType & inSignal,
         for(int k = leftSmoothLimit; k < rightSmoothLimit; ++k)
         {
             help2 = outSpectre[k];
-            outSpectre[k] = (help1 + help2 + outSpectre[k+1]) / 3.;
+            outSpectre[k] = (help1 + help2 + outSpectre[k + 1]) / 3.;
             help1 = help2;
         }
     }
