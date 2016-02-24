@@ -18,6 +18,7 @@ public:
    void readStartInfo();
    void startStopTransmisson();
    void dataSliceCame();
+   void markerCame();
    void sendStartRequest();
 
 protected:
