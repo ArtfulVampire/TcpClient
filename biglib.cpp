@@ -703,12 +703,37 @@ std::bitset<8 * sizeof(Typ)> bits(Typ in)
     return std::bitset<8 * sizeof(Typ)>(in);
 }
 
+std::string readString(QDataStream &in)
+{
+    int numOfChars;
+    in >> numOfChars;
+    std::string res;
+    res.resize(numOfChars);
+    for(int i = 0; i < numOfChars; ++i)
+    {
+        in.readRawData(&(res[i]), 1);
+    }
+    return res;
+}
+
+std::string readString(QTcpSocket * inSocket)
+{
+    int numOfChars = readFromSocket<qint32>(inSocket);
+    char * res = new char [numOfChars];
+    inSocket->read(res, numOfChars);
+    std::string ret(res);
+    delete[] res;
+    return ret;
+}
+
+
 template qint8 readFromSocket(QTcpSocket * inSocket);
 template quint8 readFromSocket(QTcpSocket * inSocket);
 template qint16 readFromSocket(QTcpSocket * inSocket);
 template quint16 readFromSocket(QTcpSocket * inSocket);
 template qint32 readFromSocket(QTcpSocket * inSocket);
 template quint32 readFromSocket(QTcpSocket * inSocket);
+template double readFromSocket(QTcpSocket * inSocket);
 
 template qint8 peekFromSocket(QTcpSocket * inSocket);
 template quint8 peekFromSocket(QTcpSocket * inSocket);

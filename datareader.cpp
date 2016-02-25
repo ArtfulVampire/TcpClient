@@ -22,8 +22,10 @@ DataReader::DataReader(QObject * inParent, QTcpSocket * inSocket,
     this->setParent(inParent);
     this->socket = inSocket;
     this->fullDataFlag = inFullDataFlag;
+#if USE_DATA_STREAM
     this->socketDataStream.setDevice(this->socket);
     this->socketDataStream.setByteOrder(QDataStream::LittleEndian);
+#endif
     connect(socket, SIGNAL(readyRead()),
             this, SLOT(receiveData()));
 
@@ -33,6 +35,7 @@ DataReader::DataReader(QObject * inParent, QTcpSocket * inSocket,
 
 DataReader::~DataReader()
 {
+#if USE_DATA_STREAM
     if(!socketDataStream.atEnd())
     {
         socketDataStream.skipRawData(socketDataStream.device()->bytesAvailable());
@@ -41,6 +44,7 @@ DataReader::~DataReader()
     {
         cout << "still not at end" << endl;
     }
+#endif
 }
 
 void DataReader::timerEvent(QTimerEvent *event)
@@ -332,7 +336,9 @@ void DataReader::readStartInfo()
 {
     if(fullDataFlag)
     {
+#if USE_DATA_STREAM
         std::string patientName = readString(socketDataStream); // cyrillic "net pacienta"
+
 //        cout << patientName << endl;
 
         socketDataStream >> numOfChannels;
@@ -378,10 +384,52 @@ void DataReader::readStartInfo()
         std::string scheme = readString(socketDataStream);
 //        cout << scheme << endl;
 //        exit(0);
+#else
+        std::string patientName = readString(socket); // cyrillic "net pacienta"
+
+//        cout << patientName << endl;
+
+        numOfChannels = readFromSocket<qint32>(socket);
+//        cout << numOfChannels << endl;
+        for(int i = 0; i < numOfChannels; ++i)
+        {
+//            cout << endl << "channel " << i << endl;
+
+            std::string channelName = readString(socket);
+//            cout << channelName << endl;
+
+            double bitWeight = readFromSocket<double>(socket);
+//            cout << bitWeight << endl;
+
+            double samplingRate = readFromSocket<double>(socket);
+//            cout << samplingRate << endl;
+
+            std::string metrica = readString(socket);
+//            cout << metrica << endl;
+
+            double LFF = readFromSocket<double>(socket);
+//            cout << LFF << endl;
+
+            double HFF = readFromSocket<double>(socket);
+//            cout << HFF << endl;
+
+            int levelHFF = readFromSocket<qint32>(socket);
+//            cout << levelHFF << endl;
+
+            double rejector = readFromSocket<double>(socket);
+//            cout << rejector << endl;
+
+            double defSans = readFromSocket<double>(socket);
+//            cout << defSans << endl;
+        }
+        std::string scheme = readString(socket);
+//        cout << scheme << endl;
+//        exit(0);
+#endif
     }
     else
     {
-
+#if USE_DATA_STREAM
         std::string patientName = readString(socketDataStream); // cyrillic "net pacienta"
 //        cout << patientName << endl;
 
@@ -405,6 +453,8 @@ void DataReader::readStartInfo()
         socketDataStream >> samplingRate;
 //        cout << samplingRate << endl;
 //        exit(0);
+#else
+#endif
     }
     cout << "start info was read" << endl;
     if(this->inProcess)
@@ -419,10 +469,13 @@ void DataReader::readStartInfo()
 
 void DataReader::startStopTransmisson()
 {
-
-
     int var;
+#if USE_DATA_STREAM
     socketDataStream >> var;
+#else
+    var = readFromSocket<qint32>(socket);
+#endif
+
     emit startStopSignal(var);
     this->inProcess = var;
 
@@ -446,7 +499,7 @@ void DataReader::startStopTransmisson()
     }
     else //if(this->inProcess) /// finish all job
     {
-
+#if USE_DATA_STREAM
         if(!socketDataStream.atEnd())
         {
             socketDataStream.skipRawData(socketDataStream.device()->bytesAvailable());
@@ -455,6 +508,9 @@ void DataReader::startStopTransmisson()
         {
             cout << "still not at end" << endl;
         }
+#else
+        socket->readAll();
+#endif
 //        connect(socket, SIGNAL(readyRead()),
 //                this, SLOT(receiveData()));
 //        this->~DataReader();
@@ -470,7 +526,11 @@ void DataReader::markerCame()
     sliceNumber = readFromSocket<qint32>(socket);
 #endif
 
+#if USE_DATA_STREAM
     std::string name = readString(socketDataStream); /// unused
+#else
+    std::string name = readString(socket); /// unused
+#endif
 
 
 #if USE_DATA_STREAM
@@ -550,8 +610,8 @@ void DataReader::dataSliceCame()
         }
 
 
-#if 0
-        if(sliceNumber % 250 == 0)
+#if 1
+//        if(sliceNumber % 250 == 0)
         cout << sliceNumber << '\t'
              << numOfChans << '\t'
              << numOfSlices
@@ -570,7 +630,6 @@ void DataReader::dataSliceCame()
             }
             /// global eegData
             emit sliceReady(oneSlice);
-
         }
         sliceNumberPrevious = sliceNumber;
     }

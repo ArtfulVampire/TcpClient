@@ -25,7 +25,7 @@
 
 #define CPP_11 1
 #define MY_QT 1
-#define USE_DATA_STREAM 1
+#define USE_DATA_STREAM 0
 
 #if MY_QT
 #include <QtCore>
@@ -57,7 +57,6 @@ struct String
 };
 
 
-std::string readString(QDataStream & in);
 
 struct Pack
 {
@@ -99,7 +98,8 @@ constexpr double leftFreq = 5.;
 constexpr double rightFreq = 20.;
 
 const QString ExpName = "PEW";
-const QString workPath = "/media/Files/Data/RealTime/";
+//const QString workPath = "/media/Files/Data/RealTime/"; /// LINDROWS
+const QString workPath = "D:/MichaelAtanov/workData/"; /// WINDOWS
 /// to read
 const QString spectraPath = workPath + "SpectraSmooth/windows";
 const QString eyesFilePath = workPath + "eyes.txt";

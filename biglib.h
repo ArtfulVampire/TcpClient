@@ -90,8 +90,14 @@ signalType four2(const signalType & inRealData, int nn = def::fftLength, int isi
 
 bool fileExists(const QString & filePath);
 
+std::string readString(QDataStream & in);
+std::string readString(QTcpSocket * inSocket);
+
 template <typename Typ>
 Typ readFromSocket(QTcpSocket * inSocket);
+
+template <typename Typ>
+Typ peekFromSocket(QTcpSocket * inSocket);
 
 template <typename Typ>
 std::bitset<8 * sizeof(Typ)> bits(Typ in);

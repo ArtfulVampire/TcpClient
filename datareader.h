@@ -39,7 +39,9 @@ private:
    double samplingRate{};
    int numOfChannels{};
 
+#if USE_DATA_STREAM
    QDataStream socketDataStream;
+#endif
 
    eegSliceType oneSlice;
    qint32 sliceNumberPrevious = 0;
