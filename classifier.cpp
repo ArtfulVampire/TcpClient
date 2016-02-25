@@ -656,7 +656,7 @@ lineType net::successiveDataToSpectre(
 //    cout << "successiveDataToSpectre" << endl;
     matrix tmpMat(def::ns, def::windowLength);
     /// readData
-
+    {
         auto it = eegDataStart;
         for(int j = 0; j < def::windowLength; ++j, ++it)
         {
@@ -666,10 +666,11 @@ lineType net::successiveDataToSpectre(
                 tmpMat[i][j] = (*itt);
             }
         }
-
+    }
 //    cout << 1 << endl;
     /// clean from eyes
-
+    if(QFile::exists(def::eyesFilePath))
+    {
 //        writePlainData(def::workPath + "testFile1.txt",
 //                       tmpMat);
         matrix coeff(def::eegNs, 2); // 2 eog channels
@@ -686,7 +687,7 @@ lineType net::successiveDataToSpectre(
 //        writePlainData(def::workPath + "testFile2.txt",
 //                       tmpMat);
         //exit(0);
-
+    }
 
     lineType res(def::eegNs * def::spLength());
     /// count spectra, take 5-20 HZ only

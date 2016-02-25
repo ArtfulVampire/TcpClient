@@ -10,7 +10,6 @@
 #include "classifier.h"
 #include "biglib.h"
 
-#define DATA_READER 1
 
 namespace Ui {
 class MainWindow;
@@ -51,7 +50,9 @@ public slots:
 
 private:
     Ui::MainWindow * ui;
+#if SOCKET_IN_MAIN
     QTcpSocket * socket = nullptr;
+#endif
     QSerialPort * comPort = nullptr;
     QDataStream comPortDataStream{};
 

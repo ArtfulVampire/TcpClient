@@ -26,6 +26,8 @@
 #define CPP_11 1
 #define MY_QT 1
 #define USE_DATA_STREAM 0
+#define SOCKET_IN_MAIN 0
+#define DATA_READER 1
 
 #if MY_QT
 #include <QtCore>

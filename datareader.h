@@ -11,7 +11,7 @@ class DataReader : public QObject
 
 public:
     DataReader(QObject * inParent = nullptr,
-               QTcpSocket * inSocket = nullptr,
+//               QTcpSocket * inSocket = nullptr,
                bool inFullDataFlag = true);
     ~DataReader();
 
@@ -56,7 +56,8 @@ class DataReaderHandler : public QObject
 {
     Q_OBJECT
 public:
-    DataReaderHandler(QTcpSocket * inSocket = nullptr,
+    DataReaderHandler(
+//            QTcpSocket * inSocket = nullptr,
                       bool inFullDataFlag = true);
     ~DataReaderHandler();
 
@@ -79,7 +80,7 @@ signals:
 
 private:
     bool fullDataFlag = true;
-    QTcpSocket * socket = nullptr;
+//    QTcpSocket * socket = nullptr;
 
     DataReader * myReader;
 

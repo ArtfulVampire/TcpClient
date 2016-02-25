@@ -61,19 +61,23 @@ MainWindow::MainWindow(QWidget *parent) :
 
 
     /// socket
+#if SOCKET_IN_MAIN
     socket = new QTcpSocket(this);
+#endif
+
 #if !DATA_READER
     socketDataStream.setDevice(socket);
     socketDataStream.setByteOrder(QDataStream::LittleEndian); // least significant bytes first
-
 #endif
 
+#if SOCKET_IN_MAIN
     connect(socket, SIGNAL(error(QAbstractSocket::SocketError)),
             this, SLOT(socketErrorSlot(QAbstractSocket::SocketError)));
     connect(socket, SIGNAL(connected()),
             this, SLOT(socketConnectedSlot()));
     connect(socket, SIGNAL(disconnected()),
             this, SLOT(socketDisconnectedSlot()));
+#endif
     connect(ui->connectToServerPushButton, SIGNAL(clicked()),
             this, SLOT(connectSlot()));
     connect(ui->disconnectFromServerPushButton, SIGNAL(clicked()),
@@ -187,9 +191,11 @@ void MainWindow::sendTwo()
 
 void MainWindow::socketErrorSlot(QAbstractSocket::SocketError)
 {
+#if SOCKET_IN_MAIN
     ui->textEdit->append("socket error: "
                          + QString::number(socket->error())
                          + " " + socket->errorString());
+#endif
 }
 
 void MainWindow::socketDisconnectedSlot()
@@ -199,21 +205,28 @@ void MainWindow::socketDisconnectedSlot()
 
 void MainWindow::socketConnectedSlot()
 {
+#if SOCKET_IN_MAIN
     ui->textEdit->append("socket connected = "
                          + socket->peerAddress().toString()
                          + ":" + QString::number(socket->peerPort()));
+#endif
 }
 
 
 void MainWindow::disconnectSlot()
 {
+
+#if SOCKET_IN_MAIN
 //    disconnect(socket, SIGNAL(readyRead()),
 //            this, SLOT(receiveDataSlot()));
     socket->disconnectFromHost();
+#endif
 }
 
 void MainWindow::connectSlot()
 {
+#if SOCKET_IN_MAIN
+
 //    socket->abort();
     socket->connectToHost(QHostAddress(ui->serverAddressLineEdit->text()),
                           ui->serverPortSpinBox->value()); // const
@@ -228,6 +241,7 @@ void MainWindow::connectSlot()
     {
         socket->abort();
     }
+    #endif
 }
 
 void MainWindow::serverAddressSlot(int a)
@@ -242,13 +256,18 @@ void MainWindow::serverAddressSlot(int a)
 
 void MainWindow::startSlot()
 {
+
+#if SOCKET_IN_MAIN
     if(!socket->isOpen())
     {
         ui->textEdit->append("socket not opened!");
         return;
     }
+#endif
+
     myDataThread = new QThread;
-    myDataReaderHandler = new DataReaderHandler(socket,
+    myDataReaderHandler = new DataReaderHandler(
+//                              socket,
                                                 ui->fullDataCheckBox->isChecked());
 
     myDataReaderHandler->moveToThread(myDataThread);

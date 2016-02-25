@@ -16,11 +16,19 @@ using namespace enc;
 //}
 
 
-DataReader::DataReader(QObject * inParent, QTcpSocket * inSocket,
+DataReader::DataReader(QObject * inParent,
+//                       QTcpSocket * inSocket,
                        bool inFullDataFlag)
 {
     this->setParent(inParent);
-    this->socket = inSocket;
+//    this->socket = inSocket;
+
+    /// consts
+    this->socket = new QTcpSocket(this);
+    this->socket->connectToHost(QHostAddress("213.145.47.104"),
+                                120);
+
+
     this->fullDataFlag = inFullDataFlag;
 #if USE_DATA_STREAM
     this->socketDataStream.setDevice(this->socket);
@@ -565,7 +573,7 @@ void DataReader::markerCame()
         break;
     }
     }
-//    cout << "Marker: " << name << ", " << def::currentMarker << endl;
+    cout << "Marker: " << name << ", " << def::currentMarker << endl;
 
 }
 
@@ -610,7 +618,7 @@ void DataReader::dataSliceCame()
         }
 
 
-#if 1
+#if 0
 //        if(sliceNumber % 250 == 0)
         cout << sliceNumber << '\t'
              << numOfChans << '\t'
@@ -637,10 +645,11 @@ void DataReader::dataSliceCame()
 
 
 /// DataReaderHandler
-DataReaderHandler::DataReaderHandler(QTcpSocket * inSocket,
+DataReaderHandler::DataReaderHandler(
+//        QTcpSocket * inSocket,
                                      bool inFullDataFlag)
 {
-    this->socket = inSocket;
+//    this->socket = inSocket;
     this->fullDataFlag = inFullDataFlag;
 }
 
@@ -657,7 +666,7 @@ void DataReaderHandler::timerEvent(QTimerEvent *event)
 void DataReaderHandler::startReadData()
 {
     myReader = new DataReader(this,
-                              this->socket,
+//                              this->socket,
                               this->fullDataFlag);
     connect(myReader, SIGNAL(destroyed()), this, SLOT(stopReadData()));
     connect(myReader, SIGNAL(startStopSignal(int)), this, SLOT(startStopSlot(int)));
