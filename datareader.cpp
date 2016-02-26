@@ -269,7 +269,7 @@ void DataReader::receiveData()
 
 
 
-    cout << inPack.packSize << '\t' << inPack.packId << endl;
+//    cout << inPack.packSize << '\t' << inPack.packId << endl;
 //    socket->read(inPack.packSize - 4);
 //    return;
 
@@ -539,14 +539,14 @@ void DataReader::markerCame()
 #else
     std::string name = readString(socket); /// unused
 #endif
-    cout << "markerCame: name.length() = " << name.size() << endl;
 
 
 #if USE_DATA_STREAM
     socketDataStream >> def::currentMarker;
 #else
     /// quint8 in real-time, quint32 in recording play
-    def::currentMarker = readFromSocket<quint8>(socket);
+//    def::currentMarker = readFromSocket<quint8>(socket);
+    def::currentMarker = readFromSocket<quint32>(socket);
 #endif
 
     switch(def::currentMarker)
@@ -575,7 +575,7 @@ void DataReader::markerCame()
         break;
     }
     }
-    cout << "Marker: " << name << ", " << int(def::currentMarker) << endl;
+//    cout << "Marker: " << name << ", " << int(def::currentMarker) << endl;
 }
 
 void DataReader::dataSliceCame()
@@ -612,14 +612,14 @@ void DataReader::dataSliceCame()
 
 
 
-        /// fill the lost slices with zeros
-        for(int i = sliceNumberPrevious + 1; i < sliceNumber; ++i)
-        {
-            emit sliceReady(eegSliceType(numOfChans, 0));
-        }
+//        /// fill the lost slices with zeros
+//        for(int i = sliceNumberPrevious + numOfSlices; i < sliceNumber; ++i)
+//        {
+//            emit sliceReady(eegSliceType(numOfChans, 0));
+//        }
 
 
-#if 1
+#if 0
 //        if(sliceNumber % 250 == 0)
         cout << sliceNumber << '\t'
              << numOfChans << '\t'

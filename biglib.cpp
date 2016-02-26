@@ -370,6 +370,23 @@ void readFileInLine(const std::string & filePath,
 
 }
 
+template <typename signalType>
+void writeFileInLine(const QString & filePath,
+                     const signalType & outData)
+{
+    ofstream file(filePath.toStdString());
+    if(!file.good())
+    {
+        cout << "bad file" << endl;
+        return;
+    }
+    for(auto out : outData)
+    {
+        file << doubleRound(out, 4) << '\n'; // \t or \n
+    }
+    file.close();
+}
+
 void readMatrixFile(const QString & filePath,
                      matrix & outData,
                      int rows,
@@ -720,7 +737,7 @@ std::string readString(QTcpSocket * inSocket)
 {
     int numOfChars = readFromSocket<qint32>(inSocket);
     char * res = new char [numOfChars + 1];
-    cout << "readString: numOfChars = " << numOfChars << endl;
+//    cout << "readString: numOfChars = " << numOfChars << endl;
 
 //    inSocket->read(res, numOfChars);
     for(int i = 0; i < numOfChars; ++i)
@@ -766,7 +783,9 @@ template std::bitset<32> bits(quint32 in);
 template lineType smoothSpectre(const lineType & inSpectre, const int numOfSmooth);
 
 template void readFileInLine(const std::string & filePath, lineType & outData);
-template void readFileInLine(const std::string & filePath, vectType & outData);
+//template void readFileInLine(const std::string & filePath, vectType & outData);
+
+template void writeFileInLine(const QString & filePath, const lineType & outData);
 
 template lineType spectre(const vectType & data);
 template lineType spectre(const lineType & data);

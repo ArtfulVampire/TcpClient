@@ -28,6 +28,7 @@
 #define USE_DATA_STREAM 0
 #define SOCKET_IN_MAIN 0
 #define DATA_READER 1
+#define MY_LINROWS 1
 
 #if MY_QT
 #include <QtCore>
@@ -43,7 +44,6 @@ template <typename T> class eegContType : public std::list<T>{}; /// Type Of Con
 typedef std::vector<qint16> eegSliceType;
 typedef eegContType<eegSliceType> eegDataType;
 
-
 namespace enc
 {
 typedef quint32 DWORD;
@@ -57,8 +57,6 @@ struct String
     int numChars;
     char * str;
 };
-
-
 
 struct Pack
 {
@@ -89,6 +87,7 @@ constexpr int ns = 24;
 constexpr int markerChannel = 22;
 constexpr int eog1 = 22;
 constexpr int eog2 = 23;
+const QSet<int> dropChannels{7};
 
 const std::vector<qint16> markers{241, 247, 254};
 const QStringList fileMarkers{"_241", "_247", "_254"}; /// needed?
@@ -102,8 +101,11 @@ constexpr double leftFreq = 5.;
 constexpr double rightFreq = 20.;
 
 const QString ExpName = "PEW";
-//const QString workPath = "/media/Files/Data/RealTime/"; /// LINDROWS
+#if MY_LINROWS
+const QString workPath = "/media/Files/Data/RealTime/"; /// LINDROWS
+#else
 const QString workPath = "D:/MichaelAtanov/workData/"; /// WINDOWS
+#endif
 /// to read
 const QString spectraPath = workPath + "SpectraSmooth/windows";
 const QString eyesFilePath = workPath + "eyes.txt";

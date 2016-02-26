@@ -3,7 +3,7 @@
 namespace def
 {
 eegDataType eegData{}; /// make ring-style container OR NOT
-int currentType = 1;
+int currentType = -1;
 QString currentName = QString();
 quint8 currentMarker = 200;
 int slicesCame = 0;

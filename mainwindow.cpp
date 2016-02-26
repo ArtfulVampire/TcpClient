@@ -5,7 +5,6 @@ using namespace enc;
 using namespace std;
 using namespace std::chrono;
 
-static int WholeNumOfSlices = 0;
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
@@ -38,8 +37,11 @@ MainWindow::MainWindow(QWidget *parent) :
             this, SLOT(serverAddressSlot(int)));
     connect(ui->serverAddressComboBox, SIGNAL(currentIndexChanged(int)),
             this, SLOT(serverAddressSlot(int)));
+#if MY_LINROWS
+    ui->serverAddressComboBox->setCurrentText("pew");
+#else
     ui->serverAddressComboBox->setCurrentText("Enceph");
-//    ui->serverAddressComboBox->setCurrentText("pew");
+#endif
 
     /// com
     for(int i = 0; i < 9; ++i)
@@ -126,9 +128,6 @@ MainWindow::MainWindow(QWidget *parent) :
         myNetThread->wait();
         delete myNetThread;
     }
-
-//    connectSlot();
-//    startSlot();
 }
 
 MainWindow::~MainWindow()
@@ -175,9 +174,6 @@ void MainWindow::comPortSlot()
         cout << "flowControl: " << comPort->flowControl() << endl;
         cout << "requestToSend: " << comPort->isRequestToSend() << endl;
         cout << "stopBits: " << comPort->stopBits() << endl << endl;
-//        char ch(1);
-//        const char * tmp = &ch;
-//        comPort->write(tmp);
     }
 }
 

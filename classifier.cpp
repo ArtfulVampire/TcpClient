@@ -633,26 +633,30 @@ void net::dataCame(eegDataType::iterator a, eegDataType::iterator b)
         return;
     }
 
-    lineType newSpectre;
-    successiveDataToSpectre(a, b);
-    return;
+    lineType newSpectre = successiveDataToSpectre(a, b);
 
-
+#if 1
+    /// spectre
+    writeFileInLine(def::workPath + "windows" +
+                    qslash() + "SpectraSmooth" +
+                    qslash() + "spec" +
+                    def::fileMarkers[type] + "." +
+                    QString::number(windowNum) + ".txt",
+                    newSpectre);
+#endif
 
     const std::string name = def::ExpName.toStdString() +
                              def::fileMarkers[type].toStdString() +
                              "." + std::to_string(windowNum);
     successiveLearning(newSpectre, type, name);
-
 }
 
 lineType net::successiveDataToSpectre(
         const eegDataType::iterator eegDataStart,
         const eegDataType::iterator eegDataEnd)
 {
-//    cout << "successiveDataToSpectre" << endl;
-    static int windowNum = 0;
-    ++windowNum;
+    static int windowNum = 0; ++windowNum;
+
     matrix tmpMat(def::ns, def::windowLength);
     /// readData
     {
@@ -666,7 +670,7 @@ lineType net::successiveDataToSpectre(
             }
         }
         tmpMat /= 8.; /// account for weight bit
-#if 1
+#if 0
         /// checked - data is ok
         writePlainData(def::workPath + "windows" +
                        qslash() + "signal_" +
@@ -690,8 +694,8 @@ lineType net::successiveDataToSpectre(
             (*it2) -= tmpMat[def::eog1] * coeff[i][0] +
                     tmpMat[def::eog2] * coeff[i][1];
         }
-#if 1
-        /// eyes NOT YET checked
+#if 0
+        /// eyes - checked, OK
         writePlainData(def::workPath + "windows" +
                        qslash() + "signal_eyesClean_" +
                        QString::number(windowNum) + ".txt",
@@ -700,23 +704,28 @@ lineType net::successiveDataToSpectre(
                        tmpMat.cols());
 #endif
     }
-    return {};
+//    return {};
 
     lineType res(def::eegNs * def::spLength());
     /// count spectra, take 5-20 HZ only
     {
-        lineType tmpSpec;
+        lineType tmpSpec(def::spLength());
         for(int i = 0; i < def::eegNs; ++i)
         {
-            calcSpectre(tmpMat[i],
-                        tmpSpec,
-                        1024, /// fftLength consts
-                        5 /// numOfSmooth consts
-                        );
+            tmpSpec = 0.;
+            if(!def::dropChannels.contains(i))
+            {
+                calcSpectre(tmpMat[i],
+                            tmpSpec,
+                            1024, /// fftLength consts
+                            5 /// numOfSmooth consts
+                            );
+            }
             std::copy(std::begin(tmpSpec) + def::left(),
                       std::begin(tmpSpec) + def::right(),
                       std::begin(res) + i * def::spLength());
         }
+
     }
     return res;
 }
@@ -730,6 +739,7 @@ void net::successiveLearning(const lineType & newSpectre,
 
 //    const double errorThreshold = 0.8; /// add to learning set or not - logistic
     const double errorThreshold = 0.5; /// add to learning set or not - softmax, 0.5 = take all
+
 
     lineType newData = (newSpectre - averageDatum) / (sigmaVector * loadDataNorm);
 
@@ -1356,6 +1366,17 @@ std::pair<int, double> net::classifyDatum(const int & vecNum)
         output[i] = activation(output[i], temp);
         output[i][ dimensionality[i] ] = 1.; //bias, unused for the highest layer
     }
+
+#if 0
+    /// cout results
+    cout << "type = " << type << '\t';
+    for(int i = 0; i < def::numOfClasses(); ++i)
+    {
+        cout << output.back()[i] << '\t';
+    }
+    cout << endl;
+#endif
+
 
     /// effect on successive procedure
     double res = 0.;

@@ -25,6 +25,10 @@ template <typename signalType>
 void readFileInLine(const std::string & filePath,
                     signalType & result);
 
+template <typename signalType>
+void writeFileInLine(const QString & filePath,
+                     const signalType & outData);
+
 //template <typename T>
 //void eraseItems(std::vector<T> & inVect,
 //                const std::vector<int> & indices);
