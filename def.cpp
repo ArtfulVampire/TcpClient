@@ -5,7 +5,7 @@ namespace def
 eegDataType eegData{}; /// make ring-style container OR NOT
 int currentType = 1;
 QString currentName = QString();
-int currentMarker = 200;
+quint8 currentMarker = 200;
 int slicesCame = 0;
 QHostAddress hostAddress("127.0.0.1");
 int hostPort(120);

@@ -269,7 +269,7 @@ void DataReader::receiveData()
 
 
 
-//    cout << inPack.packSize << '\t' << inPack.packId << endl;
+    cout << inPack.packSize << '\t' << inPack.packId << endl;
 //    socket->read(inPack.packSize - 4);
 //    return;
 
@@ -477,7 +477,7 @@ void DataReader::readStartInfo()
 
 void DataReader::startStopTransmisson()
 {
-    int var;
+    qint32 var;
 #if USE_DATA_STREAM
     socketDataStream >> var;
 #else
@@ -539,11 +539,13 @@ void DataReader::markerCame()
 #else
     std::string name = readString(socket); /// unused
 #endif
+    cout << "markerCame: name.length() = " << name.size() << endl;
 
 
 #if USE_DATA_STREAM
     socketDataStream >> def::currentMarker;
 #else
+    /// quint8 in real-time, quint32 in recording play
     def::currentMarker = readFromSocket<quint8>(socket);
 #endif
 
@@ -573,7 +575,7 @@ void DataReader::markerCame()
         break;
     }
     }
-    cout << "Marker: " << name << ", " << def::currentMarker << endl;
+    cout << "Marker: " << name << ", " << int(def::currentMarker) << endl;
 }
 
 void DataReader::dataSliceCame()

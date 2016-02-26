@@ -77,7 +77,7 @@ extern eegDataType eegData; /// make ring-style container
 extern int currentType;
 extern int slicesCame;
 extern QString currentName;
-extern int currentMarker;
+extern quint8 currentMarker;
 extern QHostAddress hostAddress;
 extern int hostPort;
 

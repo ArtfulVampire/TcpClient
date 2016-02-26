@@ -719,8 +719,15 @@ std::string readString(QDataStream &in)
 std::string readString(QTcpSocket * inSocket)
 {
     int numOfChars = readFromSocket<qint32>(inSocket);
-    char * res = new char [numOfChars];
-    inSocket->read(res, numOfChars);
+    char * res = new char [numOfChars + 1];
+    cout << "readString: numOfChars = " << numOfChars << endl;
+
+//    inSocket->read(res, numOfChars);
+    for(int i = 0; i < numOfChars; ++i)
+    {
+        inSocket->read(&(res[i]), 1);
+    }
+    res[numOfChars] = '\0';
     std::string ret(res);
     delete[] res;
     return ret;
@@ -733,6 +740,8 @@ template qint16 readFromSocket(QTcpSocket * inSocket);
 template quint16 readFromSocket(QTcpSocket * inSocket);
 template qint32 readFromSocket(QTcpSocket * inSocket);
 template quint32 readFromSocket(QTcpSocket * inSocket);
+template qint64 readFromSocket(QTcpSocket * inSocket);
+template quint64 readFromSocket(QTcpSocket * inSocket);
 template double readFromSocket(QTcpSocket * inSocket);
 
 template qint8 peekFromSocket(QTcpSocket * inSocket);

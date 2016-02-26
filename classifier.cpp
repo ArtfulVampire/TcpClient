@@ -630,22 +630,18 @@ void net::dataCame(eegDataType::iterator a, eegDataType::iterator b)
     const int type = def::currentType;
     if(type < 0)
     {
-//        cout << "return of type " << type << endl;
         return;
     }
-    else
-    {
-//        cout << "process type " << type << endl;
-    }
-
 
     lineType newSpectre;
     successiveDataToSpectre(a, b);
+    return;
+
+
 
     const std::string name = def::ExpName.toStdString() +
                              def::fileMarkers[type].toStdString() +
                              "." + std::to_string(windowNum);
-//    return;
     successiveLearning(newSpectre, type, name);
 
 }
@@ -670,7 +666,7 @@ lineType net::successiveDataToSpectre(
             }
         }
         tmpMat /= 8.; /// account for weight bit
-#if 0
+#if 1
         /// checked - data is ok
         writePlainData(def::workPath + "windows" +
                        qslash() + "signal_" +
@@ -704,6 +700,7 @@ lineType net::successiveDataToSpectre(
                        tmpMat.cols());
 #endif
     }
+    return {};
 
     lineType res(def::eegNs * def::spLength());
     /// count spectra, take 5-20 HZ only
