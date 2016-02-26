@@ -3,10 +3,12 @@
 namespace def
 {
 eegDataType eegData{}; /// make ring-style container OR NOT
-int currentType = -1;
+int currentType = 1;
 QString currentName = QString();
 int currentMarker = 200;
 int slicesCame = 0;
+QHostAddress hostAddress("127.0.0.1");
+int hostPort(120);
 //double freq = 250.;
 //int fftLength = 1024;
 //double leftFreq = 5.;

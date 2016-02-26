@@ -25,8 +25,8 @@ DataReader::DataReader(QObject * inParent,
 
     /// consts
     this->socket = new QTcpSocket(this);
-    this->socket->connectToHost(QHostAddress("213.145.47.104"),
-                                120);
+    this->socket->connectToHost(def::hostAddress,
+                                def::hostPort);
 
 
     this->fullDataFlag = inFullDataFlag;
@@ -574,7 +574,6 @@ void DataReader::markerCame()
     }
     }
     cout << "Marker: " << name << ", " << def::currentMarker << endl;
-
 }
 
 void DataReader::dataSliceCame()
@@ -618,7 +617,7 @@ void DataReader::dataSliceCame()
         }
 
 
-#if 0
+#if 1
 //        if(sliceNumber % 250 == 0)
         cout << sliceNumber << '\t'
              << numOfChans << '\t'

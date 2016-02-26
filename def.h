@@ -78,6 +78,8 @@ extern int currentType;
 extern int slicesCame;
 extern QString currentName;
 extern int currentMarker;
+extern QHostAddress hostAddress;
+extern int hostPort;
 
 
 

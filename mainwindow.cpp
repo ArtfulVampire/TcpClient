@@ -38,11 +38,11 @@ MainWindow::MainWindow(QWidget *parent) :
             this, SLOT(serverAddressSlot(int)));
     connect(ui->serverAddressComboBox, SIGNAL(currentIndexChanged(int)),
             this, SLOT(serverAddressSlot(int)));
-//    ui->serverAddressComboBox->setCurrentText("Enceph");
-    ui->serverAddressComboBox->setCurrentText("pew");
+    ui->serverAddressComboBox->setCurrentText("Enceph");
+//    ui->serverAddressComboBox->setCurrentText("pew");
 
     /// com
-    for(int i = 0; i < 10; ++i)
+    for(int i = 0; i < 9; ++i)
     {
         ui->comPortComboBox->addItem("COM"+QString::number(i+1));
     }
@@ -77,11 +77,12 @@ MainWindow::MainWindow(QWidget *parent) :
             this, SLOT(socketConnectedSlot()));
     connect(socket, SIGNAL(disconnected()),
             this, SLOT(socketDisconnectedSlot()));
-#endif
+
     connect(ui->connectToServerPushButton, SIGNAL(clicked()),
             this, SLOT(connectSlot()));
     connect(ui->disconnectFromServerPushButton, SIGNAL(clicked()),
             this, SLOT(disconnectSlot()));
+#endif
 
     connect(this->ui->startPushButton, SIGNAL(clicked()),
             this, SLOT(startSlot()));
@@ -249,8 +250,12 @@ void MainWindow::serverAddressSlot(int a)
     const QString & alias = ui->serverAddressComboBox->itemData(a).toString();
     const int semicol = alias.indexOf(':');
 
-    ui->serverAddressLineEdit->setText(alias.left(semicol));
-    ui->serverPortSpinBox->setValue(alias.right(alias.size() - semicol - 1).toInt());
+    def::hostAddress = QHostAddress(alias.left(semicol));
+    def::hostPort = alias.right(alias.size() - semicol - 1).toInt();
+
+    ui->serverAddressLineEdit->setText(def::hostAddress.toString());
+    ui->serverPortSpinBox->setValue(def::hostPort);
+
 
 }
 

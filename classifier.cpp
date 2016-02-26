@@ -7,8 +7,7 @@ using namespace std;
 net::net(QObject * par)
 {
     this->setParent(par);
-    confusionMatrix = matrix(this->numOfClasses, this->numOfClasses, 0.);
-//    workPath = "/media/Files/Data/RealTime";
+    confusionMatrix = matrix(def::numOfClasses(), def::numOfClasses(), 0.);
 }
 
 net::~net()
@@ -155,7 +154,7 @@ std::pair<std::vector<int>, std::vector<int> > net::makeIndicesSetsCross(
 
     const int fold = this->folds;
 
-    for(int i = 0; i < this->numOfClasses; ++i)
+    for(int i = 0; i < def::numOfClasses(); ++i)
     {
 
         for(int j = 0; j < classCount[i]; ++j)
@@ -259,7 +258,7 @@ void net::averageClassification()
     std::ofstream res;
     res.open(def::netResPath.toStdString(), std::ios_base::app);
 
-    for(int i = 0; i < this->numOfClasses; ++i)
+    for(int i = 0; i < def::numOfClasses(); ++i)
     {
         const double num = confusionMatrix[i].sum();
         if(num != 0.)
@@ -276,7 +275,7 @@ void net::averageClassification()
     double corrSum = 0.;
     double wholeNum = 0.;
 
-    for(int i = 0; i < this->numOfClasses; ++i)
+    for(int i = 0; i < def::numOfClasses(); ++i)
     {
         corrSum += confusionMatrix[i][i];
         wholeNum += confusionMatrix[i].sum();
@@ -286,7 +285,7 @@ void net::averageClassification()
     // kappa
     double pE = 0.; // for Cohen's kappa
     const double S = confusionMatrix.sum();
-    for(int i = 0; i < this->numOfClasses; ++i)
+    for(int i = 0; i < def::numOfClasses(); ++i)
     {
         pE += (confusionMatrix[i].sum() * confusionMatrix.getCol(i).sum()) /
               (S * S);
@@ -324,7 +323,7 @@ void net::drawWts(std::string wtsPath,
     matrix drawWts; // 3 arrays of weights
 #if 0
     vec tempVec;
-    for(int i = 0; i < this->numOfClasses; ++i)
+    for(int i = 0; i < def::numOfClasses(); ++i)
     {
         tempVec.clear();
         for(int j = 0; j < dataMatrix.cols(); ++j)
@@ -382,7 +381,7 @@ void net::reset()
     const int numOfLayers = 2;
     dimensionality.resize(numOfLayers);
     dimensionality[0] = this->dataMatrix.cols();
-    dimensionality[1] = this->numOfClasses;
+    dimensionality[1] = def::numOfClasses();
 
     weight.resize(numOfLayers - 1);
     for(int i = 0; i < numOfLayers - 1; ++i) // weights from layer i to i+1
@@ -412,7 +411,7 @@ void net::tallNetIndices(const std::vector<int> & indices)
     std::ofstream badFilesStr;
     badFilesStr.open(def::netBadPath.toStdString(), std::ios_base::app);
 
-    matrix localConfusionMatrix(this->numOfClasses, this->numOfClasses);
+    matrix localConfusionMatrix(def::numOfClasses(), def::numOfClasses());
     for(int i = 0; i < indices.size(); ++i)
     {
         const int outClass = classifyDatum(indices[i]).first;
@@ -453,7 +452,7 @@ void net::tallNetIndices(const std::vector<int> & indices)
 //    logStream.open(helpString.c_str(), std::ios_base::app);
     logStream.open(def::netLogPath.toStdString(), std::ios_base::app);
 
-    for(int i = 0; i < this->numOfClasses; ++i)
+    for(int i = 0; i < def::numOfClasses(); ++i)
     {
         const double num = localConfusionMatrix[i].sum();
         if(num != 0.)
@@ -468,7 +467,7 @@ void net::tallNetIndices(const std::vector<int> & indices)
     }
 
     double corrSum = 0.;
-    for(int i = 0; i < this->numOfClasses; ++i)
+    for(int i = 0; i < def::numOfClasses(); ++i)
     {
         corrSum += localConfusionMatrix[i][i];
     }
@@ -511,7 +510,9 @@ void net::successivePreclean(const std::string & spectraPath)
 //    emit finish();
     return;
 
-    for(int i = 0; i < leest2.size() - learnSetStay * numOfClasses * 2; ++i)
+    for(int i = 0;
+        i < leest2.size() - learnSetStay * def::numOfClasses() * 2;
+        ++i)
     {
 //        remove(leest2[i].c_str());
     }
@@ -654,6 +655,8 @@ lineType net::successiveDataToSpectre(
         const eegDataType::iterator eegDataEnd)
 {
 //    cout << "successiveDataToSpectre" << endl;
+    static int windowNum = 0;
+    ++windowNum;
     matrix tmpMat(def::ns, def::windowLength);
     /// readData
     {
@@ -666,13 +669,20 @@ lineType net::successiveDataToSpectre(
                 tmpMat[i][j] = (*itt);
             }
         }
+        tmpMat /= 8.; /// account for weight bit
+#if 0
+        /// checked - data is ok
+        writePlainData(def::workPath + "windows" +
+                       qslash() + "signal_" +
+                       QString::number(windowNum) + ".txt",
+                       tmpMat,
+                       def::ns,
+                       tmpMat.cols());
+#endif
     }
-//    cout << 1 << endl;
     /// clean from eyes
     if(QFile::exists(def::eyesFilePath))
     {
-//        writePlainData(def::workPath + "testFile1.txt",
-//                       tmpMat);
         matrix coeff(def::eegNs, 2); // 2 eog channels
         readMatrixFile(def::eyesFilePath,
                        coeff,
@@ -684,14 +694,20 @@ lineType net::successiveDataToSpectre(
             (*it2) -= tmpMat[def::eog1] * coeff[i][0] +
                     tmpMat[def::eog2] * coeff[i][1];
         }
-//        writePlainData(def::workPath + "testFile2.txt",
-//                       tmpMat);
-        //exit(0);
+#if 1
+        /// eyes NOT YET checked
+        writePlainData(def::workPath + "windows" +
+                       qslash() + "signal_eyesClean_" +
+                       QString::number(windowNum) + ".txt",
+                       tmpMat,
+                       def::ns,
+                       tmpMat.cols());
+#endif
     }
 
     lineType res(def::eegNs * def::spLength());
     /// count spectra, take 5-20 HZ only
-
+    {
         lineType tmpSpec;
         for(int i = 0; i < def::eegNs; ++i)
         {
@@ -700,14 +716,11 @@ lineType net::successiveDataToSpectre(
                         1024, /// fftLength consts
                         5 /// numOfSmooth consts
                         );
-//            cout << i << endl;
             std::copy(std::begin(tmpSpec) + def::left(),
                       std::begin(tmpSpec) + def::right(),
                       std::begin(res) + i * def::spLength());
-//            cout << i << endl;
         }
-//        cout << 3 << endl;
-
+    }
     return res;
 }
 
@@ -718,8 +731,6 @@ void net::successiveLearning(const lineType & newSpectre,
     /// consider loaded wts
     /// dataMatrix is learning matrix
 
-
-
 //    const double errorThreshold = 0.8; /// add to learning set or not - logistic
     const double errorThreshold = 0.5; /// add to learning set or not - softmax, 0.5 = take all
 
@@ -729,15 +740,19 @@ void net::successiveLearning(const lineType & newSpectre,
 
     const std::pair<int, double> outType = classifyDatum(dataMatrix.rows() - 1); // take the last
     confusionMatrix[newType][outType.first] += 1.;
-    if(outType.first == newType) /// if good coincidence
+
+    /// if correct classification
+    if(outType.first == newType)
     {
-        if(newType == 1 ||
-           newType == 2)
+        /// if the stimulus is a problem and not resting
+        if(newType == 0 ||
+           newType == 1)
         {
             cout << "emit 1" << endl;
             emit sendSignal(1);
         }
 
+        /// if accurate classification
         if(outType.second < errorThreshold)
         {
             const int num = std::find(types.begin(), types.end(), newType) - types.begin();
@@ -752,8 +767,8 @@ void net::successiveLearning(const lineType & newSpectre,
     }
     else
     {
-        if(newType == 1 ||
-           newType == 2)
+        if(newType == 0 ||
+           newType == 1)
         {
             cout << "emit 2" << endl;
             emit sendSignal(2);
@@ -868,9 +883,8 @@ void net::leaveOneOutClassification()
 
 void net::crossClassification()
 {
-
     std::vector<std::vector<int> > arr;
-    arr.resize(this->numOfClasses, std::vector<int>());
+    arr.resize(def::numOfClasses(), std::vector<int>());
     for(int i = 0; i < dataMatrix.rows(); ++i)
     {
         arr[ types[i] ].push_back(i);
@@ -883,7 +897,7 @@ void net::crossClassification()
         cout << " "; cout.flush();
 
         // mix arr for one "pair"-iteration
-        for(int i = 0; i < this->numOfClasses; ++i)
+        for(int i = 0; i < def::numOfClasses(); ++i)
         {
 #if CPP_11
             unsigned seed = std::chrono::system_clock::now().time_since_epoch().count();
@@ -901,12 +915,12 @@ void net::crossClassification()
 //            if(tallCleanFlag)
 //            {
 //                /// remake for k-fold tallCleanFlag
-//                arr.resize(this->numOfClasses, {});
+//                arr.resize(def::numOfClasses(), {});
 //                for(int i = 0; i < dataMatrix.rows(); ++i)
 //                {
 //                    arr[ types[i] ].push_back(i);
 //                }
-//                for(int i = 0; i < this->numOfClasses; ++i)
+//                for(int i = 0; i < def::numOfClasses(); ++i)
 //                {
 //                    unsigned seed = std::chrono::system_clock::now().time_since_epoch().count();
 //                    std::shuffle(arr[i].begin(),
@@ -1069,7 +1083,7 @@ void net::loadData(const std::string & spectraPath)
 
 
     dataMatrix = matrix();
-    classCount.resize(this->numOfClasses, 0.);
+    classCount.resize(def::numOfClasses(), 0.);
     types.clear();
     fileNames.clear();
 
@@ -1097,7 +1111,6 @@ void net::loadData(const std::string & spectraPath)
             pushBackDatum(tempArr, i, fileName);
         }
     }
-//    cout << "loadDataNorm = " << loadDataNorm << endl;
 #if 1
     averageDatum = dataMatrix.averageRow();
     for(int i = 0; i < dataMatrix.rows(); ++i)
@@ -1175,7 +1188,7 @@ void net::learnNetIndices(std::vector<int> mixNum,
     std::vector<double> normCoeff;
     const double helpMin = *std::min_element(classCount.begin(),
                                              classCount.end());
-    for(int i = 0; i < this->numOfClasses; ++i)
+    for(int i = 0; i < def::numOfClasses(); ++i)
     {
         normCoeff.push_back(helpMin / classCount[i]);
     }
@@ -1276,7 +1289,7 @@ void net::learnNetIndices(std::vector<int> mixNum,
             // numOfLayers = 2 and i == 0 in this case
             // simplified
 
-            for(int j = 0; j < this->numOfClasses; ++j)
+            for(int j = 0; j < def::numOfClasses(); ++j)
             {
                 weight[0][j] += output[0]
                         * (learnRate * normCoeff[type]
@@ -1351,11 +1364,11 @@ std::pair<int, double> net::classifyDatum(const int & vecNum)
     double res = 0.;
     if(activation == logistic)
     {
-        for(int i = 0; i < this->numOfClasses; ++i)
+        for(int i = 0; i < def::numOfClasses(); ++i)
         {
             res += pow((output.back()[i] - (i == type)), 2);
         }
-        res = sqrt(res / this->numOfClasses);
+        res = sqrt(res / def::numOfClasses());
     }
     else if(activation == softmax)
     {

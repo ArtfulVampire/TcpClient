@@ -104,4 +104,6 @@ std::bitset<8 * sizeof(Typ)> bits(Typ in);
 
 std::string slash();
 QString qslash();
+
+
 #endif // BIGLIB_H

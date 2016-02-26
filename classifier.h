@@ -83,7 +83,6 @@ private:
     /// previously from namespace def
     std::string workPath; // def::dir->absolutePath()
     std::string ExpName; /// really unused
-    static const int numOfClasses = 3;
 
 signals:
     void finish();
