@@ -121,6 +121,10 @@ MainWindow::MainWindow(QWidget *parent) :
     //    myNetThread->start(QThread::TimeCriticalPriority); // veru fast
         myNetThread->start(QThread::HighestPriority); // veru fast
 
+//        /// GRID TEST
+//        myNetThread->wait();
+
+
     }
     if(0)
     {

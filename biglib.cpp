@@ -56,6 +56,26 @@ int typeOfFileName(const std::string & filePath)
     return -1;
 }
 
+int typeOfFileName(const QString & fileName)
+{
+    QStringList leest;
+    int res = 0;
+    for(const QString & marker : def::fileMarkers)
+    {
+        leest.clear();
+        leest = marker.split(QRegExp("[,; ]"), QString::SkipEmptyParts);
+        for(const QString & filter : leest)
+        {
+            if(fileName.contains(filter))
+            {
+                return res;
+            }
+        }
+        ++res;
+    }
+    return -1;
+}
+
 bool endsWith(const std::string & inStr,
               const std::string & filter)
 {

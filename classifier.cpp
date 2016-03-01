@@ -192,11 +192,12 @@ void net::autoClassification(const QString & spectraDir)
     loadData(spectraDir);
 
 #if 0
-        adjustLearnRate(this->lowLimit,
-                        this->highLimit); // or reduce coeff ?
+    adjustLearnRate(this->lowLimit,
+                    this->highLimit); // or reduce coeff ?
 #endif
 
 
+        confusionMatrix.fill(0.);
     if(this->Mode == myMode::k_fold)
     {
         crossClassification();
@@ -564,7 +565,7 @@ void net::successiveProcessing(const QString & spectraPath)
     exIndices.clear();
 
     /// check for no test items
-    cout << "check for no test items" << endl;
+//    cout << "check for no test items" << endl;
     loadData(spectraPath);
     for(int i = 0; i < dataMatrix.rows(); ++i)
     {
@@ -584,7 +585,7 @@ void net::successiveProcessing(const QString & spectraPath)
     std::vector<double> count = classCount;
     for(int i = 0; i < dataMatrix.rows(); ++i)
     {
-        if(count[ types[i] ] > this->learnSetStay)
+        if(count[ types[i] ] > learnSetStay)
         {
             eraseIndices.push_back(i);
             count[ types[i] ] -= 1.;
@@ -596,15 +597,37 @@ void net::successiveProcessing(const QString & spectraPath)
     /// consts
     errCrit = 0.05;
     learnRate = 0.05;
+
     cout << "get initial weights on train set" << endl;
+    learnNet();
 
-    learnNet(); /// get initial weights on train set
-
-    errCrit = 0.05;
-    learnRate = 0.05;
+    /// GRID TEST
+    errCrit = 0.02;
+    learnRate = 0.02;
+//    errCrit = def::tempErrcrit;
+//    learnRate = def::tempLrate;
 
     cout << "successive: initial learn done" << endl;
     cout << "successive itself" << endl;
+
+#if OFFLINE_SUCCESSIVE
+    lineType tempArr;
+    int type = -1;
+    QStringList leest = QDir(spectraPath).entryList({"*_test*"}); /// special generality
+
+//    helpString = "/media/michael/Files/Data/RealTime/windows/SpectraSmooth";
+//    QStringList leest = QDir(helpString).entryList(QDir::Files); /// special generality
+
+    for(const QString & fileNam : leest)
+    {
+        readFileInLine(spectraPath + qslash() + fileNam,
+                       tempArr);
+        type = typeOfFileName(fileNam);
+        successiveLearning(tempArr, type, fileNam);
+    }
+    averageClassification();
+    emit finish();
+#endif
 }
 
 void net::dataCame(eegDataType::iterator a, eegDataType::iterator b)
@@ -619,7 +642,7 @@ void net::dataCame(eegDataType::iterator a, eegDataType::iterator b)
 
     lineType newSpectre = successiveDataToSpectre(a, b);
 
-#if 1
+#if 0
     /// spectre
     writeFileInLine(def::workPath + "windows" +
                     qslash() + "SpectraSmooth" +
@@ -678,7 +701,7 @@ lineType net::successiveDataToSpectre(
             (*it2) -= tmpMat[def::eog1] * coeff[i][0] +
                     tmpMat[def::eog2] * coeff[i][1];
         }
-#if 1
+#if 0
         /// eyes - checked, OK
         writePlainData(def::workPath + "windows" +
                        qslash() + def::ExpName + "_" +
@@ -720,10 +743,7 @@ void net::successiveLearning(const lineType & newSpectre,
 {
     /// consider loaded wts
     /// dataMatrix is learning matrix
-
-
     lineType newData = (newSpectre - averageDatum) / (sigmaVector * loadDataNorm);
-
 
     pushBackDatum(newData, newType, newFileName);
 
@@ -737,14 +757,18 @@ void net::successiveLearning(const lineType & newSpectre,
         if(newType == 0 ||
            newType == 1)
         {
-//            cout << "emit 1" << endl;
             emit sendSignal(1);
         }
 
         /// if accurate classification
         if(outType.second < def::errorThreshold)
+        /// GRID TEST
+//        if(outType.second < def::tempError)
         {
-            const int num = std::find(types.begin(), types.end(), newType) - types.begin();
+            const int num = std::find(types.begin(),
+                                      types.end(),
+                                      newType)
+                            - types.begin();
             eraseDatum(num);
             ++numGoodNew;
         }
@@ -759,13 +783,12 @@ void net::successiveLearning(const lineType & newSpectre,
         if(newType == 0 ||
            newType == 1)
         {
-//            cout << "emit 2" << endl;
             emit sendSignal(2);
         }
         popBackDatum();
     }
 
-    if(numGoodNew == this->numGoodNewLimit)
+    if(numGoodNew == numGoodNewLimit)
     {
         successiveRelearn();
         numGoodNew = 0;
@@ -775,24 +798,15 @@ void net::successiveLearning(const lineType & newSpectre,
 void net::successiveRelearn()
 {
     // decay weights
-    const double rat = this->decayRate;
+    const double rat = decayRate;
     for(int i = 0; i < dimensionality.size() - 1; ++i)
     {
-#if CPP_11
         std::for_each(weight[i].begin(),
                       weight[i].end(),
                       [rat](lineType & in)
         {
             in *= 1. - rat;
         });
-#else
-        for(std::vector<lineType>::iterator it = weight[i].begin();
-            it != weight[i].end();
-            ++it)
-        {
-            (*it) *= 1. - rat;
-        }
-#endif
     }
     learnNet(false); // relearn w/o weights reset
 }
@@ -1137,11 +1151,7 @@ void net::loadData(const QString & spectraPath)
 void net::learnNet(const bool resetFlag)
 {
     std::vector<int> mixNum(dataMatrix.rows());
-#if CPP_11
     std::iota(mixNum.begin(), mixNum.end(), 0);
-#else
-    myIota(mixNum);
-#endif
     learnNetIndices(mixNum, resetFlag);
 }
 
@@ -1149,13 +1159,10 @@ void net::learnNetIndices(std::vector<int> mixNum,
                           const bool resetFlag)
 {
 
-//    cout << "pew" << endl;
     if(resetFlag)
     {
         reset();
     }
-
-//    cout << "pewpew" << endl;
 
     const int numOfLayers = dimensionality.size();
     std::vector<std::valarray<double> > deltaWeights(numOfLayers);
@@ -1166,12 +1173,8 @@ void net::learnNetIndices(std::vector<int> mixNum,
         output[i].resize(dimensionality[i] + 1); // for biases
     }
 
-
     double currentError = this->errCrit + 0.1;
-
     int type = 0;
-
-
 
     /// edit due to Indices
     std::vector<double> normCoeff;
@@ -1184,45 +1187,28 @@ void net::learnNetIndices(std::vector<int> mixNum,
     epoch = 0;
     while(currentError > this->errCrit && epoch < this->maxEpoch)
     {
-#if CPP_11
+        /// mix the sequence of input vectors
         unsigned seed = std::chrono::system_clock::now().time_since_epoch().count();
-        // mix the sequence of input vectors
         std::shuffle(mixNum.begin(),
                      mixNum.end(),
                      std::default_random_engine(seed));
-#else
-        myShuffle(mixNum);
-#endif
+
 
         currentError = 0.;
 
-#if CPP_11
         for(const int & index : mixNum)
         {
-#else
-        for(std::vector<int>::iterator it = mixNum.begin();
-            it != mixNum.end();
-            ++it)
-        {
-            const int index = *it;
-#endif
-
-#if CPP_11
-            // add data
+            /// add data
             std::copy(begin(dataMatrix[index]),
                       end(dataMatrix[index]),
                       begin(output[0]));
-#else
-            output[0] = dataMatrix[index];
-#endif
 
 
-
-            // add bias
+            /// add bias
             output[0][output[0].size() - 1] = 1.;
             type = types[index];
 
-            //obtain outputs
+            /// obtain outputs
             for(int i = 1; i < numOfLayers; ++i)
             {
                 for(int j = 0; j < dimensionality[i]; ++j)
@@ -1234,7 +1220,7 @@ void net::learnNetIndices(std::vector<int> mixNum,
                 output[i][ dimensionality[i] ] = 1.; //bias, unused for the highest layer
             }
 
-            //error in the last layer
+            /// error in the last layer
             {
                 double err = 0.;
                 for(int j = 0; j < dimensionality.back(); ++j)
@@ -1288,7 +1274,6 @@ void net::learnNetIndices(std::vector<int> mixNum,
 
             // numOfLayers = 2 and i == 0 in this case
             // simplified
-
             for(int j = 0; j < def::numOfClasses(); ++j)
             {
                 weight[0][j] += output[0]
@@ -1321,17 +1306,15 @@ void net::learnNetIndices(std::vector<int> mixNum,
 #endif
         }
         ++epoch;
-        //count error
         if(def::errType == errorNetType::SME)
         {
             currentError /= mixNum.size();
         }
-
-//        cout << "epoch = " << epoch << "\terror = " << doubleRound(currentError, 4) << endl;
     }
-    cout << "epoch = " << epoch << "\terror = " << doubleRound(currentError, 4) << endl;
+//    cout << "epoch = " << epoch << "\terror = " << doubleRound(currentError, 4) << endl;
 
-    writeWts();
+//    writeWts();
+
 //    printData();
 }
 
@@ -1388,7 +1371,15 @@ std::pair<int, double> net::classifyDatum(const int & vecNum)
     resizeValar(output.back(), def::numOfClasses());
     int outClass = indexOfMax(output.back());
 
-#if 1
+    /// effect on successive procedure
+    double res = 0.;
+    for(int j = 0; j < dimensionality.back(); ++j)
+    {
+        res += pow((output.back()[j] - int(type == j) ), 2.);
+    }
+    res = sqrt(res);
+
+#if 0
     /// cout results
     cout << "type = " << type << '\t' << "(";
     for(int i = 0; i < def::numOfClasses(); ++i)
@@ -1404,35 +1395,10 @@ std::pair<int, double> net::classifyDatum(const int & vecNum)
     {
         cout << "-";
     }
+    cout << "\t" << doubleRound(res, 2);
     cout << endl;
 #endif
-
-
-    /// effect on successive procedure
-    double res = 0.;
-    for(int j = 0; j < dimensionality.back(); ++j)
-    {
-        res += pow((output.back()[j] - int(type == j) ), 2.);
-    }
-    res = sqrt(res);
-
-    // return number of maximal element in output.back()
-#if CPP_11
     return std::make_pair(outClass,
                           res);
-#else
-    int maxNum = -1;
-    double maxVal = 0.;
-    for(int i = 0; i < output.back().size() - 1; ++i)
-    {
-        if(output.back()[i] > maxVal)
-        {
-            maxVal = output.back()[i];
-            maxNum = i;
-        }
-    }
-    return std::make_pair(maxNum, res);
-#endif
-
 }
 

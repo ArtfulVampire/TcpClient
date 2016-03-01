@@ -65,7 +65,7 @@ private:
     static const int lowLimit = 70;
     static const int highLimit = 110;
 
-    static const int learnSetStay = 100;
+    static const int learnSetStay = 120;
     static const int numGoodNewLimit = 5;
     static constexpr double decayRate = 0.01;
 

@@ -23,12 +23,16 @@
 #include <ios>
 #include <fstream>
 
+/// if one changes one of these - certain death
 #define CPP_11 1
 #define MY_QT 1
 #define USE_DATA_STREAM 1
 #define SOCKET_IN_MAIN 0
 #define DATA_READER 1
+
+/// but one can change these
 #define MY_LINROWS 1
+#define OFFLINE_SUCCESSIVE 1
 
 
 #if MY_QT
@@ -85,6 +89,10 @@ extern markerType currentMarker;
 extern QHostAddress hostAddress;
 extern int hostPort;
 
+extern double tempError;
+extern double tempErrcrit;
+extern double tempLrate;
+
 /// consts
 constexpr int eegNs = 19;
 constexpr int ns = 24;
@@ -92,8 +100,8 @@ constexpr int markerChannel = 22;
 constexpr int eog1 = 22;
 constexpr int eog2 = 23;
 const QSet<int> dropChannels{7, 11};
-const errorNetType errType = errorNetType::maxDist; /// how to calculate
-constexpr double errorThreshold = 0.3;
+const errorNetType errType = errorNetType::SME; /// how to calculate
+constexpr double errorThreshold = 1.0;
 
 const std::vector<qint16> markers{241, 247, 254};
 const QStringList fileMarkers{"_241", "_247", "_254"}; /// needed?

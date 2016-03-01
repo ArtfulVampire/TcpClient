@@ -48,6 +48,7 @@ bool contains(const std::string & inStr,
               const std::vector<std::string> & filters);
 
 int typeOfFileName(const std::string & filePath);
+int typeOfFileName(const QString & fileName);
 
 void myIota(std::vector<int> & in);
 void myShuffle(std::vector<int> & in);
