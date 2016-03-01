@@ -21,10 +21,10 @@ public:
 private:
     matrix dataMatrix; // biases and types separately
     std::vector<int> types;
-    std::vector<std::string> fileNames;
+    std::vector<QString> fileNames;
     std::vector<double> classCount; // really int but...
 
-    double loadDataNorm = 10.; // for windows, empirical
+    const double loadDataNorm = 10.; // for windows, empirical
     lineType averageDatum;
     lineType sigmaVector;
 
@@ -35,7 +35,6 @@ private:
 
     double averageAccuracy = 0.;
     double kappa = 0.; // Cohen's
-
 
     bool tallCleanFlag  = false;
 
@@ -62,27 +61,27 @@ private:
     double errCrit = 0.05;
     double learnRate = 0.05;
 
+
     static const int lowLimit = 70;
     static const int highLimit = 110;
 
     static const int learnSetStay = 100;
     static const int numGoodNewLimit = 5;
+    static constexpr double decayRate = 0.01;
+
     int numGoodNew = 0;
+
 #if CPP_11
     std::vector<int> exIndices{};
 #else
     std::vector<int> exIndices;
 #endif
-    static constexpr double decayRate = 0.01;
+
 
 
     int numOfPairs = 15;
     int folds = 8;
     double rdcCoeff = 1.; // deprecated
-
-    /// previously from namespace def
-    std::string workPath; // def::dir->absolutePath()
-    std::string ExpName; /// really unused
 
 signals:
     void finish();
@@ -91,11 +90,14 @@ signals:
 public slots:
     void dataCame(eegDataType::iterator a, eegDataType::iterator b);
 
+    void averageClassification();
+
 public:
     void startOperate();
     double adjustLearnRate(int lowLimit,
                            int highLimit);
     std::pair<int, double> classifyDatum(const int & vecNum);
+    double errorNet();
 
 
     std::vector<int> makeLearnIndexSet();
@@ -103,14 +105,14 @@ public:
                                                                         const int numOfFold);
     std::valarray<double> (*activation)(const std::valarray<double> & in, double temp) = softmax;
 
-    void autoClassification(const std::string & spectraDir);
+    void autoClassification(const QString & spectraDir);
     //    void autoClassificationSimple();
     void leaveOneOut();
     void crossClassification();
     void leaveOneOutClassification();
     void halfHalfClassification();
-    void trainTestClassification(const std::string & trainTemplate = "_train",
-                                 const std::string & testTemplate = "_test");
+    void trainTestClassification(const QString & trainTemplate = "_train",
+                                 const QString & testTemplate = "_test");
 
     void learnNetIndices(std::vector<int> mixNum,
                          const bool resetFlag = true);
@@ -119,7 +121,6 @@ public:
     void tallNet();
     void reset();
 
-    void averageClassification();
 
     double getAverageAccuracy();
     double getKappa();
@@ -128,21 +129,22 @@ public:
     double getLrate();
 
     void aaDefaultSettings();
+    void printData();
 
 
 
-    void loadData(const std::string & spectraPath = std::string());
+    void loadData(const QString & spectraPath = QString());
     void popBackDatum();
     void pushBackDatum(const lineType & inDatum,
                        const int & inType,
-                       const std::string & inFileName);
+                       const QString & inFileName);
     void eraseDatum(const int & index);
     void eraseData(const std::vector<int> & indices);
 
 
 
 
-    void writeWts(const std::string &wtsPath = std::string());
+    void writeWts(const std::string & wtsPath = std::string());
 #if DRAWS
     void drawWts(std::string wtsPath = std::string(),
                  std::string picPath = std::string());
@@ -151,16 +153,16 @@ public:
                  twovector<lineType> * wtsMatrix = NULL);
 
 
-    void successivePreclean(const std::string & spectraPath = std::string());
+    void successivePreclean(const QString & spectraPath = QString());
 
-    void successiveProcessing(const std::string & spectraPath = std::string());
+    void successiveProcessing(const QString & spectraPath = QString());
 
     lineType successiveDataToSpectre(const eegDataType::iterator eegDataStart,
                                      const eegDataType::iterator eegDataEnd);
 
     void successiveLearning(const lineType & newSpectre,
                             const int newType,
-                            const std::string & newFileName);
+                            const QString & newFileName);
     void successiveRelearn();
 
 
@@ -178,6 +180,11 @@ public:
 
     ~NetHandler()
     {
+    }
+
+    void printAccuracy()
+    {
+        emit printAcc();
     }
 
 public slots:
@@ -199,6 +206,8 @@ public slots:
                 this, SLOT(rethrowSlot(int)));
         connect(this, SIGNAL(toProcess(eegDataType::iterator, eegDataType::iterator)),
                 myNet, SLOT(dataCame(eegDataType::iterator, eegDataType::iterator)));
+        connect(this, SIGNAL(printAcc()),
+                myNet, SLOT(averageClassification()));
         myNet->startOperate();
     }
     void dataReceive(eegDataType::iterator a, eegDataType::iterator b)
@@ -212,6 +221,7 @@ signals:
     void sendSignal(int);
     void finishWork();
     void toProcess(eegDataType::iterator, eegDataType::iterator);
+    void printAcc();
 
 private:
     net * myNet;

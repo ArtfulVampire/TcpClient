@@ -71,13 +71,11 @@ inline std::valarray<double> logistic(const std::valarray<double> & in, double t
 
 inline std::valarray<double> softmax(const std::valarray<double> & in, double temp = 0.)
 {
-    // -1 for bias
-    double sum = 0.;
-    for(int i = 0; i < in.size() - 1; ++i)
-    {
-        sum += exp(in[i]);
-    }
-    return exp(in) / sum; // dont care about the last
+    double sum = std::accumulate(std::begin(in),
+                                 std::end(in) - 1, /// bias
+                                 0.,
+                                 [](double a, double b){return a + exp(b);});
+    return exp(in) / sum; // dont care about the last (bias)
 }
 
 inline int fftL(const int & in)
@@ -89,12 +87,12 @@ inline int fftL(const int & in)
 
 inline double prod(const lineType & in1, const lineType & in2)
 {
-    return (in1 * in2).sum(); // very slow
+//    return (in1 * in2).sum(); // very slow
 
-//    return std::inner_product(begin(in1),
-//                              end(in1),
-//                              begin(in2),
-//                              0.);
+    return std::inner_product(begin(in1),
+                              end(in1),
+                              begin(in2),
+                              0.);
 }
 
 inline double normaSq(const lineType & in)

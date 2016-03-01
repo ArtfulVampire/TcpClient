@@ -26,6 +26,7 @@ public:
 
 
 signals:
+
 public slots:
 
     void socketErrorSlot(QAbstractSocket::SocketError);

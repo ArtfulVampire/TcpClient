@@ -268,8 +268,8 @@ void MainWindow::startSlot()
 
     myDataThread = new QThread;
     myDataReaderHandler = new DataReaderHandler(
-//                              socket,
-                                                ui->fullDataCheckBox->isChecked());
+                              //                              socket,
+                              ui->fullDataCheckBox->isChecked());
 
     myDataReaderHandler->moveToThread(myDataThread);
 
@@ -285,10 +285,15 @@ void MainWindow::startSlot()
             myDataThread, SLOT(quit()));
     connect(ui->endPushButton, SIGNAL(clicked()),
             myDataReaderHandler, SLOT(stopReadData()));
+
     connect(myDataReaderHandler, SIGNAL(finishReadData()),
             myDataReaderHandler, SLOT(deleteLater()));
     connect(myDataReaderHandler, SIGNAL(finishReadData()),
             myDataThread, SLOT(deleteLater()));
+    connect(myDataThread, SIGNAL(finished()),
+            myDataReaderHandler, SLOT(deleteLater()));
+
+
     connect(myDataReaderHandler, SIGNAL(startStopSignal(int)),
             this, SLOT(startStopSlot(int)));
 
@@ -305,8 +310,9 @@ void MainWindow::endSlot() /// dont click twice anyway
     if(myDataThread)
     {
         myDataThread->wait();
-        delete myDataThread;
+//        delete myDataThread;
     }
+    myNetHandler->printAccuracy();
 }
 
 

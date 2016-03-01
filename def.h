@@ -25,10 +25,11 @@
 
 #define CPP_11 1
 #define MY_QT 1
-#define USE_DATA_STREAM 0
+#define USE_DATA_STREAM 1
 #define SOCKET_IN_MAIN 0
 #define DATA_READER 1
 #define MY_LINROWS 1
+
 
 #if MY_QT
 #include <QtCore>
@@ -40,9 +41,14 @@
 #include <QSerialPortInfo>
 #endif
 
+enum class errorNetType {SME, maxDist};
+
 template <typename T> class eegContType : public std::list<T>{}; /// Type Of Container
 typedef std::vector<qint16> eegSliceType;
 typedef eegContType<eegSliceType> eegDataType;
+
+//typedef quint8 markerType; // online
+typedef quint32 markerType; // offline
 
 namespace enc
 {
@@ -75,11 +81,9 @@ extern eegDataType eegData; /// make ring-style container
 extern int currentType;
 extern int slicesCame;
 extern QString currentName;
-extern quint8 currentMarker;
+extern markerType currentMarker;
 extern QHostAddress hostAddress;
 extern int hostPort;
-
-
 
 /// consts
 constexpr int eegNs = 19;
@@ -87,7 +91,9 @@ constexpr int ns = 24;
 constexpr int markerChannel = 22;
 constexpr int eog1 = 22;
 constexpr int eog2 = 23;
-const QSet<int> dropChannels{7};
+const QSet<int> dropChannels{7, 11};
+const errorNetType errType = errorNetType::maxDist; /// how to calculate
+constexpr double errorThreshold = 0.3;
 
 const std::vector<qint16> markers{241, 247, 254};
 const QStringList fileMarkers{"_241", "_247", "_254"}; /// needed?
@@ -102,9 +108,9 @@ constexpr double rightFreq = 20.;
 
 const QString ExpName = "PEW";
 #if MY_LINROWS
-const QString workPath = "/media/Files/Data/RealTime/"; /// LINDROWS
+const QString workPath = "/media/Files/Data/RealTime/";
 #else
-const QString workPath = "D:/MichaelAtanov/workData/"; /// WINDOWS
+const QString workPath = "D:/MichaelAtanov/workData/";
 #endif
 /// to read
 const QString spectraPath = workPath + "SpectraSmooth/windows";

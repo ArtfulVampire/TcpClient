@@ -8,6 +8,7 @@ net::net(QObject * par)
 {
     this->setParent(par);
     confusionMatrix = matrix(def::numOfClasses(), def::numOfClasses(), 0.);
+
 }
 
 net::~net()
@@ -16,16 +17,11 @@ net::~net()
 
 void net::startOperate()
 {
-//    return;
-    ExpName = "GAS_train";
-//    successivePreclean(def::spectraPath.toStdString());
+//    successivePreclean(def::spectraPath);
 
-
-    ExpName = "GAS_test";
     Mode = myMode::train_test;
-    successiveProcessing(def::spectraPath.toStdString());
+    successiveProcessing(def::spectraPath);
     cout << "classifier waits for work" << endl;
-
 }
 
 std::vector<int> net::makeLearnIndexSet()
@@ -35,7 +31,7 @@ std::vector<int> net::makeLearnIndexSet()
     {
         for(int i = 0; i < fileNames.size(); ++i)
         {
-            if(contains(fileNames[i], "_train"))
+            if(fileNames[i].contains("_train"))
             {
                 mixNum.push_back(i);
             }
@@ -173,7 +169,21 @@ std::pair<std::vector<int>, std::vector<int> > net::makeIndicesSetsCross(
     return std::make_pair(learnInd, tallInd);
 }
 
-void net::autoClassification(const std::string & spectraDir)
+void net::printData()
+{
+    cout << "size of learning set:" << dataMatrix.rows() << " = ";
+    cout << std::count(types.begin(), types.end(), 0) << " + ";
+    cout << std::count(types.begin(), types.end(), 1) << " + ";
+    cout << std::count(types.begin(), types.end(), 2) << endl;
+    cout << "OR = ";
+    cout << classCount[0] << " + ";
+    cout << classCount[1] << " + ";
+    cout << classCount[2] << endl;
+
+}
+
+
+void net::autoClassification(const QString & spectraDir)
 {
 //    std::string helpString = this->workPath + slash() + "log.txt";
 //    remove(helpString.c_str());
@@ -206,7 +216,6 @@ void net::autoClassification(const std::string & spectraDir)
 
     learnNet();
     writeWts();
-//    cout <<  "AutoClass: time elapsed = " << myTime.elapsed()/1000. << " sec" << endl;
 }
 
 
@@ -294,9 +303,10 @@ void net::averageClassification()
 
     res << doubleRound(averageAccuracy, 2) << '\t';
     res << doubleRound(kappa, 3) << '\t';
-    res << this->ExpName << endl;
+    res << def::ExpName.toStdString() << endl;
     res.close();
 
+    confusionMatrix.print();
     cout << "average accuracy = " << doubleRound(averageAccuracy, 2) << endl;
     cout << "kappa = " << kappa << endl;
 }
@@ -350,10 +360,23 @@ void net::drawWts(std::string wtsPath,
 #endif
 
 
-void net::writeWts(const std::string & wtsPath)
+void net::writeWts(const string & wtsPath)
 {
+    static int wtsCounter = 0;
     std::ofstream weightsFile;
-    weightsFile.open(wtsPath.c_str());
+    if(wtsPath.empty())
+    {
+        weightsFile.open(def::workPath.toStdString() +
+                         def::ExpName.toStdString() + "_" +
+                         std::to_string(wtsCounter++) + ".wts");
+
+
+    }
+    else
+    {
+        weightsFile.open(wtsPath);
+    }
+
 
     if(!weightsFile.good())
     {
@@ -420,8 +443,8 @@ void net::tallNetIndices(const std::vector<int> & indices)
             badFilesStr << fileNames[ indices[i] ] << endl;
             if(tallCleanFlag)
             {
-                remove((def::spectraPath.toStdString() +
-                       slash() + fileNames[ indices[i] ]).c_str());
+                QFile::remove(def::spectraPath +
+                              qslash() + fileNames[ indices[i] ]);
 
                 /// pewpew
                 if(this->Source == source::reals)
@@ -480,41 +503,34 @@ void net::tallNetIndices(const std::vector<int> & indices)
 
 
 
-void net::successivePreclean(const std::string & spectraPath)
+void net::successivePreclean(const QString & spectraPath)
 {
-    std::vector<std::vector<std::string> > leest = contents(spectraPath,
-                                                            makeDefFilters());
+    QStringList leest;
+    makeFullFileList(spectraPath, leest, {"*train*"});
     // clean from first 2 winds
-    cout << "clean from first 2 winds" << endl;
-
-    for(int i = 0; i < leest.size(); ++i)
+    cout << "clean first 2 winds" << endl;
+    for(auto str : leest)
     {
-        for(int j = 0; j < leest[i].size(); ++j)
+        if(str.endsWith(".00") || str.endsWith(".01"))
         {
-//            cout << leest[i][j] << endl; continue;
-            if(contains(leest[i][j], "_train") && // generality train
-               (endsWith(leest[i][j], ".00") ||
-                endsWith(leest[i][j], ".01")))
-            {
-//                cout << leest[i][j] << endl; continue;
-                remove(leest[i][j].c_str());
-            }
+            QFile::remove(spectraPath + qslash() + str);
         }
     }
 
-    // cleen by learnSetStay
-    cout << "cleen by learnSetStay" << endl;
-    std::vector<std::string> leest2 = contents(spectraPath, "_train"); // all train files
-    cout << leest2.size() << endl;
+    // clean by learnSetStay
+    cout << "clean by learnSetStay" << endl;
+    vector<QStringList> leest2;
+    makeFileLists(spectraPath, leest2);
 
-//    emit finish();
-    return;
-
-    for(int i = 0;
-        i < leest2.size() - learnSetStay * def::numOfClasses() * 2;
-        ++i)
+    for(int j = 0; j < def::numOfClasses(); ++j)
     {
-//        remove(leest2[i].c_str());
+        auto it = leest2[j].begin();
+        for(int i = 0;
+            i < leest2[j].size() - learnSetStay * 1.3; /// consts generality
+            ++i, ++it)
+        {
+            QFile::remove(spectraPath + qslash() + (*it));
+        }
     }
     Source = source::winds;
     Mode = myMode::N_fold;
@@ -522,9 +538,9 @@ void net::successivePreclean(const std::string & spectraPath)
     // N-fold cleaning
     cout << "N-fold cleaning" << endl;
     tallCleanFlag = true;
-    for(int i = 0; i < 1; ++i)
+    for(int i = 0; i < 3; ++i)
     {
-        this->autoClassification(spectraPath);
+        autoClassification(spectraPath);
     }
     tallCleanFlag = false;
 }
@@ -533,7 +549,7 @@ void net::successivePreclean(const std::string & spectraPath)
 
 
 
-void net::successiveProcessing(const std::string & spectraPath)
+void net::successiveProcessing(const QString & spectraPath)
 {
 
 
@@ -552,7 +568,7 @@ void net::successiveProcessing(const std::string & spectraPath)
     loadData(spectraPath);
     for(int i = 0; i < dataMatrix.rows(); ++i)
     {
-        if(contains(fileNames[i], "_test"))
+        if(fileNames[i].contains("_test"))
         {
             eraseIndices.push_back(i);
         }
@@ -578,49 +594,17 @@ void net::successiveProcessing(const std::string & spectraPath)
     eraseIndices.clear();
 
     /// consts
-    this->errCrit = 0.05;
-    this->learnRate = 0.05;
+    errCrit = 0.05;
+    learnRate = 0.05;
     cout << "get initial weights on train set" << endl;
+
     learnNet(); /// get initial weights on train set
-    this->errCrit = 0.01;
-    this->learnRate = 0.01;
+
+    errCrit = 0.05;
+    learnRate = 0.05;
 
     cout << "successive: initial learn done" << endl;
-    lineType tempArr;
-    int type = -1;
-
-#if CPP_11
-    std::vector<std::string> leest = contents(spectraPath, "_test"); /// special generality
-#else
-    std::vector<std::string> leest = contents(spectraPath, "_test"); /// special generality
-#endif
-
-
-
     cout << "successive itself" << endl;
-    /// make slot
-#if 0
-
-#if CPP_11
-    for(const std::string & filePath : leest)
-    {
-#else
-    for(int i = 0; i < leest.size(); ++i)
-    {
-        const std::string & filePath = leest[i];
-#endif
-
-        readFileInLine(filePath, tempArr);
-        type = typeOfFileName(filePath);
-
-        int a = filePath.rfind(slash());
-        std::string fileName = filePath.substr(a + 1, filePath.size() - a);
-
-        successiveLearning(tempArr, type,
-                           fileName);
-    }
-    averageClassification();
-#endif
 }
 
 void net::dataCame(eegDataType::iterator a, eegDataType::iterator b)
@@ -639,15 +623,15 @@ void net::dataCame(eegDataType::iterator a, eegDataType::iterator b)
     /// spectre
     writeFileInLine(def::workPath + "windows" +
                     qslash() + "SpectraSmooth" +
-                    qslash() + "spec" +
+                    qslash() + def::ExpName +
                     def::fileMarkers[type] + "." +
                     QString::number(windowNum) + ".txt",
                     newSpectre);
 #endif
 
-    const std::string name = def::ExpName.toStdString() +
-                             def::fileMarkers[type].toStdString() +
-                             "." + std::to_string(windowNum);
+    const QString name = def::ExpName +
+                         def::fileMarkers[type] +
+                         "." + QString::number(windowNum) + ".txt";
     successiveLearning(newSpectre, type, name);
 }
 
@@ -673,7 +657,7 @@ lineType net::successiveDataToSpectre(
 #if 0
         /// checked - data is ok
         writePlainData(def::workPath + "windows" +
-                       qslash() + "signal_" +
+                       qslash() + def::ExpName + "_" +
                        QString::number(windowNum) + ".txt",
                        tmpMat,
                        def::ns,
@@ -694,10 +678,10 @@ lineType net::successiveDataToSpectre(
             (*it2) -= tmpMat[def::eog1] * coeff[i][0] +
                     tmpMat[def::eog2] * coeff[i][1];
         }
-#if 0
+#if 1
         /// eyes - checked, OK
         writePlainData(def::workPath + "windows" +
-                       qslash() + "signal_eyesClean_" +
+                       qslash() + def::ExpName + "_" +
                        QString::number(windowNum) + ".txt",
                        tmpMat,
                        def::ns,
@@ -732,16 +716,14 @@ lineType net::successiveDataToSpectre(
 
 void net::successiveLearning(const lineType & newSpectre,
                              const int newType,
-                             const std::string & newFileName)
+                             const QString & newFileName)
 {
     /// consider loaded wts
     /// dataMatrix is learning matrix
 
-//    const double errorThreshold = 0.8; /// add to learning set or not - logistic
-    const double errorThreshold = 0.5; /// add to learning set or not - softmax, 0.5 = take all
-
 
     lineType newData = (newSpectre - averageDatum) / (sigmaVector * loadDataNorm);
+
 
     pushBackDatum(newData, newType, newFileName);
 
@@ -751,16 +733,16 @@ void net::successiveLearning(const lineType & newSpectre,
     /// if correct classification
     if(outType.first == newType)
     {
-        /// if the stimulus is a problem and not resting
+        /// if the stimulus is a task and not resting
         if(newType == 0 ||
            newType == 1)
         {
-            cout << "emit 1" << endl;
+//            cout << "emit 1" << endl;
             emit sendSignal(1);
         }
 
         /// if accurate classification
-        if(outType.second < errorThreshold)
+        if(outType.second < def::errorThreshold)
         {
             const int num = std::find(types.begin(), types.end(), newType) - types.begin();
             eraseDatum(num);
@@ -777,7 +759,7 @@ void net::successiveLearning(const lineType & newSpectre,
         if(newType == 0 ||
            newType == 1)
         {
-            cout << "emit 2" << endl;
+//            cout << "emit 2" << endl;
             emit sendSignal(2);
         }
         popBackDatum();
@@ -785,7 +767,7 @@ void net::successiveLearning(const lineType & newSpectre,
 
     if(numGoodNew == this->numGoodNewLimit)
     {
-        TIME(successiveRelearn());
+        successiveRelearn();
         numGoodNew = 0;
     }
 }
@@ -968,18 +950,18 @@ void net::halfHalfClassification()
     averageClassification();
 }
 
-void net::trainTestClassification(const std::string & trainTemplate,
-                                  const std::string & testTemplate)
+void net::trainTestClassification(const QString & trainTemplate,
+                                  const QString & testTemplate)
 {
     std::vector<int> learnIndices;
     std::vector<int> tallIndices;
     for(int i = 0; i < dataMatrix.rows(); ++i)
     {
-        if(contains(fileNames[i], trainTemplate))
+        if(fileNames[i].contains(trainTemplate))
         {
             learnIndices.push_back(i);
         }
-        if(contains(fileNames[i], testTemplate))
+        if(fileNames[i].contains(testTemplate))
         {
             tallIndices.push_back(i);
         }
@@ -1038,7 +1020,7 @@ void net::leaveOneOut()
 
 void net::pushBackDatum(const lineType & inDatum,
                       const int & inType,
-                      const std::string & inFileName)
+                      const QString & inFileName)
 {
     dataMatrix.push_back(inDatum);
     classCount[inType] += 1.;
@@ -1084,9 +1066,11 @@ void net::eraseData(const std::vector<int> & indices)
 
 
 // like readPaFile from library.cpp
-void net::loadData(const std::string & spectraPath)
+void net::loadData(const QString & spectraPath)
 {
-    std::vector<std::vector<std::string> > leest = contents(spectraPath, makeDefFilters());
+//    std::vector<std::vector<std::string> > leest = contents(spectraPath, makeDefFilters());
+    vector<QStringList> leest;
+    makeFileLists(spectraPath, leest);
 
 
     dataMatrix = matrix();
@@ -1095,13 +1079,11 @@ void net::loadData(const std::string & spectraPath)
     fileNames.clear();
 
     lineType tempArr;
-//    cout << leest.size() << endl;
     for(int i = 0; i < leest.size(); ++i)
     {
-//        cout << leest[i].size() << endl;
         classCount[i] = 0.;
 #if CPP_11
-        for(std::string fileName : leest[i])
+        for(QString fileName : leest[i])
         {
 #else
         for(int j = 0; j < leest[i].size(); ++j)
@@ -1109,9 +1091,9 @@ void net::loadData(const std::string & spectraPath)
             std::string fileName = leest[i][j];
 #endif
             /// generality path-name
-            fileName = fileName.substr(fileName.rfind(slash()) + 1);
+//            fileName = fileName.substr(fileName.rfind(slash()) + 1);
 
-            readFileInLine(spectraPath + slash() + fileName,
+            readFileInLine(spectraPath + qslash() + fileName,
                            tempArr);
 
 
@@ -1212,6 +1194,7 @@ void net::learnNetIndices(std::vector<int> mixNum,
         myShuffle(mixNum);
 #endif
 
+        currentError = 0.;
 
 #if CPP_11
         for(const int & index : mixNum)
@@ -1252,13 +1235,23 @@ void net::learnNetIndices(std::vector<int> mixNum,
             }
 
             //error in the last layer
-            double err1 = 0.;
-            for(int j = 0; j < dimensionality.back(); ++j)
             {
-                err1 += pow((output.back()[j] - int(type == j) ), 2.);
+                double err = 0.;
+                for(int j = 0; j < dimensionality.back(); ++j)
+                {
+                    err += pow((output.back()[j] - int(type == j) ), 2.);
+                }
+                err = sqrt(err);
+                if(def::errType == errorNetType::SME)
+                {
+                    currentError += err;
+                }
+                else if(def::errType == errorNetType::maxDist)
+                {
+                    currentError = max(err, currentError);
+                }
             }
-            err1 = sqrt(err1);
-            currentError += err1;
+
 #if 0
             /// check weight
             if(!deltaFlag) /// enum !
@@ -1329,11 +1322,36 @@ void net::learnNetIndices(std::vector<int> mixNum,
         }
         ++epoch;
         //count error
-        currentError /= mixNum.size();
+        if(def::errType == errorNetType::SME)
+        {
+            currentError /= mixNum.size();
+        }
 
 //        cout << "epoch = " << epoch << "\terror = " << doubleRound(currentError, 4) << endl;
     }
     cout << "epoch = " << epoch << "\terror = " << doubleRound(currentError, 4) << endl;
+
+    writeWts();
+//    printData();
+}
+
+double net::errorNet()
+{
+//    double tmp;
+//    for(int j = 0; j < dimensionality.back(); ++j)
+//    {
+//        tmp = pow((output.back()[j] - int(type == j) ), 2.);
+//    }
+//    if(activation == logistic)
+//    {
+//        err1 = sqrt(tmp);
+//        currentError += err1;
+//    }
+//    if(activation == softmax)
+//    {
+//        err1 = max(err1, tmp);
+//    }
+//    return tmp;
 }
 
 
@@ -1367,12 +1385,24 @@ std::pair<int, double> net::classifyDatum(const int & vecNum)
         output[i][ dimensionality[i] ] = 1.; //bias, unused for the highest layer
     }
 
-#if 0
+    resizeValar(output.back(), def::numOfClasses());
+    int outClass = indexOfMax(output.back());
+
+#if 1
     /// cout results
-    cout << "type = " << type << '\t';
+    cout << "type = " << type << '\t' << "(";
     for(int i = 0; i < def::numOfClasses(); ++i)
     {
-        cout << output.back()[i] << '\t';
+        cout << doubleRound(output.back()[i], 3) << '\t';
+    }
+    cout << ") " << fileNames[vecNum] << "   ";
+    if(type == outClass)
+    {
+        cout << "+";
+    }
+    else
+    {
+        cout << "-";
     }
     cout << endl;
 #endif
@@ -1380,24 +1410,15 @@ std::pair<int, double> net::classifyDatum(const int & vecNum)
 
     /// effect on successive procedure
     double res = 0.;
-    if(activation == logistic)
+    for(int j = 0; j < dimensionality.back(); ++j)
     {
-        for(int i = 0; i < def::numOfClasses(); ++i)
-        {
-            res += pow((output.back()[i] - (i == type)), 2);
-        }
-        res = sqrt(res / def::numOfClasses());
+        res += pow((output.back()[j] - int(type == j) ), 2.);
     }
-    else if(activation == softmax)
-    {
-        res = 1. - output[numOfLayers - 1][type]; // crutch
-    }
+    res = sqrt(res);
 
     // return number of maximal element in output.back()
 #if CPP_11
-    return std::make_pair(std::max_element(begin(output.back()),
-                                           end(output.back()) - 1)  // -bias
-                          - begin(output.back()),
+    return std::make_pair(outClass,
                           res);
 #else
     int maxNum = -1;
@@ -1413,19 +1434,5 @@ std::pair<int, double> net::classifyDatum(const int & vecNum)
     return std::make_pair(maxNum, res);
 #endif
 
-
-    // more general
-//    return std::distance(output.back().begin(),
-//                         std::max_element(output.back().begin(),
-//                                          output.back().end()));
-
-//    for(int k = 0; k < dimensionality[numOfLayers - 1]; ++k)
-//    {
-//        if(k != type && output[numOfLayers - 1] [k] >= output[numOfLayers - 1] [type])
-//        {
-//            return false;
-//        }
-//    }
-//    return true;
 }
 

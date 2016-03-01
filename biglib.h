@@ -22,7 +22,7 @@ std::ostream & operator<< (std::ostream &os, QString toOut);
 
 
 template <typename signalType>
-void readFileInLine(const std::string & filePath,
+void readFileInLine(const QString & filePath,
                     signalType & result);
 
 template <typename signalType>
@@ -54,6 +54,15 @@ void myShuffle(std::vector<int> & in);
 int myLess(int a, int b); // for sort in eraseItems
 
 void four1(double * dataF, int nn, int isign);
+
+
+void makeFullFileList(const QString & path,
+                      QStringList & lst,
+                      const QStringList & auxFilters = QStringList());
+
+void makeFileLists(const QString & path,
+                   std::vector<QStringList> & lst,
+                   const QStringList & auxFilters = QStringList());
 
 void readMatrixFile(const QString & filePath,
                      matrix & outData,
@@ -87,6 +96,12 @@ void calcSpectre(const signalType & inSignal,
                  const int & NumOfSmooth = 5.,
                  const int & Eyes = 0.,
                  const double & powArg = 1.);
+
+template <typename Container>
+int indexOfMax(const Container & cont);
+
+
+void resizeValar(lineType & in, int num);
 
 
 template <typename signalType = lineType>

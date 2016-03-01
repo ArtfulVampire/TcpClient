@@ -4,16 +4,6 @@ using namespace std;
 using namespace std::chrono;
 using namespace enc;
 
-//template <typename Typ>
-//Typ readFromSocket(QTcpSocket * inSocket)
-//{
-//    int siz = sizeof(Typ);
-//    char * tmp = new char[siz];
-//    inSocket->read(tmp, siz);
-//    Typ res = *(reinterpret_cast<Typ*>(tmp));
-//    delete[] tmp;
-//    return res;
-//}
 
 
 DataReader::DataReader(QObject * inParent,
@@ -46,7 +36,7 @@ DataReader::~DataReader()
 #if USE_DATA_STREAM
     if(!socketDataStream.atEnd())
     {
-        socketDataStream.skipRawData(socketDataStream.device()->bytesAvailable());
+//        socketDataStream.skipRawData(socketDataStream.device()->bytesAvailable());
     }
     if(!socketDataStream.atEnd())
     {
@@ -76,155 +66,45 @@ void DataReader::sendStartRequest()
     auto bytesWritten = socket->write(reinterpret_cast<char *>(&startPack),
                                       startPack.packSize + sizeof(DWORD));
     cout << "sendStartRequest: written " << bytesWritten << " bytes" << endl;
-//    receiveData();
 }
 
 void DataReader::receiveData()
 {
     static enc::Pack inPack;
 
-    static int waitCounter = 0;
+//    static int waitCounter = 0;
 
     if(inPack.packSize == 0)
     {
         if(socket->bytesAvailable() < sizeof(inPack.packSize) + sizeof(inPack.packId))
         {
-            ++waitCounter;
             return;
         }
-
-        if(waitCounter != 0)
-        {
-//            cout << "size waitCounter = " << waitCounter << endl;
-            waitCounter = 0;
-        }
-
-//        char tmp;
-//        socketDataStream.device()->peek(&tmp, 1);
-
-//        socketDataStream >> inPack.packSize;
 #if !USE_DATA_STREAM
 
         inPack.packSize = readFromSocket<qint32>(socket);
         inPack.packId = readFromSocket<quint32>(socket);
 
 #else
-        QByteArray arr = socket->peek(8); // try read int + uint = 8 bytes
-        QDataStream str(&arr, QIODevice::ReadOnly);
-        str.setByteOrder(QDataStream::LittleEndian);
-        str >> inPack.packSize;
-        str >> inPack.packId;
+        socketDataStream >> inPack.packSize;
+//        cout << inPack.packSize << endl;
+        socketDataStream >> inPack.packId;
 
-#if 0
-        socketDataStream.skipRawData(8);
-#else
-        if(!(inPack.packSize == 1618 && inPack.packId == 2) &&
-           !(inPack.packId == 8) &&
-           !(inPack.packSize == 8 && inPack.packId == 6) &&
-           !(inPack.packId == 9))
-        {
-            cout << "BAD PACK: "
-                 << "packSize = " << inPack.packSize
-                 << "\t"
-                 << "packId = " << inPack.packId
-//                 << '\t'
-//                 << "packSize = " << bits(inPack.packSize)
-//                 << "\t"
-//                 << "packId = " << bits(inPack.packId)
-                 << endl;
-
-            inPack.packSize = 0;
-            inPack.packId = 0;
-
-
-            if(int sk = socketDataStream.skipRawData(2) != 2)
-            {
-                cout << "sk != 2, sk == " << sk << endl;
-            }
-            return;
-        }
-        else
-        {
-            if(int sk = socketDataStream.skipRawData(8) != 8)
-            {
-                cout << "sk != 8, sk == " << sk << endl;
-            }
-
-            /// prevent some seldom situations
-            if(inPack.packSize == 8 && inPack.packId == 6)
-            {
-
-                QByteArray arr = socket->peek(8); // try read int + uint
-
-                QDataStream str(&arr, QIODevice::ReadOnly);
-                str.setByteOrder(QDataStream::LittleEndian);
-                qint32 a;
-                str >> a;
-                quint32 b;
-                str >> b;
-                if(a == 8 && b == 6)
-                {
-                    if(int sk = socketDataStream.skipRawData(8) != 8)
-                    {
-                        cout << "DOUBLE KILL: sk != 8, sk == " << sk << endl;
-                    }
-                }
-            }
-
-
-#if 0
-            if(inPack.packId == 8)
-            {
-                qint32 sliceNum;
-                socketDataStream >> sliceNum;
-                cout << sliceNum << endl;
-            }
-            else
-            {
-                socketDataStream.skipRawData(4);
-            }
-            socketDataStream.skipRawData(inPack.packSize - sizeof(inPack.packId) - 4); // skip for peek
-            inPack.packSize = 0;
-            inPack.packId = 0;
-            return;
-#endif
-        }
-
+//        QByteArray arr = socket->peek(8); // try read int + uint = 8 bytes
+//        QDataStream str(&arr, QIODevice::ReadOnly);
+//        str.setByteOrder(QDataStream::LittleEndian);
+//        str >> inPack.packSize;
+//        str >> inPack.packId;
 #endif
         /// deprecate
 //        if(int(tmp) == -1) /// initial data for not fullData
 //        {
 //            inPack.packSize = 259 - sizeof(inPack.packSize);
 //        }
-#endif
     }
 
-#if 1
-//    if(inPack.packId == 0)
-//    {
-//        if(socket->bytesAvailable() < sizeof(inPack.packId))
-//        {
-//            ++waitCounter;
-//            return;
-//        }
-
-//        if(waitCounter != 0)
-//        {
-////            cout << "id waitCounter = " << waitCounter << endl;
-//            waitCounter = 0;
-//        }
-
-//        //    {
-//        socketDataStream >> inPack.packId;
-//    }
-
-
-
-//    cout << "packSize = " << inPack.packSize << "\t"
-//         << "packId = " << inPack.packId << endl;
-
     if(inPack.packId > 12 || inPack.packId < 0 ||
-            inPack.packSize > 2000 || inPack.packSize < 0)
+       inPack.packSize > 2000 || inPack.packSize < 0)
     {
         cout << "BAD PACK: "
              << "packSize = " << inPack.packSize << "\t"
@@ -235,45 +115,11 @@ void DataReader::receiveData()
 
     if(socket->bytesAvailable() < (inPack.packSize - sizeof(inPack.packId)))
     {
-//        cout << "wait for data\t";
-//        cout << socket->bytesAvailable() << "\t" << inPack.packSize - sizeof(inPack.packId) << endl;
-        ++waitCounter;
         return;
     }
-    if(waitCounter != 0)
-    {
-//        cout << "data waitCounter = " << waitCounter << endl;
-        waitCounter = 0;
-    }
-#else
-    if(socket->bytesAvailable() < inPack.packSize)
-    {
-        ++waitCounter;
-        return;
-    }
-    else
-    {
-        socketDataStream >> inPack.packId;
-
-
-        inPack.packData = socket->read(inPack.packSize);
-        myBuffer = new QBuffer(&(inPack.packData));
-        myBuffer->open(QIODevice::ReadOnly);
-
-        socketDataStream.unsetDevice();
-        socketDataStream.setDevice(myBuffer);
-        socketDataStream.setByteOrder(QDataStream::LittleEndian);
-    }
-    cout << "packSize = " << inPack.packSize << "\t" << "packId = " << inPack.packId << endl;
-#endif
-
-
-
 //    cout << inPack.packSize << '\t' << inPack.packId << endl;
-//    socket->read(inPack.packSize - 4);
-//    return;
 
-//    cout << socket->bytesAvailable() << endl;
+
 
     switch(inPack.packId)
     {
@@ -465,12 +311,6 @@ void DataReader::readStartInfo()
 #endif
     }
     cout << "start info was read" << endl;
-    if(this->inProcess)
-    {
-//        disconnect(socket, SIGNAL(readyRead()),
-//                   this, SLOT(receiveData()));
-//        cout << "disconnected readyRead()" << endl;
-    }
 }
 
 
@@ -493,17 +333,7 @@ void DataReader::startStopTransmisson()
 
     if(var == 1) /// real-time ON signal came - should send datarequest again
     {
-//        cout << "pew" << endl;
-//        QObject::disconnect(socket, SIGNAL(readyRead()),
-//                            this, SLOT(receiveData()));
-//        this->thread()->sleep(8);
         this->sendStartRequest();
-//        std::thread p([this](){
-//        while(this->inProcess)
-//        {
-//            receiveData();
-//        }
-//        }); p.detach();
     }
     else //if(this->inProcess) /// finish all job
     {
@@ -519,9 +349,6 @@ void DataReader::startStopTransmisson()
 #else
         socket->readAll();
 #endif
-//        connect(socket, SIGNAL(readyRead()),
-//                this, SLOT(receiveData()));
-//        this->~DataReader();
     }
 }
 void DataReader::markerCame()
@@ -546,7 +373,7 @@ void DataReader::markerCame()
 #else
     /// quint8 in real-time, quint32 in recording play
 //    def::currentMarker = readFromSocket<quint8>(socket);
-    def::currentMarker = readFromSocket<quint32>(socket);
+    def::currentMarker = readFromSocket<markerType>(socket);
 #endif
 
     switch(def::currentMarker)

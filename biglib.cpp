@@ -330,12 +330,12 @@ int myLess(int a, int b)
 //}
 
 template <typename signalType>
-void readFileInLine(const std::string & filePath,
+void readFileInLine(const QString & filePath,
                     signalType & result)
 {
 //    cout << filePath << endl;
 
-    ifstream file(filePath.c_str());
+    ifstream file(filePath.toStdString());
     if(!file.good())
     {
         cout << "readFileInLine: bad file " << filePath << endl;
@@ -385,6 +385,77 @@ void writeFileInLine(const QString & filePath,
         file << doubleRound(out, 4) << '\n'; // \t or \n
     }
     file.close();
+}
+
+
+void makeFileLists(const QString & path,
+                   vector<QStringList> & lst,
+                   const QStringList & auxFilters)
+{
+    QDir localDir(path);
+    QStringList nameFilters, leest;
+    QString helpString;
+    for(const QString & fileMark : def::fileMarkers)
+    {
+        nameFilters.clear();
+        leest.clear();
+        leest = fileMark.split(QRegExp("[,; ]"), QString::SkipEmptyParts);
+        for(const QString & filter : leest)
+        {
+            helpString = "*" + filter + "*";
+            if(!auxFilters.isEmpty())
+            {
+                for(const QString & aux : auxFilters)
+                {
+//                    nameFilters << QString(def::ExpName.left(3) + "*" + aux + helpString);
+                    nameFilters << QString("*" + aux + helpString);
+                }
+            }
+            else
+            {
+//                nameFilters << QString(def::ExpName.left(3) + helpString);
+                nameFilters << helpString;
+
+            }
+        }
+        lst.push_back(localDir.entryList(nameFilters,
+                                         QDir::Files,
+                                         QDir::Name)); /// Name ~ order
+    }
+}
+
+void makeFullFileList(const QString & path,
+                      QStringList & lst,
+                      const QStringList & auxFilters)
+{
+    QDir localDir(path);
+    QStringList nameFilters, leest;
+    QString helpString;
+    for(const QString & fileMark : def::fileMarkers)
+    {
+        leest = fileMark.split(QRegExp("[,; ]"), QString::SkipEmptyParts);
+        for(const QString & filter : leest)
+        {
+            helpString = "*" + filter + "*";
+            if(!auxFilters.isEmpty())
+            {
+                for(const QString & aux : auxFilters)
+                {
+//                    nameFilters << QString(def::ExpName.left(3) + "*" + aux + helpString);
+                    nameFilters << QString("*" + aux + helpString);
+                }
+            }
+            else
+            {
+//                nameFilters << QString(def::ExpName.left(3) + helpString);
+                nameFilters << helpString;
+            }
+
+        }
+    }
+    lst = localDir.entryList(nameFilters,
+                             QDir::Files,
+                             QDir::Name); /// Name ~ order
 }
 
 void readMatrixFile(const QString & filePath,
@@ -641,6 +712,35 @@ signalType four2(const signalType & inRealData, int fftLen, int isign)
     return res;
 }
 
+template <typename Container>
+int indexOfMax(const Container & cont)
+{
+    int res = 0;
+    int ans = 0;
+    auto val = *(std::begin(cont));
+
+    for(auto it = std::begin(cont);
+        it != std::end(cont);
+        ++it, ++res)
+    {
+        if(*it > val)
+        {
+            ans = res;
+            val = *it;
+        }
+    }
+    return ans;
+}
+
+void resizeValar(lineType & in, int num)
+{
+    lineType temp = in;
+    in.resize(num);
+    std::copy(begin(temp),
+              begin(temp) + min(in.size(), temp.size()),
+              begin(in));
+}
+
 template <typename signalType = lineType>
 void calcSpectre(const signalType & inSignal,
                  signalType & outSpectre,
@@ -775,6 +875,10 @@ template std::bitset<16> bits(quint16 in);
 template std::bitset<32> bits(qint32 in);
 template std::bitset<32> bits(quint32 in);
 
+template int indexOfMax(const std::vector<double> & cont);
+template int indexOfMax(const std::valarray<double> & cont);
+template int indexOfMax(const std::list<double> & cont);
+
 //template void eraseItems(std::vector<std::string> & inVect, const std::vector<int> & indices);
 //template void eraseItems(std::vector<lineType> & inVect, const std::vector<int> & indices);
 //template void eraseItems(std::vector<int> & inVect, const std::vector<int> & indices);
@@ -782,7 +886,7 @@ template std::bitset<32> bits(quint32 in);
 
 template lineType smoothSpectre(const lineType & inSpectre, const int numOfSmooth);
 
-template void readFileInLine(const std::string & filePath, lineType & outData);
+template void readFileInLine(const QString & filePath, lineType & outData);
 //template void readFileInLine(const std::string & filePath, vectType & outData);
 
 template void writeFileInLine(const QString & filePath, const lineType & outData);
