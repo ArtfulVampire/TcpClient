@@ -20,8 +20,7 @@ SOURCES += main.cpp\
     def.cpp \
     classifier.cpp \
     matrix.cpp \
-    biglib.cpp \
-    ringvector.cpp
+    biglib.cpp
 
 HEADERS  += mainwindow.h \
     def.h \
@@ -29,7 +28,6 @@ HEADERS  += mainwindow.h \
     classifier.h \
     lib.h \
     matrix.h \
-    biglib.h \
-    ringvector.h
+    biglib.h
 
 FORMS    += mainwindow.ui
