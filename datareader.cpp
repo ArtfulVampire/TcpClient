@@ -6,24 +6,29 @@ using namespace enc;
 
 
 
-DataReader::DataReader(QObject * inParent,
-//                       QTcpSocket * inSocket,
-                       bool inFullDataFlag)
+DataReader::DataReader(QObject * inParent)
 {
     this->setParent(inParent);
-//    this->socket = inSocket;
 
-    /// consts
+
     this->socket = new QTcpSocket(this);
+    connect(socket, SIGNAL(error(QAbstractSocket::SocketError)),
+            this, SLOT(socketErrorSlot()));
+    connect(socket, SIGNAL(connected()),
+            this, SLOT(socketConnectedSlot()));
+    connect(socket, SIGNAL(disconnected()),
+            this, SLOT(socketDisconnectedSlot()));
+
     this->socket->connectToHost(def::hostAddress,
                                 def::hostPort);
 
+    this->fullDataFlag = def::fullDataFlag;
 
-    this->fullDataFlag = inFullDataFlag;
 #if USE_DATA_STREAM
     this->socketDataStream.setDevice(this->socket);
     this->socketDataStream.setByteOrder(QDataStream::LittleEndian);
 #endif
+
     connect(socket, SIGNAL(readyRead()),
             this, SLOT(receiveData()));
 
@@ -43,15 +48,18 @@ DataReader::~DataReader()
         cout << "still not at end" << endl;
     }
 #endif
-}
-
-void DataReader::timerEvent(QTimerEvent *event)
-{
-
+    socket->disconnectFromHost();
+    socket->close();
 }
 
 void DataReader::sendStartRequest()
 {
+    if(!socket->isOpen())
+    {
+        emit retranslateMessage("socket not opened!");
+        return;
+    }
+
     enc::Pack startPack;
     startPack.packSize = sizeof(DWORD);
     if(this->fullDataFlag)
@@ -68,6 +76,26 @@ void DataReader::sendStartRequest()
     cout << "sendStartRequest: written " << bytesWritten << " bytes" << endl;
 }
 
+void DataReader::socketConnectedSlot()
+{
+    emit retranslateMessage("socket connected = "
+                            + socket->peerAddress().toString()
+                            + ":" + QString::number(socket->peerPort()));
+
+}
+
+void DataReader::socketErrorSlot()
+{
+    emit retranslateMessage("socket error: "
+                            + QString::number(socket->error())
+                            + " " + socket->errorString());
+}
+
+void DataReader::socketDisconnectedSlot()
+{
+    emit retranslateMessage("socket disconnected from host");
+}
+
 void DataReader::receiveData()
 {
     static enc::Pack inPack;
@@ -76,10 +104,10 @@ void DataReader::receiveData()
 
     if(inPack.packSize == 0)
     {
-        if(socket->bytesAvailable() < sizeof(inPack.packSize) + sizeof(inPack.packId))
-        {
-            return;
-        }
+//        if(socket->bytesAvailable() < sizeof(inPack.packSize) + sizeof(inPack.packId))
+//        {
+//            return;
+//        }
 #if !USE_DATA_STREAM
 
         inPack.packSize = readFromSocket<qint32>(socket);
@@ -87,20 +115,8 @@ void DataReader::receiveData()
 
 #else
         socketDataStream >> inPack.packSize;
-//        cout << inPack.packSize << endl;
         socketDataStream >> inPack.packId;
-
-//        QByteArray arr = socket->peek(8); // try read int + uint = 8 bytes
-//        QDataStream str(&arr, QIODevice::ReadOnly);
-//        str.setByteOrder(QDataStream::LittleEndian);
-//        str >> inPack.packSize;
-//        str >> inPack.packId;
 #endif
-        /// deprecate
-//        if(int(tmp) == -1) /// initial data for not fullData
-//        {
-//            inPack.packSize = 259 - sizeof(inPack.packSize);
-//        }
     }
 
     if(inPack.packId > 12 || inPack.packId < 0 ||
@@ -113,13 +129,13 @@ void DataReader::receiveData()
         return;
     }
 
-    if(socket->bytesAvailable() < (inPack.packSize - sizeof(inPack.packId)))
-    {
-        return;
-    }
-//    cout << inPack.packSize << '\t' << inPack.packId << endl;
-
-
+//    if(socket->bytesAvailable() < (inPack.packSize - sizeof(inPack.packId)))
+//    {
+//        return;
+//    }
+#if VERBOSE_OUTPUT
+    cout << inPack.packSize << '\t' << inPack.packId << endl;
+#endif
 
     switch(inPack.packId)
     {
@@ -149,7 +165,6 @@ void DataReader::receiveData()
     case 9:
     {
         /// FP marker
-//        cout << 9 << '\t';
         markerCame();
         break;
     }
@@ -161,7 +176,6 @@ void DataReader::receiveData()
     case 11: // 0x000B
     {
         /// presentation marker
-//        cout << 11 << '\t';
         markerCame();
         break;
     }
@@ -171,13 +185,8 @@ void DataReader::receiveData()
         break;
     }
     }
-#if 0
-    delete myBuffer;
-    socketDataStream.unsetDevice();
-    socketDataStream.setDevice(socket);
-    socketDataStream.setByteOrder(QDataStream::LittleEndian);
-#endif
     inPack = enc::Pack();
+    /// pewpew crutch
     if(socket->bytesAvailable() >= 64)
     {
         receiveData();
@@ -237,7 +246,6 @@ void DataReader::readStartInfo()
         }
         std::string scheme = readString(socketDataStream);
 //        cout << scheme << endl;
-//        exit(0);
 #else
         std::string patientName = readString(socket); // cyrillic "net pacienta"
 
@@ -278,7 +286,6 @@ void DataReader::readStartInfo()
         }
         std::string scheme = readString(socket);
 //        cout << scheme << endl;
-//        exit(0);
 #endif
     }
     else
@@ -308,9 +315,35 @@ void DataReader::readStartInfo()
 //        cout << samplingRate << endl;
 //        exit(0);
 #else
+        std::string patientName = readString(socket); // cyrillic "net pacienta"
+//        cout << patientName << endl;
+
+        numOfChannels = readFromSocket<qint32>(socket);
+//        cout << numOfChannels << endl;
+
+        for(int i = 0; i < numOfChannels; ++i)
+        {
+//            cout << endl << "channel " << i << endl;
+
+            std::string channelName = readString(socket);
+//            cout << channelName << endl;
+
+        }
+        std::string scheme = readString(socket);
+//        cout << scheme << endl;
+
+        bitWeight = readFromSocket<double>(socket);
+//        cout << bitWeight << endl;
+
+        samplingRate = readFromSocket<double>(socket);
+//        cout << samplingRate << endl;
+//        exit(0);
 #endif
     }
     cout << "start info was read" << endl;
+#if VERBOSE_OUTPUT
+
+#endif
 }
 
 
@@ -324,11 +357,10 @@ void DataReader::startStopTransmisson()
     var = readFromSocket<qint32>(socket);
 #endif
 
-    emit startStopSignal(var);
     this->inProcess = var;
 
-//    QString res = (var == 1)?"ON":"OFF";
-//    ui->textEdit->append("data transmission " + res);
+    QString res = (var == 1)?"ON":"OFF";
+    emit retranslateMessage("data transmission " + res);
 
 
     if(var == 1) /// real-time ON signal came - should send datarequest again
@@ -446,7 +478,7 @@ void DataReader::dataSliceCame()
 //        }
 
 
-#if 0
+#if VERBOSE_OUTPUT
 //        if(sliceNumber % 250 == 0)
         cout << sliceNumber << '\t'
              << numOfChans << '\t'
@@ -473,12 +505,8 @@ void DataReader::dataSliceCame()
 
 
 /// DataReaderHandler
-DataReaderHandler::DataReaderHandler(
-//        QTcpSocket * inSocket,
-                                     bool inFullDataFlag)
+DataReaderHandler::DataReaderHandler()
 {
-//    this->socket = inSocket;
-    this->fullDataFlag = inFullDataFlag;
 }
 
 DataReaderHandler::~DataReaderHandler()
@@ -491,14 +519,19 @@ void DataReaderHandler::timerEvent(QTimerEvent *event)
 
 }
 
+
+void DataReaderHandler::retranslateMessageSlot(QString a)
+{
+    emit retranslateMessage(a);
+}
+
 void DataReaderHandler::startReadData()
 {
-    myReader = new DataReader(this,
-//                              this->socket,
-                              this->fullDataFlag);
+    myReader = new DataReader(this);
     connect(myReader, SIGNAL(destroyed()), this, SLOT(stopReadData()));
-    connect(myReader, SIGNAL(startStopSignal(int)), this, SLOT(startStopSlot(int)));
-    /// global eegData
+    connect(myReader, SIGNAL(retranslateMessage(QString)),
+            this, SLOT(retranslateMessageSlot(QString)));
+
     connect(myReader, SIGNAL(sliceReady(eegSliceType)),
             this, SLOT(receiveSlice(eegSliceType)));
 
@@ -535,9 +568,4 @@ void DataReaderHandler::receiveSlice(eegSliceType slic)
         emit dataSend(windowStartIterator, windowEndIterator);
     }
 #endif
-}
-
-void DataReaderHandler::startStopSlot(int var)
-{
-    emit this->startStopSignal(var);
 }

@@ -29,39 +29,48 @@ signals:
 
 public slots:
 
-    void socketErrorSlot(QAbstractSocket::SocketError);
+#if COM_IN_MAIN
     void serialPortErrorSlot(QSerialPort::SerialPortError);
+    void sendOne();
+    void sendTwo();
+    void comPortSlot();
+#endif
+#if SOCKET_IN_MAIN
+    void socketErrorSlot(QAbstractSocket::SocketError);
 
     void socketConnectedSlot();
     void socketDisconnectedSlot();
-
-    void sendOne();
-    void sendTwo();
-
-    // ui slots
     void connectSlot();
     void disconnectSlot();
+
+#endif
+
+
+    // ui slots
     void serverAddressSlot(int a);
     void startSlot();
     void endSlot(); /// is needed?
-    void comPortSlot();
 
-    void startStopSlot(int var); /// from dataReader
-    void comPortSend(int); /// from classifier
+    void retranslateMessageSlot(QString); /// from dataReader
+
 
 private:
     Ui::MainWindow * ui;
 #if SOCKET_IN_MAIN
     QTcpSocket * socket = nullptr;
 #endif
+
+#if COM_IN_MAIN
     QSerialPort * comPort = nullptr;
     QDataStream comPortDataStream{};
+#endif
 
     QThread * myDataThread = nullptr;
     DataReaderHandler * myDataReaderHandler = nullptr;
 
     QThread * myNetThread = nullptr;
     NetHandler * myNetHandler = nullptr;
+
 
 
 

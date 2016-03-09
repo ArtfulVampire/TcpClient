@@ -24,16 +24,7 @@
 #include <fstream>
 
 /// if one changes one of these - certain death
-#define CPP_11 1
 #define MY_QT 1
-#define USE_DATA_STREAM 1
-#define SOCKET_IN_MAIN 0
-#define DATA_READER 1
-
-/// but one can change these
-#define MY_LINROWS 1
-#define OFFLINE_SUCCESSIVE 1
-
 
 #if MY_QT
 #include <QtCore>
@@ -45,15 +36,25 @@
 #include <QSerialPortInfo>
 #endif
 
+#define CPP_11 1
+#define USE_DATA_STREAM 1
+#define SOCKET_IN_MAIN 0
+#define COM_IN_MAIN 0
+#define DATA_READER 1
+
+/// but one can change these
+#define MY_LINROWS 1
+#define OFFLINE_SUCCESSIVE 0
+#define VERBOSE_OUTPUT 1
+
+//typedef quint8 markerType; /// online
+typedef quint32 markerType; /// offline
+
 enum class errorNetType {SME, maxDist};
 
 template <typename T> class eegContType : public std::list<T>{}; /// Type Of Container
 typedef std::vector<qint16> eegSliceType;
 typedef eegContType<eegSliceType> eegDataType;
-
-//typedef quint8 markerType; // online
-typedef quint32 markerType; // offline
-
 namespace enc
 {
 typedef quint32 DWORD;
@@ -88,10 +89,8 @@ extern QString currentName;
 extern markerType currentMarker;
 extern QHostAddress hostAddress;
 extern int hostPort;
-
-extern double tempError;
-extern double tempErrcrit;
-extern double tempLrate;
+extern bool fullDataFlag;
+extern QString comPortName;
 
 /// consts
 constexpr int eegNs = 19;
@@ -101,7 +100,7 @@ constexpr int eog1 = 22;
 constexpr int eog2 = 23;
 const QSet<int> dropChannels{7, 11};
 const errorNetType errType = errorNetType::SME; /// how to calculate
-constexpr double errorThreshold = 1.0;
+constexpr double errorThreshold = 0.9;
 
 const std::vector<qint16> markers{241, 247, 254};
 const QStringList fileMarkers{"_241", "_247", "_254"}; /// needed?
@@ -113,6 +112,7 @@ constexpr int windowLength = 1024;
 
 constexpr double leftFreq = 5.;
 constexpr double rightFreq = 20.;
+
 
 const QString ExpName = "PEW";
 #if MY_LINROWS
@@ -127,6 +127,7 @@ const QString eyesFilePath = workPath + "eyes.txt";
 const QString netLogPath = workPath + "log.txt";
 const QString netResPath = workPath + "results.txt";
 const QString netBadPath = workPath + "badFiles.txt";
+
 
 /// funcs (ORDER is important, or extern+cpp)
 constexpr int fftLimit(const double & inFreq)

@@ -43,12 +43,15 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->serverAddressComboBox->setCurrentText("Enceph");
 #endif
 
+
     /// com
     for(int i = 0; i < 9; ++i)
     {
         ui->comPortComboBox->addItem("COM"+QString::number(i+1));
     }
     ui->comPortComboBox->setCurrentText("COM5");
+
+#if COM_IN_MAIN
     connect(ui->connectComPortPushButton, SIGNAL(clicked()),
             this, SLOT(comPortSlot()));
 
@@ -59,6 +62,7 @@ MainWindow::MainWindow(QWidget *parent) :
             this, SLOT(sendOne()));
     connect(this->ui->comPortSendTwoPushButton, SIGNAL(clicked()),
             this, SLOT(sendTwo()));
+#endif
 
 
 
@@ -98,6 +102,7 @@ MainWindow::MainWindow(QWidget *parent) :
     if(1)
     {
         def::eegData.resize(10 * def::windowLength);
+        def::comPortName = ui->comPortComboBox->currentText();
         myNetThread = new QThread;
         myNetHandler = new NetHandler();
 
@@ -114,17 +119,7 @@ MainWindow::MainWindow(QWidget *parent) :
         connect(myNetHandler, SIGNAL(finishWork()),
                 myNetThread, SLOT(deleteLater()));
 
-        connect(myNetHandler, SIGNAL(sendSignal(int)),
-                this, SLOT(comPortSend(int)));
-
-
-    //    myNetThread->start(QThread::TimeCriticalPriority); // veru fast
         myNetThread->start(QThread::HighestPriority); // veru fast
-
-//        /// GRID TEST
-//        myNetThread->wait();
-
-
     }
     if(0)
     {
@@ -139,17 +134,11 @@ MainWindow::~MainWindow()
     delete ui;
 }
 
-void MainWindow::startStopSlot(int var)
-{
-    QString res = (var == 1) ? "ON" : "OFF";
-    ui->textEdit->append("data transmission " + res);
-}
-
+#if COM_IN_MAIN
 void MainWindow::comPortSend(int a)
 {
     comPortDataStream << qint8(a);
 }
-
 
 void MainWindow::serialPortErrorSlot(QSerialPort::SerialPortError)
 {
@@ -189,14 +178,15 @@ void MainWindow::sendTwo()
 {
     comPortDataStream << qint8(2);
 }
+#endif
 
+
+#if SOCKET_IN_MAIN
 void MainWindow::socketErrorSlot(QAbstractSocket::SocketError)
 {
-#if SOCKET_IN_MAIN
     ui->textEdit->append("socket error: "
                          + QString::number(socket->error())
                          + " " + socket->errorString());
-#endif
 }
 
 void MainWindow::socketDisconnectedSlot()
@@ -206,27 +196,20 @@ void MainWindow::socketDisconnectedSlot()
 
 void MainWindow::socketConnectedSlot()
 {
-#if SOCKET_IN_MAIN
     ui->textEdit->append("socket connected = "
                          + socket->peerAddress().toString()
                          + ":" + QString::number(socket->peerPort()));
-#endif
 }
 
 
 void MainWindow::disconnectSlot()
 {
 
-#if SOCKET_IN_MAIN
-//    disconnect(socket, SIGNAL(readyRead()),
-//            this, SLOT(receiveDataSlot()));
     socket->disconnectFromHost();
-#endif
 }
 
 void MainWindow::connectSlot()
 {
-#if SOCKET_IN_MAIN
 
 //    socket->abort();
     socket->connectToHost(QHostAddress(ui->serverAddressLineEdit->text()),
@@ -242,8 +225,9 @@ void MainWindow::connectSlot()
     {
         socket->abort();
     }
-    #endif
 }
+
+#endif
 
 void MainWindow::serverAddressSlot(int a)
 {
@@ -255,25 +239,13 @@ void MainWindow::serverAddressSlot(int a)
 
     ui->serverAddressLineEdit->setText(def::hostAddress.toString());
     ui->serverPortSpinBox->setValue(def::hostPort);
-
-
 }
 
 void MainWindow::startSlot()
 {
-
-#if SOCKET_IN_MAIN
-    if(!socket->isOpen())
-    {
-        ui->textEdit->append("socket not opened!");
-        return;
-    }
-#endif
-
+    def::fullDataFlag = ui->fullDataCheckBox->isChecked();
     myDataThread = new QThread;
-    myDataReaderHandler = new DataReaderHandler(
-                              //                              socket,
-                              ui->fullDataCheckBox->isChecked());
+    myDataReaderHandler = new DataReaderHandler();
 
     myDataReaderHandler->moveToThread(myDataThread);
 
@@ -298,11 +270,16 @@ void MainWindow::startSlot()
             myDataReaderHandler, SLOT(deleteLater()));
 
 
-    connect(myDataReaderHandler, SIGNAL(startStopSignal(int)),
-            this, SLOT(startStopSlot(int)));
+    connect(myDataReaderHandler, SIGNAL(retranslateMessage(QString)),
+            this, SLOT(retranslateMessageSlot(QString)));
 
 //    myDataThread->start(QThread::TimeCriticalPriority); // veru fast
     myDataThread->start(QThread::HighestPriority); // veru fast
+}
+
+void MainWindow::retranslateMessageSlot(QString a)
+{
+    ui->textEdit->append(a);
 }
 
 void MainWindow::endSlot() /// dont click twice anyway
@@ -314,7 +291,6 @@ void MainWindow::endSlot() /// dont click twice anyway
     if(myDataThread)
     {
         myDataThread->wait();
-//        delete myDataThread;
     }
     myNetHandler->printAccuracy();
 }

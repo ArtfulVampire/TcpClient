@@ -2,17 +2,36 @@
 
 using namespace std;
 
-/// defaults???
 
 net::net(QObject * par)
 {
     this->setParent(par);
     confusionMatrix = matrix(def::numOfClasses(), def::numOfClasses(), 0.);
 
+    readMatrixFile(def::eyesFilePath,
+                   coeff); // num eog channels
+
+    comPort = new QSerialPort(this);
+    comPort->setPortName(def::comPortName);
+    comPort->open(QIODevice::WriteOnly);
+    comPortDataStream.setDevice(comPort);
+    if(comPort->isOpen())
+    {
+        cout << "serialPort opened: " + def::comPortName << endl;
+        cout << "portName: " << comPort->portName().toStdString() << endl;
+        cout << "dataBits: " << comPort->dataBits() << endl;
+        cout << "baudRate: " << comPort->baudRate() << endl;
+        cout << "dataTerminalReady: " << comPort->isDataTerminalReady() << endl;
+        cout << "flowControl: " << comPort->flowControl() << endl;
+        cout << "requestToSend: " << comPort->isRequestToSend() << endl;
+        cout << "stopBits: " << comPort->stopBits() << endl << endl;
+    }
+
 }
 
 net::~net()
 {
+    comPort->close();
 }
 
 void net::startOperate()
@@ -94,10 +113,10 @@ double net::adjustLearnRate(int lowLimit,
            || this->getEpoch() < lowLimit)
         {
             this->learnRate = (currVal
-                                       * sqrt(this->getEpoch()
-                                              /  ((lowLimit + highLimit) / 2.)
-                                              )
-                                       );
+                               * sqrt(this->getEpoch()
+                                      /  ((lowLimit + highLimit) / 2.)
+                                      )
+                               );
         }
         else
         {
@@ -564,20 +583,22 @@ void net::successiveProcessing(const QString & spectraPath)
     confusionMatrix.fill(0.);
     exIndices.clear();
 
+
+//    const QString testMarker = "_test";
+    const QString testMarker = "_3.";
+
     /// check for no test items
 //    cout << "check for no test items" << endl;
     loadData(spectraPath);
     for(int i = 0; i < dataMatrix.rows(); ++i)
     {
-        if(fileNames[i].contains("_test"))
+        if(fileNames[i].contains(testMarker))
         {
             eraseIndices.push_back(i);
         }
     }
     eraseData(eraseIndices);
     eraseIndices.clear();
-
-
 
     /// reduce learning set to (NumClasses * suc::learnSetStay)
     /// move to preclean?
@@ -601,11 +622,8 @@ void net::successiveProcessing(const QString & spectraPath)
     cout << "get initial weights on train set" << endl;
     learnNet();
 
-    /// GRID TEST
     errCrit = 0.02;
     learnRate = 0.02;
-//    errCrit = def::tempErrcrit;
-//    learnRate = def::tempLrate;
 
     cout << "successive: initial learn done" << endl;
     cout << "successive itself" << endl;
@@ -613,7 +631,7 @@ void net::successiveProcessing(const QString & spectraPath)
 #if OFFLINE_SUCCESSIVE
     lineType tempArr;
     int type = -1;
-    QStringList leest = QDir(spectraPath).entryList({"*_test*"}); /// special generality
+    QStringList leest = QDir(spectraPath).entryList({'*' + testMarker + '*'}); /// special generality
 
 //    helpString = "/media/michael/Files/Data/RealTime/windows/SpectraSmooth";
 //    QStringList leest = QDir(helpString).entryList(QDir::Files); /// special generality
@@ -626,7 +644,7 @@ void net::successiveProcessing(const QString & spectraPath)
         successiveLearning(tempArr, type, fileNam);
     }
     averageClassification();
-    emit finish();
+//    emit finish();
 #endif
 }
 
@@ -690,11 +708,6 @@ lineType net::successiveDataToSpectre(
     /// clean from eyes
     if(QFile::exists(def::eyesFilePath))
     {
-        matrix coeff(def::eegNs, 2); // 2 eog channels
-        readMatrixFile(def::eyesFilePath,
-                       coeff,
-                       def::eegNs,
-                       2); // num eog channels
         auto it2 = tmpMat.begin();
         for(int i = 0; i < def::eegNs; ++i, ++it2)
         {
@@ -711,7 +724,6 @@ lineType net::successiveDataToSpectre(
                        tmpMat.cols());
 #endif
     }
-//    return {};
 
     lineType res(def::eegNs * def::spLength());
     /// count spectra, take 5-20 HZ only
@@ -757,13 +769,12 @@ void net::successiveLearning(const lineType & newSpectre,
         if(newType == 0 ||
            newType == 1)
         {
-            emit sendSignal(1);
+            comPortDataStream << qint8(1);
+//            emit sendSignal(1);
         }
 
         /// if accurate classification
         if(outType.second < def::errorThreshold)
-        /// GRID TEST
-//        if(outType.second < def::tempError)
         {
             const int num = std::find(types.begin(),
                                       types.end(),
@@ -783,7 +794,8 @@ void net::successiveLearning(const lineType & newSpectre,
         if(newType == 0 ||
            newType == 1)
         {
-            emit sendSignal(2);
+            comPortDataStream << qint8(2);
+//            emit sendSignal(2);
         }
         popBackDatum();
     }
@@ -915,23 +927,6 @@ void net::crossClassification()
         /// new with indices
         for(int numFold = 0; numFold < this->folds; ++numFold)
         {
-//            if(tallCleanFlag)
-//            {
-//                /// remake for k-fold tallCleanFlag
-//                arr.resize(def::numOfClasses(), {});
-//                for(int i = 0; i < dataMatrix.rows(); ++i)
-//                {
-//                    arr[ types[i] ].push_back(i);
-//                }
-//                for(int i = 0; i < def::numOfClasses(); ++i)
-//                {
-//                    unsigned seed = std::chrono::system_clock::now().time_since_epoch().count();
-//                    std::shuffle(arr[i].begin(),
-//                                 arr[i].end(),
-//                                 std::default_random_engine(seed));
-//                }
-//            }
-
             std::pair<std::vector<int>, std::vector<int> > sets
                     = makeIndicesSetsCross(arr, numFold);
             learnNetIndices(sets.first);
@@ -955,7 +950,7 @@ void net::halfHalfClassification()
     }
     if(learnIndices.empty() || tallIndices.empty())
     {
-        cout << "teainTest: indicesArray empty, return" << endl;
+        cout << "trainTest: indicesArray empty, return" << endl;
         return;
     }
     learnNetIndices(learnIndices);
@@ -1082,7 +1077,6 @@ void net::eraseData(const std::vector<int> & indices)
 // like readPaFile from library.cpp
 void net::loadData(const QString & spectraPath)
 {
-//    std::vector<std::vector<std::string> > leest = contents(spectraPath, makeDefFilters());
     vector<QStringList> leest;
     makeFileLists(spectraPath, leest);
 
@@ -1379,7 +1373,7 @@ std::pair<int, double> net::classifyDatum(const int & vecNum)
     }
     res = sqrt(res);
 
-#if 0
+#if VERBOSE_OUTPUT
     /// cout results
     cout << "type = " << type << '\t' << "(";
     for(int i = 0; i < def::numOfClasses(); ++i)

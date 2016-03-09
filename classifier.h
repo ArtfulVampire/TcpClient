@@ -19,6 +19,7 @@ public:
     ~net();
 
 private:
+    matrix coeff{def::eegNs, 2}; // 2 eog channels
     matrix dataMatrix; // biases and types separately
     std::vector<int> types;
     std::vector<QString> fileNames;
@@ -83,14 +84,17 @@ private:
     int folds = 8;
     double rdcCoeff = 1.; // deprecated
 
+    QSerialPort * comPort = nullptr;
+    QDataStream comPortDataStream{};
+
 signals:
     void finish();
     void sendSignal(int);
 
 public slots:
     void dataCame(eegDataType::iterator a, eegDataType::iterator b);
-
     void averageClassification();
+
 
 public:
     void startOperate();

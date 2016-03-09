@@ -8,11 +8,9 @@ QString currentName = QString();
 markerType currentMarker = 200;
 int slicesCame = 0;
 QHostAddress hostAddress("127.0.0.1");
-int hostPort(120);
-
-double tempError;
-double tempErrcrit;
-double tempLrate;
+int hostPort{120};
+bool fullDataFlag{true};
+QString comPortName{"COM5"};
 
 //double freq = 250.;
 //int fftLength = 1024;

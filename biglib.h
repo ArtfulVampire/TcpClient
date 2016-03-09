@@ -66,9 +66,7 @@ void makeFileLists(const QString & path,
                    const QStringList & auxFilters = QStringList());
 
 void readMatrixFile(const QString & filePath,
-                     matrix & outData,
-                     int rows,
-                     int cols);
+                     matrix & outData);
 
 void writeMatrixFile(const QString & filePath,
                       const matrix & outData,

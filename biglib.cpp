@@ -479,16 +479,21 @@ void makeFullFileList(const QString & path,
 }
 
 void readMatrixFile(const QString & filePath,
-                     matrix & outData,
-                     int rows,
-                     int cols)
+                     matrix & outData)
 {
     ifstream file(filePath.toStdString());
     if(!file.good())
     {
-        cout << "readSpectreFile: bad input file " << filePath << endl;
+        cout << "readMatrixFile: bad input file " << filePath << endl;
         return;
     }
+    int rows{};
+    int cols{};
+    file.ignore(64, ' ');
+    file >> rows;
+    file.ignore(64, ' ');
+    file >> cols;
+
     outData.resize(rows, cols);
 
     for(int i = 0; i < rows; ++i)
@@ -823,6 +828,7 @@ Typ peekFromSocket(QTcpSocket * inSocket)
     delete[] tmp;
     return res;
 }
+
 template <typename Typ>
 Typ readFromSocket(QTcpSocket * inSocket)
 {
@@ -840,9 +846,9 @@ std::bitset<8 * sizeof(Typ)> bits(Typ in)
     return std::bitset<8 * sizeof(Typ)>(in);
 }
 
-std::string readString(QDataStream &in)
+std::string readString(QDataStream & in)
 {
-    int numOfChars;
+    qint32 numOfChars;
     in >> numOfChars;
     std::string res;
     res.resize(numOfChars);
@@ -857,9 +863,6 @@ std::string readString(QTcpSocket * inSocket)
 {
     int numOfChars = readFromSocket<qint32>(inSocket);
     char * res = new char [numOfChars + 1];
-//    cout << "readString: numOfChars = " << numOfChars << endl;
-
-//    inSocket->read(res, numOfChars);
     for(int i = 0; i < numOfChars; ++i)
     {
         inSocket->read(&(res[i]), 1);
