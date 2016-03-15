@@ -10,6 +10,7 @@ net::net(QObject * par)
 
     readMatrixFile(def::eyesFilePath,
                    coeff); // num eog channels
+    coeff.print();
 
     comPort = new QSerialPort(this);
     comPort->setPortName(def::comPortName);
@@ -584,12 +585,13 @@ void net::successiveProcessing(const QString & spectraPath)
     exIndices.clear();
 
 
-//    const QString testMarker = "_test";
-    const QString testMarker = "_3.";
+    const QString testMarker = "_test";
+//    const QString testMarker = "_3.";
 
     /// check for no test items
 //    cout << "check for no test items" << endl;
     loadData(spectraPath);
+
     for(int i = 0; i < dataMatrix.rows(); ++i)
     {
         if(fileNames[i].contains(testMarker))
@@ -599,6 +601,7 @@ void net::successiveProcessing(const QString & spectraPath)
     }
     eraseData(eraseIndices);
     eraseIndices.clear();
+
 
     /// reduce learning set to (NumClasses * suc::learnSetStay)
     /// move to preclean?
@@ -628,7 +631,7 @@ void net::successiveProcessing(const QString & spectraPath)
     cout << "successive: initial learn done" << endl;
     cout << "successive itself" << endl;
 
-#if OFFLINE_SUCCESSIVE
+#if 1
     lineType tempArr;
     int type = -1;
     QStringList leest = QDir(spectraPath).entryList({'*' + testMarker + '*'}); /// special generality
@@ -636,6 +639,7 @@ void net::successiveProcessing(const QString & spectraPath)
 //    helpString = "/media/michael/Files/Data/RealTime/windows/SpectraSmooth";
 //    QStringList leest = QDir(helpString).entryList(QDir::Files); /// special generality
 
+    leest.erase(leest.begin() + 215, leest.end());
     for(const QString & fileNam : leest)
     {
         readFileInLine(spectraPath + qslash() + fileNam,
@@ -650,8 +654,8 @@ void net::successiveProcessing(const QString & spectraPath)
 
 void net::dataCame(eegDataType::iterator a, eegDataType::iterator b)
 {
-    static int windowNum = 0;
-    ++windowNum;
+//    static int windowNum = 0;
+//    ++windowNum;
     const int type = def::currentType;
     if(type < 0)
     {
@@ -660,8 +664,7 @@ void net::dataCame(eegDataType::iterator a, eegDataType::iterator b)
 
     lineType newSpectre = successiveDataToSpectre(a, b);
 
-#if 0
-    /// spectre
+#if 0    /// spectre
     writeFileInLine(def::workPath + "windows" +
                     qslash() + "SpectraSmooth" +
                     qslash() + def::ExpName +
@@ -671,8 +674,9 @@ void net::dataCame(eegDataType::iterator a, eegDataType::iterator b)
 #endif
 
     const QString name = def::ExpName +
+                         "." + QString::number(def::numOfReal) +
                          def::fileMarkers[type] +
-                         "." + QString::number(windowNum) + ".txt";
+                         "." + rightNumber(def::numOfWind++, 4) + ".txt";
     successiveLearning(newSpectre, type, name);
 }
 
@@ -682,7 +686,7 @@ lineType net::successiveDataToSpectre(
 {
     static int windowNum = 0; ++windowNum;
 
-    matrix tmpMat(def::ns, def::windowLength);
+    matrix tmpMat(def::ns, def::windowLength, 0.);
     /// readData
     {
         auto it = eegDataStart;
@@ -701,7 +705,6 @@ lineType net::successiveDataToSpectre(
                        qslash() + def::ExpName + "_" +
                        QString::number(windowNum) + ".txt",
                        tmpMat,
-                       def::ns,
                        tmpMat.cols());
 #endif
     }
@@ -717,10 +720,9 @@ lineType net::successiveDataToSpectre(
 #if 0
         /// eyes - checked, OK
         writePlainData(def::workPath + "windows" +
-                       qslash() + def::ExpName + "_" +
+                       qslash() + def::ExpName + "_EC_" +
                        QString::number(windowNum) + ".txt",
                        tmpMat,
-                       def::ns,
                        tmpMat.cols());
 #endif
     }
@@ -756,6 +758,8 @@ void net::successiveLearning(const lineType & newSpectre,
     /// consider loaded wts
     /// dataMatrix is learning matrix
     lineType newData = (newSpectre - averageDatum) / (sigmaVector * loadDataNorm);
+
+//    cout << newData.sum() << endl;
 
     pushBackDatum(newData, newType, newFileName);
 
@@ -1080,7 +1084,6 @@ void net::loadData(const QString & spectraPath)
     vector<QStringList> leest;
     makeFileLists(spectraPath, leest);
 
-
     dataMatrix = matrix();
     classCount.resize(def::numOfClasses(), 0.);
     types.clear();
@@ -1125,6 +1128,7 @@ void net::loadData(const QString & spectraPath)
             dataMatrix[i] /= sigmaVector[i] * loadDataNorm;
         }
     }
+
     dataMatrix.transpose();
 #endif
 #if 0
@@ -1342,12 +1346,13 @@ std::pair<int, double> net::classifyDatum(const int & vecNum)
     output[0].resize(dimensionality[0] + 1); // +1 for biases
 
 #if CPP_11
-    std::copy(begin(dataMatrix[vecNum]),
-              end(dataMatrix[vecNum]),
-              begin(output[0]));
+    std::copy(std::begin(dataMatrix[vecNum]),
+              std::end(dataMatrix[vecNum]),
+              std::begin(output[0]));
 #else
     output[0] = dataMatrix[vecNum];
 #endif
+
 
     output[0][output[0].size() - 1] = 1.; //bias
 
@@ -1373,7 +1378,7 @@ std::pair<int, double> net::classifyDatum(const int & vecNum)
     }
     res = sqrt(res);
 
-#if VERBOSE_OUTPUT
+#if VERBOSE_OUTPUT >= 1
     /// cout results
     cout << "type = " << type << '\t' << "(";
     for(int i = 0; i < def::numOfClasses(); ++i)

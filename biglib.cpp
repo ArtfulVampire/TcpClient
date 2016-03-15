@@ -353,41 +353,26 @@ template <typename signalType>
 void readFileInLine(const QString & filePath,
                     signalType & result)
 {
-//    cout << filePath << endl;
-
     ifstream file(filePath.toStdString());
     if(!file.good())
     {
         cout << "readFileInLine: bad file " << filePath << endl;
         return;
     }
-    vectType outData;
-    double tmp;
-    int num = 0;
-    while(!file.eof())
+    int rows;
+    int cols;
+    file.ignore(64, ' ');
+    file >> rows;
+    file.ignore(64, ' ');
+    file >> cols;
+
+    int len = rows * cols;
+    result.resize(len);
+    for(int i = 0; i < len; ++i)
     {
-        file >> tmp;
-        outData.push_back(tmp);
-        ++num;
+        file >> result[i];
     }
-    outData.pop_back(); ///// prevent doubling last item (eof) bicycle
     file.close();
-
-    result.resize(outData.size());
-#if CPP_11
-    std::copy(outData.begin(),
-              outData.end(),
-              begin(result));
-#else
-    int i = 0;
-    for(vectType::iterator it = outData.begin();
-        it != outData.end();
-        ++i, ++it)
-    {
-        result[i] = *it;
-    }
-#endif
-
 }
 
 template <typename signalType>
@@ -400,10 +385,13 @@ void writeFileInLine(const QString & filePath,
         cout << "bad file" << endl;
         return;
     }
+    file << "FileLen " << outData.size() << '\t';
+    file << "Pewpew " << 1 << endl;
     for(auto out : outData)
     {
-        file << doubleRound(out, 4) << '\n'; // \t or \n
+        file << doubleRound(out, 4) << '\n';
     }
+    file << endl;
     file.close();
 }
 
@@ -479,7 +467,7 @@ void makeFullFileList(const QString & path,
 }
 
 void readMatrixFile(const QString & filePath,
-                     matrix & outData)
+                    matrix & outData)
 {
     ifstream file(filePath.toStdString());
     if(!file.good())
@@ -487,8 +475,8 @@ void readMatrixFile(const QString & filePath,
         cout << "readMatrixFile: bad input file " << filePath << endl;
         return;
     }
-    int rows{};
-    int cols{};
+    int rows;
+    int cols;
     file.ignore(64, ' ');
     file >> rows;
     file.ignore(64, ' ');
@@ -508,27 +496,22 @@ void readMatrixFile(const QString & filePath,
 
 void writeMatrixFile(const QString & filePath,
                       const matrix & outData,
-                      int rows,
-                      int cols)
-
+                     const QString & rowsString,
+                     const QString & colsString)
 {
-    if(rows > outData.rows() ||
-       cols > outData.cols())
-    {
-        cout << "bad inputs while writing matrix" << endl;
-        return;
-    }
-
     ofstream file(filePath.toStdString());
     if(!file.good())
     {
-        cout << "bad output file:\n" << filePath.toStdString() << endl;
+        cout << "writeMatrixFile: bad output file\n" << filePath.toStdString() << endl;
         return;
     }
 
-    for(int i = 0; i < rows; ++i)
+    file << rowsString << " " << outData.rows() << '\t';
+    file << colsString << " " << outData.cols() << endl;
+
+    for(int i = 0; i < outData.rows(); ++i)
     {
-        for(int j = 0; j < cols; ++j)
+        for(int j = 0; j < outData.cols(); ++j)
         {
             file << doubleRound(outData[i][j], 4) << '\t';
         }
@@ -538,9 +521,9 @@ void writeMatrixFile(const QString & filePath,
 }
 
 
+/// in file and in matrix - transposed
 void writePlainData(const QString outPath,
                     const matrix & data,
-                    const int & ns,
                     int numOfSlices,
                     const int & start)
 {
@@ -551,16 +534,15 @@ void writePlainData(const QString outPath,
 
     ofstream outStr;
     outStr.open(outPath.toStdString());
-    outStr << "NumOfSlices " << numOfSlices;
-    outStr << "\tNumOfChannels " << ns;
-    outStr << endl;
+    outStr << "NumOfSlices " << numOfSlices << '\t';
+    outStr << "NumOfChannels " << data.rows() << endl;
     for (int i = 0; i < numOfSlices; ++i)
     {
-        for(int j = 0; j < ns; ++j)
+        for(int j = 0; j < data.rows(); ++j)
         {
-            outStr << doubleRound(data[j][i + start], 3) << '\t';
+            outStr << doubleRound(data[j][i + start], 4) << '\t';
         }
-        outStr << '\n';
+        outStr << endl;
     }
     outStr.flush();
     outStr.close();
@@ -569,7 +551,6 @@ void writePlainData(const QString outPath,
 
 void readPlainData(const QString & inPath,
                    matrix & data,
-                   const int & ns,
                    int & numOfSlices,
                    const int & start)
 {
@@ -577,25 +558,20 @@ void readPlainData(const QString & inPath,
     inStr.open(inPath.toStdString());
     if(!inStr.good())
     {
-        cout << "readPlainData: cannot open file" << endl;
+        cout << "readPlainData: cannot open file\n" << inPath << endl;
         return;
     }
-    int inNs = -1;
+    int localNs;
     inStr.ignore(64, ' '); // "NumOfSlices "
     inStr >> numOfSlices;
-    inStr.ignore(64, ' '); // "NumOfChannels N\n"
-    inStr >> inNs;
-    inStr.ignore(64, '\n');
-    if(inNs != -1 && inNs != ns)
-    {
-        cout << "readPlainData: not real ns" << endl;
-    }
+    inStr.ignore(64, ' '); // "NumOfChannels "
+    inStr >> localNs;
 
-    data.resize(ns, numOfSlices + start);
+    data.resize(localNs, numOfSlices + start);
 
     for (int i = 0; i < numOfSlices; ++i)
     {
-        for(int j = 0; j < ns; ++j)
+        for(int j = 0; j < localNs; ++j)
         {
             inStr >> data[j][i + start];
         }
@@ -818,6 +794,34 @@ void calcSpectre(const signalType & inSignal,
     }
 }
 
+QString rightNumber(const unsigned int input, int N) // prepend zeros
+{
+    QString h;
+    h.setNum(input);
+    for(int i = 0; i < N; ++i)
+    {
+        h.prepend("0");
+    }
+    return h.right(N);
+}
+
+void fixFilesSlashN(const QString & path)
+{
+    for(const QString & fileNam : QDir(path).entryList(QDir::Files))
+    {
+        QFile fil;
+
+        fil.setFileName(path + fileNam);
+        fil.open(QFile::ReadOnly);
+        auto dat = fil.readAll().replace("\n", "\r\n");
+        fil.close();
+
+        fil.open(QFile::WriteOnly);
+        fil.write(dat);
+        fil.close();
+    }
+}
+
 template <typename Typ>
 Typ peekFromSocket(QTcpSocket * inSocket)
 {
@@ -850,12 +854,14 @@ std::string readString(QDataStream & in)
 {
     qint32 numOfChars;
     in >> numOfChars;
+//    cout << "numChars = " << numOfChars << endl;
     std::string res;
     res.resize(numOfChars);
     for(int i = 0; i < numOfChars; ++i)
     {
         in.readRawData(&(res[i]), 1);
     }
+//    cout << res << endl;
     return res;
 }
 

@@ -20,6 +20,8 @@ std::string funcName(std::string in);
 
 std::ostream & operator<< (std::ostream &os, QString toOut);
 
+QString rightNumber(const unsigned int input, int N);
+
 
 template <typename signalType>
 void readFileInLine(const QString & filePath,
@@ -65,25 +67,25 @@ void makeFileLists(const QString & path,
                    std::vector<QStringList> & lst,
                    const QStringList & auxFilters = QStringList());
 
-void readMatrixFile(const QString & filePath,
-                     matrix & outData);
-
-void writeMatrixFile(const QString & filePath,
-                      const matrix & outData,
-                      int rows,
-                      int cols);
-
 void readPlainData(const QString & inPath,
                    matrix & data,
-                   const int & ns,
                    int & numOfSlices,
                    const int & start = 0);
 
 void writePlainData(const QString outPath,
-                    const matrix &data,
-                    const int & ns,
+                    const matrix & data,
                     int numOfSlices,
                     const int & start = 0);
+
+void readMatrixFile(const QString & filePath,
+                    matrix & outData);
+
+void writeMatrixFile(const QString & filePath,
+                     const matrix & outData,
+                     const QString & rowsString = "NumOfRows",
+                     const QString & colsString = "NumOfCols");
+
+void fixFilesSlashN(const QString & path);
 
 template <typename signalType = lineType, typename retType = lineType>
 retType spectre(const signalType & data);

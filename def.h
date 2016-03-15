@@ -23,6 +23,10 @@
 #include <ios>
 #include <fstream>
 
+
+
+
+
 /// if one changes one of these - certain death
 #define MY_QT 1
 
@@ -43,9 +47,13 @@
 #define DATA_READER 1
 
 /// but one can change these
-#define MY_LINROWS 1
+#define MY_LINROWS 0
 #define OFFLINE_SUCCESSIVE 0
 #define VERBOSE_OUTPUT 1
+
+
+
+
 
 //typedef quint8 markerType; /// online
 typedef quint32 markerType; /// offline
@@ -71,7 +79,7 @@ struct String
 
 struct Pack
 {
-    int packSize = 0;
+    Int packSize = 0;
     DWORD packId = 0;
     QByteArray packData;
 };
@@ -91,6 +99,8 @@ extern QHostAddress hostAddress;
 extern int hostPort;
 extern bool fullDataFlag;
 extern QString comPortName;
+extern int numOfReal;
+extern int numOfWind;
 
 /// consts
 constexpr int eegNs = 19;
@@ -114,7 +124,7 @@ constexpr double leftFreq = 5.;
 constexpr double rightFreq = 20.;
 
 
-const QString ExpName = "PEW";
+const QString ExpName = "AAU_test";
 #if MY_LINROWS
 const QString workPath = "/media/Files/Data/RealTime/";
 #else

@@ -12,7 +12,6 @@ MainWindow::MainWindow(QWidget *parent) :
 {
     ui->setupUi(this);
 
-
     qRegisterMetaType<eegDataType::iterator>("eegDataType::iterator");
 
     /// server
@@ -42,6 +41,9 @@ MainWindow::MainWindow(QWidget *parent) :
 #else
     ui->serverAddressComboBox->setCurrentText("Enceph");
 #endif
+
+
+    ui->serverAddressComboBox->setCurrentText("pew"); /// fix via router, always 192.168.0.104
 
 
     /// com
@@ -102,6 +104,7 @@ MainWindow::MainWindow(QWidget *parent) :
     if(1)
     {
         def::eegData.resize(10 * def::windowLength);
+//        cout << "list size = " << def::eegData.size() << endl;
         def::comPortName = ui->comPortComboBox->currentText();
         myNetThread = new QThread;
         myNetHandler = new NetHandler();

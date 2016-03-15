@@ -129,11 +129,12 @@ void DataReader::receiveData()
         return;
     }
 
-//    if(socket->bytesAvailable() < (inPack.packSize - sizeof(inPack.packId)))
-//    {
-//        return;
-//    }
-#if VERBOSE_OUTPUT
+    /// wait for data to come (namely, initial 1618 bytes)
+    if(socket->bytesAvailable() < (inPack.packSize - sizeof(inPack.packId)))
+    {
+        return;
+    }
+#if VERBOSE_OUTPUT >= 3
     cout << inPack.packSize << '\t' << inPack.packId << endl;
 #endif
 
@@ -243,6 +244,7 @@ void DataReader::readStartInfo()
             double defSans;
             socketDataStream >> defSans;
 //            cout << defSans << endl;
+//            cout << endl;
         }
         std::string scheme = readString(socketDataStream);
 //        cout << scheme << endl;
@@ -342,7 +344,6 @@ void DataReader::readStartInfo()
     }
     cout << "start info was read" << endl;
 #if VERBOSE_OUTPUT
-
 #endif
 }
 
@@ -385,8 +386,10 @@ void DataReader::startStopTransmisson()
 }
 void DataReader::markerCame()
 {
-    qint32 sliceNumber;
 
+
+
+    qint32 sliceNumber;
 #if USE_DATA_STREAM
     socketDataStream >> sliceNumber;
 #else
@@ -414,18 +417,32 @@ void DataReader::markerCame()
     {
         def::currentType = 0;
         def::slicesCame = 0;
+        ++def::numOfReal;
+        def::numOfWind = 0;
         break;
     }
     case 247:
     {
         def::currentType = 1;
         def::slicesCame = 0;
+        ++def::numOfReal;
+        def::numOfWind = 0;
         break;
     }
     case 254:
     {
         def::currentType = 2;
         def::slicesCame = 0;
+        ++def::numOfReal;
+        def::numOfWind = 0;
+        break;
+    }
+    case 200:
+    {
+        def::currentType = 2;
+        def::slicesCame = 0;
+        def::numOfReal = 2; /// right after "sta"
+        def::numOfWind = 0;
         break;
     }
     default:
@@ -478,7 +495,7 @@ void DataReader::dataSliceCame()
 //        }
 
 
-#if VERBOSE_OUTPUT
+#if VERBOSE_OUTPUT >= 2
 //        if(sliceNumber % 250 == 0)
         cout << sliceNumber << '\t'
              << numOfChans << '\t'
@@ -556,9 +573,8 @@ void DataReaderHandler::receiveSlice(eegSliceType slic)
 
 //    cout << def::slicesCame << endl;
 
-
     if(def::slicesCame % def::timeShift == 0 &&
-       def::slicesCame > def::windowLength) // not >= to delay reaction
+       def::slicesCame >= def::windowLength) // not >= to delay reaction
     {
         eegDataType::iterator windowStartIterator = def::eegData.end();
         eegDataType::iterator windowEndIterator = --def::eegData.end(); /// really unused
