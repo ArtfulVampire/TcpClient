@@ -63,12 +63,12 @@ private:
     double learnRate = 0.05;
 
 
-    static const int lowLimit = 70;
-    static const int highLimit = 110;
+    static const int lowLimit = 85;
+    static const int highLimit = 130;
 
-    static const int learnSetStay = 60;
-    static const int numGoodNewLimit = 8;
-    static constexpr double decayRate = 0.01;
+    static const int numGoodNewLimit = 5;
+    static const int learnSetStay = 80;
+    static constexpr double decayRate = 0.005;
 
     int numGoodNew = 0;
 
@@ -137,7 +137,8 @@ public:
 
 
 
-    void loadData(const QString & spectraPath = QString());
+    void loadData(const QString & spectraPath = QString(),
+                  const QStringList & filters = {"*_train*"});
     void popBackDatum();
     void pushBackDatum(const lineType & inDatum,
                        const int & inType,

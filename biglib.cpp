@@ -389,7 +389,7 @@ void writeFileInLine(const QString & filePath,
     file << "Pewpew " << 1 << endl;
     for(auto out : outData)
     {
-        file << doubleRound(out, 4) << '\n';
+        file << doubleRound(out, 3) << '\n';
     }
     file << endl;
     file.close();
@@ -513,7 +513,7 @@ void writeMatrixFile(const QString & filePath,
     {
         for(int j = 0; j < outData.cols(); ++j)
         {
-            file << doubleRound(outData[i][j], 4) << '\t';
+            file << doubleRound(outData[i][j], 3) << '\t';
         }
         file << endl;
     }
@@ -540,7 +540,7 @@ void writePlainData(const QString outPath,
     {
         for(int j = 0; j < data.rows(); ++j)
         {
-            outStr << doubleRound(data[j][i + start], 4) << '\t';
+            outStr << doubleRound(data[j][i + start], 3) << '\t';
         }
         outStr << endl;
     }

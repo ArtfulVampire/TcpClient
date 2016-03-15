@@ -47,7 +47,7 @@
 #define DATA_READER 1
 
 /// but one can change these
-#define MY_LINROWS 0
+#define MY_LINROWS 1
 #define OFFLINE_SUCCESSIVE 0
 #define VERBOSE_OUTPUT 1
 

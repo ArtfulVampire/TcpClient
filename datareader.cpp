@@ -573,8 +573,11 @@ void DataReaderHandler::receiveSlice(eegSliceType slic)
 
 //    cout << def::slicesCame << endl;
 
-    if(def::slicesCame % def::timeShift == 0 &&
-       def::slicesCame >= def::windowLength) // not >= to delay reaction
+    /// old variant
+//    if(def::slicesCame % def::timeShift == 0 &&
+//       def::slicesCame > def::windowLength) // not >= to delay reaction
+    if((def::slicesCame - def::windowLength) % def::timeShift == 0
+       && def::slicesCame >= def::windowLength)
     {
         eegDataType::iterator windowStartIterator = def::eegData.end();
         eegDataType::iterator windowEndIterator = --def::eegData.end(); /// really unused

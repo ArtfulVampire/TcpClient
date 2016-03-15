@@ -10,7 +10,7 @@ net::net(QObject * par)
 
     readMatrixFile(def::eyesFilePath,
                    coeff); // num eog channels
-    coeff.print();
+//    coeff.print();
 
     comPort = new QSerialPort(this);
     comPort->setPortName(def::comPortName);
@@ -126,9 +126,9 @@ double net::adjustLearnRate(int lowLimit,
         }
 
         /// check lrate values
-        if(this->learnRate < 0.005)
+        if(this->learnRate < 0.001)
         {
-            this->learnRate = (0.005); break;
+            this->learnRate = 0.001; break;
         }
         else if(this->learnRate >= 1.)
         {
@@ -136,6 +136,8 @@ double net::adjustLearnRate(int lowLimit,
         }
         ++counter;
     } while (counter < 15);
+    cout << endl;
+    this->learnRate = doubleRound(this->learnRate, 3);
     return res;
 }
 
@@ -585,22 +587,23 @@ void net::successiveProcessing(const QString & spectraPath)
     exIndices.clear();
 
 
-    const QString testMarker = "_test";
+//    const QString testMarker = "_test";
+
+    const QString testMarker = "_3_rr_eyesClean";
 //    const QString testMarker = "_3.";
 
     /// check for no test items
-//    cout << "check for no test items" << endl;
-    loadData(spectraPath);
+    loadData(spectraPath, {"*_train*"});
 
-    for(int i = 0; i < dataMatrix.rows(); ++i)
-    {
-        if(fileNames[i].contains(testMarker))
-        {
-            eraseIndices.push_back(i);
-        }
-    }
-    eraseData(eraseIndices);
-    eraseIndices.clear();
+//    for(int i = 0; i < dataMatrix.rows(); ++i)
+//    {
+//        if(fileNames[i].contains(testMarker))
+//        {
+//            eraseIndices.push_back(i);
+//        }
+//    }
+//    eraseData(eraseIndices);
+//    eraseIndices.clear();
 
 
     /// reduce learning set to (NumClasses * suc::learnSetStay)
@@ -620,7 +623,10 @@ void net::successiveProcessing(const QString & spectraPath)
 
     /// consts
     errCrit = 0.05;
-    learnRate = 0.05;
+    learnRate = 0.01;
+
+    adjustLearnRate(this->lowLimit,
+                    this->highLimit);
 
     cout << "get initial weights on train set" << endl;
     learnNet();
@@ -631,7 +637,7 @@ void net::successiveProcessing(const QString & spectraPath)
     cout << "successive: initial learn done" << endl;
     cout << "successive itself" << endl;
 
-#if 1
+#if OFFLINE_SUCCESSIVE
     lineType tempArr;
     int type = -1;
     QStringList leest = QDir(spectraPath).entryList({'*' + testMarker + '*'}); /// special generality
@@ -639,7 +645,7 @@ void net::successiveProcessing(const QString & spectraPath)
 //    helpString = "/media/michael/Files/Data/RealTime/windows/SpectraSmooth";
 //    QStringList leest = QDir(helpString).entryList(QDir::Files); /// special generality
 
-    leest.erase(leest.begin() + 215, leest.end());
+//    leest.erase(leest.begin() + 215, leest.end());
     for(const QString & fileNam : leest)
     {
         readFileInLine(spectraPath + qslash() + fileNam,
@@ -648,7 +654,6 @@ void net::successiveProcessing(const QString & spectraPath)
         successiveLearning(tempArr, type, fileNam);
     }
     averageClassification();
-//    emit finish();
 #endif
 }
 
@@ -664,12 +669,12 @@ void net::dataCame(eegDataType::iterator a, eegDataType::iterator b)
 
     lineType newSpectre = successiveDataToSpectre(a, b);
 
-#if 0    /// spectre
-    writeFileInLine(def::workPath + "windows" +
-                    qslash() + "SpectraSmooth" +
-                    qslash() + def::ExpName +
-                    def::fileMarkers[type] + "." +
-                    QString::number(windowNum) + ".txt",
+#if 1    /// spectre
+    writeFileInLine(def::workPath + "windows/SpectraSmooth/" +
+                    def::ExpName +
+                    "." + rightNumber(def::numOfReal, 4) +
+                    def::fileMarkers[def::currentType] +
+                    "." + rightNumber(def::numOfWind, 2) + ".txt",
                     newSpectre);
 #endif
 
@@ -704,8 +709,10 @@ lineType net::successiveDataToSpectre(
 #if 0
         /// checked - data is ok
         writePlainData(def::workPath + "windows" +
-                       qslash() + def::ExpName + "_" +
-                       QString::number(windowNum) + ".txt",
+                       qslash() + def::ExpName +
+                       "." + rightNumber(def::numOfReal, 4) +
+                       def::fileMarkers[def::currentType] +
+                       "." + rightNumber(def::numOfWind, 2) + ".txt",
                        tmpMat,
                        tmpMat.cols());
 #endif
@@ -725,7 +732,7 @@ lineType net::successiveDataToSpectre(
                        qslash() + def::ExpName +
                        "." + rightNumber(def::numOfReal, 4) +
                        def::fileMarkers[def::currentType] +
-                       "." + QString::number(def::numOfWind) + ".txt",
+                       "." + rightNumber(def::numOfWind, 2) + ".txt",
                        tmpMat,
                        tmpMat.cols());
 #endif
@@ -1083,10 +1090,11 @@ void net::eraseData(const std::vector<int> & indices)
 
 
 // like readPaFile from library.cpp
-void net::loadData(const QString & spectraPath)
+void net::loadData(const QString & spectraPath,
+                   const QStringList & filters)
 {
     vector<QStringList> leest;
-    makeFileLists(spectraPath, leest, {"*_train*"}); /// PEW!!!
+    makeFileLists(spectraPath, leest, filters);
 
     dataMatrix = matrix();
     classCount.resize(def::numOfClasses(), 0.);
@@ -1384,6 +1392,14 @@ std::pair<int, double> net::classifyDatum(const int & vecNum)
 
 #if VERBOSE_OUTPUT >= 1
     /// cout results
+
+    std::ofstream resFile;
+    resFile.open((def::workPath + "class_online.txt").toStdString(),
+                 ios_base::app);
+    auto tmp = std::cout.rdbuf();
+    cout.rdbuf(resFile.rdbuf());
+
+
     cout << "type = " << type << '\t' << "(";
     for(int i = 0; i < def::numOfClasses(); ++i)
     {
@@ -1400,6 +1416,10 @@ std::pair<int, double> net::classifyDatum(const int & vecNum)
     }
     cout << "\t" << doubleRound(res, 2);
     cout << endl;
+
+
+    cout.rdbuf(tmp);
+    resFile.close();
 #endif
     return std::make_pair(outClass,
                           res);
