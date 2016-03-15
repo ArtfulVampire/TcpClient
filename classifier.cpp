@@ -674,10 +674,12 @@ void net::dataCame(eegDataType::iterator a, eegDataType::iterator b)
 #endif
 
     const QString name = def::ExpName +
-                         "." + QString::number(def::numOfReal) +
+                         "." + rightNumber(def::numOfReal, 4) +
                          def::fileMarkers[type] +
-                         "." + rightNumber(def::numOfWind++, 4) + ".txt";
+                         "." + rightNumber(def::numOfWind, 2) + ".txt";
     successiveLearning(newSpectre, type, name);
+
+    ++def::numOfWind;
 }
 
 lineType net::successiveDataToSpectre(
@@ -717,11 +719,13 @@ lineType net::successiveDataToSpectre(
             (*it2) -= tmpMat[def::eog1] * coeff[i][0] +
                     tmpMat[def::eog2] * coeff[i][1];
         }
-#if 0
+#if 1
         /// eyes - checked, OK
         writePlainData(def::workPath + "windows" +
-                       qslash() + def::ExpName + "_EC_" +
-                       QString::number(windowNum) + ".txt",
+                       qslash() + def::ExpName +
+                       "." + rightNumber(def::numOfReal, 4) +
+                       def::fileMarkers[def::currentType] +
+                       "." + QString::number(def::numOfWind) + ".txt",
                        tmpMat,
                        tmpMat.cols());
 #endif
@@ -1082,7 +1086,7 @@ void net::eraseData(const std::vector<int> & indices)
 void net::loadData(const QString & spectraPath)
 {
     vector<QStringList> leest;
-    makeFileLists(spectraPath, leest);
+    makeFileLists(spectraPath, leest, {"*_train*"}); /// PEW!!!
 
     dataMatrix = matrix();
     classCount.resize(def::numOfClasses(), 0.);
