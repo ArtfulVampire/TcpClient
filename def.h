@@ -47,7 +47,7 @@
 #define DATA_READER 1
 
 /// but one can change these
-#define MY_LINROWS 1
+#define MY_LINDROWS 1
 #define OFFLINE_SUCCESSIVE 0
 #define VERBOSE_OUTPUT 1
 
@@ -108,7 +108,8 @@ constexpr int ns = 24;
 constexpr int markerChannel = 22;
 constexpr int eog1 = 22;
 constexpr int eog2 = 23;
-const QSet<int> dropChannels{7, 11};
+const QSet<int> dropChannels{};
+//const QSet<int> dropChannels{7, 11};
 const errorNetType errType = errorNetType::SME; /// how to calculate
 constexpr double errorThreshold = 0.9;
 
@@ -125,7 +126,7 @@ constexpr double rightFreq = 20.;
 
 
 const QString ExpName = "AAU_test";
-#if MY_LINROWS
+#if MY_LINDROWS
 const QString workPath = "/media/Files/Data/RealTime/";
 #else
 const QString workPath = "D:/MichaelAtanov/workData/";

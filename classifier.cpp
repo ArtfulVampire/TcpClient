@@ -350,7 +350,7 @@ void net::drawWts(std::string wtsPath,
             return;
         }
     }
-    twovector<lineType> tempWeights;
+    wtsType tempWeights;
     readWtsByName(wtsPath, &tempWeights);
 
     matrix drawWts; // 3 arrays of weights
@@ -383,43 +383,56 @@ void net::drawWts(std::string wtsPath,
 #endif
 
 
-void net::writeWts(const string & wtsPath)
+void net::writeWts(const QString & outPath)
 {
+    if(weight.size() != 1) return;
     static int wtsCounter = 0;
-    std::ofstream weightsFile;
-    if(wtsPath.empty())
+//    std::ofstream weightsFile;
+    QString wtsPath;
+    if(outPath.isEmpty())
     {
-        weightsFile.open(def::workPath.toStdString() +
-                         def::ExpName.toStdString() + "_" +
-                         std::to_string(wtsCounter++) + ".wts");
-
-
+        while(QFile::exists(def::workPath +
+                            def::ExpName + "_" +
+                            QString::number(wtsCounter) + ".wts"))
+        {
+            ++wtsCounter;
+        }
+        wtsPath = def::workPath +
+                  def::ExpName + "_" +
+                  QString::number(wtsCounter++) + ".wts";
+//        weightsFile.open((def::workPath +
+//                         def::ExpName + "_" +
+//                         QString::number(wtsCounter++) + ".wts").toStdString());
     }
     else
     {
-        weightsFile.open(wtsPath);
+        wtsPath = outPath;
+//        weightsFile.open(wtsPath);
     }
+    writeMatrixFile(wtsPath, weight[0]);
 
 
-    if(!weightsFile.good())
-    {
-        cout << "saveWts: cannot open file = " << wtsPath << endl;
-        return;
-    }
+//    if(!weightsFile.good())
+//    {
+//        cout << "saveWts: cannot open file = " << wtsPath << endl;
+//        return;
+//    }
 
-    for(int i = 0; i < dimensionality.size() - 1; ++i) // numOfLayers
-    {
-        for(int j = 0; j < dimensionality[i + 1]; ++j) // NetLength+1 for bias
-        {
-            for(int k = 0; k < dimensionality[i] + 1; ++k) // NumOfClasses
-            {
-                weightsFile << weight[i][j][k] << '\n';
-            }
-            weightsFile << '\n';
-        }
-        weightsFile << '\n';
-    }
-    weightsFile.close();
+
+
+//    for(int i = 0; i < dimensionality.size() - 1; ++i) // numOfLayers
+//    {
+//        for(int j = 0; j < dimensionality[i + 1]; ++j) // NetLength+1 for bias
+//        {
+//            for(int k = 0; k < dimensionality[i] + 1; ++k) // NumOfClasses
+//            {
+//                weightsFile << weight[i][j][k] << '\n';
+//            }
+//            weightsFile << '\n';
+//        }
+//        weightsFile << '\n';
+//    }
+//    weightsFile.close();
 }
 
 void net::reset()
@@ -587,13 +600,14 @@ void net::successiveProcessing(const QString & spectraPath)
     exIndices.clear();
 
 
+const QString trainMarker = "_train";
 //    const QString testMarker = "_test";
-
     const QString testMarker = "_3_rr_eyesClean";
 //    const QString testMarker = "_3.";
 
+
     /// check for no test items
-    loadData(spectraPath, {"*_train*"});
+    loadData(spectraPath, {"*" + trainMarker + "*"});
 
 //    for(int i = 0; i < dataMatrix.rows(); ++i)
 //    {
@@ -623,13 +637,14 @@ void net::successiveProcessing(const QString & spectraPath)
 
     /// consts
     errCrit = 0.05;
-    learnRate = 0.01;
+    learnRate = 0.005;
 
     adjustLearnRate(this->lowLimit,
                     this->highLimit);
 
     cout << "get initial weights on train set" << endl;
     learnNet();
+//    writeWts();
 
     errCrit = 0.02;
     learnRate = 0.02;
@@ -654,6 +669,7 @@ void net::successiveProcessing(const QString & spectraPath)
         successiveLearning(tempArr, type, fileNam);
     }
     averageClassification();
+    exit(0);
 #endif
 }
 
@@ -839,7 +855,7 @@ void net::successiveRelearn()
 }
 
 void net::readWts(const std::string & fileName,
-                  twovector<lineType> * wtsMatrix)
+                  wtsType * wtsMatrix)
 {
     std::ifstream wtsStr(fileName.c_str());
     if(!wtsStr.good())
@@ -1394,7 +1410,7 @@ std::pair<int, double> net::classifyDatum(const int & vecNum)
     /// cout results
 
     std::ofstream resFile;
-    resFile.open((def::workPath + "class_online.txt").toStdString(),
+    resFile.open((def::workPath + "class.txt").toStdString(),
                  ios_base::app);
     auto tmp = std::cout.rdbuf();
     cout.rdbuf(resFile.rdbuf());

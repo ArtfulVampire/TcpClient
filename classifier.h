@@ -31,7 +31,9 @@ private:
 
     matrix confusionMatrix; // rows - realClass, cols - outClass
 
-    twovector<lineType> weight;
+//    typedef twovector<lineType> wtsType;
+    typedef std::vector<matrix> wtsType;
+    wtsType weight;
     std::vector<int> dimensionality; // for backprop
 
     double averageAccuracy = 0.;
@@ -149,13 +151,13 @@ public:
 
 
 
-    void writeWts(const std::string & wtsPath = std::string());
+    void writeWts(const QString & outPath = QString());
 #if DRAWS
     void drawWts(std::string wtsPath = std::string(),
                  std::string picPath = std::string());
 #endif
     void readWts(const std::string & fileName,
-                 twovector<lineType> * wtsMatrix = NULL);
+                 wtsType * wtsMatrix = nullptr);
 
 
     void successivePreclean(const QString & spectraPath = QString());
