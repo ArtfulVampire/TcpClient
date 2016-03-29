@@ -91,6 +91,11 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(ui->disconnectFromServerPushButton, SIGNAL(clicked()),
             this, SLOT(disconnectSlot()));
 #endif
+    /// "static" COM-port sending
+    connect(this->ui->comPortSendOnePushButton, SIGNAL(clicked()),
+            this, SLOT(sendOne()));
+    connect(this->ui->comPortSendTwoPushButton, SIGNAL(clicked()),
+            this, SLOT(sendTwo()));
 
     connect(this->ui->startPushButton, SIGNAL(clicked()),
             this, SLOT(startSlot()));
@@ -173,15 +178,39 @@ void MainWindow::comPortSlot()
     }
 }
 
+#endif
 void MainWindow::sendOne()
 {
+    QSerialPort * comPort;
+    comPort = new QSerialPort(this);
+
+    comPort->setPortName(ui->comPortComboBox->currentText());
+    comPort->open(QIODevice::WriteOnly);
+
+    QDataStream comPortDataStream;
+    comPortDataStream.setDevice(comPort);
+
     comPortDataStream << qint8(1);
+    comPortDataStream.setDevice(nullptr);
+    comPort->close();
+    delete comPort;
 }
 void MainWindow::sendTwo()
 {
+    QSerialPort * comPort;
+    comPort = new QSerialPort(this);
+
+    comPort->setPortName(ui->comPortComboBox->currentText());
+    comPort->open(QIODevice::WriteOnly);
+
+    QDataStream comPortDataStream;
+    comPortDataStream.setDevice(comPort);
+
     comPortDataStream << qint8(2);
+    comPortDataStream.setDevice(nullptr);
+    comPort->close();
+    delete comPort;
 }
-#endif
 
 
 #if SOCKET_IN_MAIN

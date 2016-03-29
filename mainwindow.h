@@ -51,6 +51,9 @@ public slots:
     void startSlot();
     void endSlot(); /// is needed?
 
+    void sendOne();
+    void sendTwo();
+
     void retranslateMessageSlot(QString); /// from dataReader
 
 
