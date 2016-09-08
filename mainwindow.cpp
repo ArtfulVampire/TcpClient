@@ -14,6 +14,7 @@ MainWindow::MainWindow(QWidget *parent) :
 
     qRegisterMetaType<eegDataType::iterator>("eegDataType::iterator");
 
+
     /// server
     ui->serverPortSpinBox->setMaximum(65535);
     int hostCounter = 0;
@@ -67,6 +68,16 @@ MainWindow::MainWindow(QWidget *parent) :
 #endif
 
 
+    QSerialPort * comPort;
+    comPort = new QSerialPort(this);
+
+    comPort->setPortName(ui->comPortComboBox->currentText());
+    comPort->open(QIODevice::WriteOnly);
+
+    comPortDataStream.setDevice(comPort);
+
+
+
 
     /// socket
 #if SOCKET_IN_MAIN
@@ -106,7 +117,7 @@ MainWindow::MainWindow(QWidget *parent) :
 
     /// DataProcessor
 
-    if(1)
+    if(0)
     {
         def::eegData.resize(10 * def::windowLength);
 //        cout << "list size = " << def::eegData.size() << endl;
@@ -181,35 +192,11 @@ void MainWindow::comPortSlot()
 #endif
 void MainWindow::sendOne()
 {
-    QSerialPort * comPort;
-    comPort = new QSerialPort(this);
-
-    comPort->setPortName(ui->comPortComboBox->currentText());
-    comPort->open(QIODevice::WriteOnly);
-
-    QDataStream comPortDataStream;
-    comPortDataStream.setDevice(comPort);
-
     comPortDataStream << qint8(1);
-    comPortDataStream.setDevice(nullptr);
-    comPort->close();
-    delete comPort;
 }
 void MainWindow::sendTwo()
 {
-    QSerialPort * comPort;
-    comPort = new QSerialPort(this);
-
-    comPort->setPortName(ui->comPortComboBox->currentText());
-    comPort->open(QIODevice::WriteOnly);
-
-    QDataStream comPortDataStream;
-    comPortDataStream.setDevice(comPort);
-
     comPortDataStream << qint8(2);
-    comPortDataStream.setDevice(nullptr);
-    comPort->close();
-    delete comPort;
 }
 
 

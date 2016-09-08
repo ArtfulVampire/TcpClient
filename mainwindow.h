@@ -75,6 +75,7 @@ private:
     NetHandler * myNetHandler = nullptr;
 
 
+    QDataStream comPortDataStream;
 
 
     /// moved to DataReader
