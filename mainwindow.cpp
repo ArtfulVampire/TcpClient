@@ -117,7 +117,7 @@ MainWindow::MainWindow(QWidget *parent) :
 
     /// DataProcessor
 
-    if(0)
+    if(1)
     {
         def::eegData.resize(10 * def::windowLength);
 //        cout << "list size = " << def::eegData.size() << endl;

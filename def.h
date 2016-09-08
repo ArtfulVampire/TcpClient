@@ -47,7 +47,7 @@
 #define DATA_READER 1
 
 /// but one can change these
-#define MY_LINDROWS 1
+#define MY_LINDROWS 0
 #define OFFLINE_SUCCESSIVE 0
 #define VERBOSE_OUTPUT 1
 
@@ -124,12 +124,14 @@ constexpr int windowLength = 1024;
 constexpr double leftFreq = 5.;
 constexpr double rightFreq = 20.;
 
-
+/// make GUI for these variables
 const QString ExpName = "AAU_test";
 #if MY_LINDROWS
 const QString workPath = "/media/Files/Data/RealTime/";
-#else
+#elif 0
 const QString workPath = "D:/MichaelAtanov/workData/";
+#else
+const QString workPath = "C:/RealTime/workData/";
 #endif
 /// to read
 const QString spectraPath = workPath + "SpectraSmooth/windows";
