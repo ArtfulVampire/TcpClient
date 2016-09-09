@@ -7,7 +7,10 @@
 QT       += core gui svg
 QT += network
 QT += serialport
-QMAKE_CXXFLAGS = -std=c++11
+QMAKE_CXXFLAGS += -Wno-sign-compare
+QMAKE_CXXFLAGS += -Wno-unused-parameter
+QMAKE_CXXFLAGS += -Wno-unused-result
+QMAKE_CXXFLAGS += -std=c++11
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
 TARGET = TcpClient

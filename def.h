@@ -49,6 +49,7 @@
 /// but one can change these
 #define MY_LINDROWS 0
 #define OFFLINE_SUCCESSIVE 0
+/// 0 1 2 3
 #define VERBOSE_OUTPUT 1
 
 

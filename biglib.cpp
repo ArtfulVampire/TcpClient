@@ -9,7 +9,7 @@ std::string funcName(std::string in)
     for(char a : {' ', '='})
     {
         auto b = in.rfind(a);
-        if(b >= 0)
+        if(b != std::string::npos)
         {
             in = in.substr(b + 1);
         }
@@ -271,7 +271,7 @@ void myIota(std::vector<int> & in)
 
 void myShuffle(std::vector<int> & in)
 {
-    srand(time(NULL));
+    srand(time(nullptr));
     for(int i = 0; i < in.size() * 5; ++i)
     {
         int a = rand()%in.size();

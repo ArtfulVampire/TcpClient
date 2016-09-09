@@ -23,7 +23,7 @@ matrix::matrix(int rows, int cols)
     this->fill(0.);
 }
 
-matrix::matrix(const matrix & other)
+matrix::matrix(const matrix & other) : matrix()
 {
     this->data = other.data;
 }

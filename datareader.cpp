@@ -119,8 +119,10 @@ void DataReader::receiveData()
 #endif
     }
 
-    if(inPack.packId > 12 || inPack.packId < 0 ||
-       inPack.packSize > 2000 || inPack.packSize < 0)
+    if(inPack.packId > 12 ||
+//            inPack.packId < 0 ||
+            inPack.packSize > 2000 ||
+            inPack.packSize < 0)
     {
         cout << "BAD PACK: "
              << "packSize = " << inPack.packSize << "\t"

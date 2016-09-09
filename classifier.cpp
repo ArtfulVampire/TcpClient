@@ -644,7 +644,6 @@ const QString trainMarker = "_train";
 
     cout << "get initial weights on train set" << endl;
     learnNet();
-//    writeWts();
 
     errCrit = 0.02;
     learnRate = 0.02;
@@ -801,7 +800,7 @@ void net::successiveLearning(const lineType & newSpectre,
            newType == 1)
         {
             comPortDataStream << qint8(1);
-//            emit sendSignal(1);
+            std::cout << "1 sent" << std::endl;
         }
 
         /// if accurate classification
@@ -826,7 +825,8 @@ void net::successiveLearning(const lineType & newSpectre,
            newType == 1)
         {
             comPortDataStream << qint8(2);
-//            emit sendSignal(2);
+            std::cout << "2 sent" << std::endl;
+
         }
         popBackDatum();
     }
@@ -863,7 +863,7 @@ void net::readWts(const std::string & fileName,
         cout << "readWtsByName: wtsStr is not good() " << endl;
         return;
     }
-    if(wtsMatrix == NULL)
+    if(wtsMatrix == nullptr)
     {
         wtsMatrix = &(this->weight);
     }
