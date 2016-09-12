@@ -1161,13 +1161,19 @@ void net::learnNetIndices(std::vector<int> mixNum,
     int type = 0;
 
     /// edit due to Indices
-    std::vector<double> normCoeff;
-    const double helpMin = *std::min_element(classCount.begin(),
-                                             classCount.end());
-    for(int i = 0; i < def::numOfClasses(); ++i)
+    std::vector<int> localClassCount(def::numOfClasses(), 0);
+    for(int index : mixNum)
     {
-        normCoeff.push_back(helpMin / classCount[i]);
+        ++localClassCount[types[index]];
     }
+    const double helpMin = *std::min_element(std::begin(localClassCount),
+                                             std::end(localClassCount));
+    std::vector<double> normCoeff;
+    for(uint i = 0; i < def::numOfClasses(); ++i)
+    {
+        normCoeff.push_back(helpMin / double(localClassCount[i]));
+    }
+
     epoch = 0;
     while(currentError > this->errCrit && epoch < this->maxEpoch)
     {
