@@ -126,7 +126,7 @@ constexpr double leftFreq = 5.;
 constexpr double rightFreq = 20.;
 
 /// make GUI for these variables
-const QString ExpName = "AAU_test";
+const QString ExpName = "GAS_train";
 #if MY_LINDROWS
 const QString workPath = "/media/Files/Data/RealTime/";
 #elif 0
