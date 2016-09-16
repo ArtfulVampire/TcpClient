@@ -104,10 +104,6 @@ void DataReader::receiveData()
 
     if(inPack.packSize == 0)
     {
-//        if(socket->bytesAvailable() < sizeof(inPack.packSize) + sizeof(inPack.packId))
-//        {
-//            return;
-//        }
 #if !USE_DATA_STREAM
 
         inPack.packSize = readFromSocket<qint32>(socket);
@@ -127,8 +123,8 @@ void DataReader::receiveData()
         cout << "BAD PACK: "
              << "packSize = " << inPack.packSize << "\t"
              << "packId = " << inPack.packId << endl;
-        inPack = enc::Pack();
-        return;
+//        inPack = enc::Pack();
+//        return;
     }
 
     /// wait for data to come (namely, initial 1618 bytes)
@@ -136,7 +132,8 @@ void DataReader::receiveData()
     {
         return;
     }
-#if VERBOSE_OUTPUT >= 3
+#if (VERBOSE_OUTPUT >= 3) || 0
+    if(inPack.packId != 8)
     cout << inPack.packSize << '\t' << inPack.packId << endl;
 #endif
 
@@ -174,6 +171,7 @@ void DataReader::receiveData()
     case 10: // 0x000A
     {
         /// AVS marker
+        markerCameAVS();
         break;
     }
     case 11: // 0x000B
@@ -185,6 +183,8 @@ void DataReader::receiveData()
     default:
     {
         cout << "unknown data-pack came, OMG " << inPack.packId << endl;
+        exit(0);
+        socketDataStream.readRawData(tmpData, inPack.packSize);
         break;
     }
     }
@@ -386,11 +386,9 @@ void DataReader::startStopTransmisson()
 #endif
     }
 }
+
 void DataReader::markerCame()
 {
-
-
-
     qint32 sliceNumber;
 #if USE_DATA_STREAM
     socketDataStream >> sliceNumber;
@@ -453,7 +451,34 @@ void DataReader::markerCame()
         break;
     }
     }
-//    cout << "Marker: " << name << ", " << int(def::currentMarker) << endl;
+    cout << "Marker: " << name << ", " << int(def::currentMarker) << endl;
+}
+
+
+void DataReader::markerCameAVS()
+{
+    qint32 sliceNumber;
+#if USE_DATA_STREAM
+    socketDataStream >> sliceNumber;
+#else
+    sliceNumber = readFromSocket<qint32>(socket);
+#endif
+
+#if USE_DATA_STREAM
+    std::string name = readString(socketDataStream);
+#else
+    std::string name = readString(socket);
+#endif
+
+
+#if USE_DATA_STREAM
+//    socketDataStream >> def::currentMarker;
+#else
+    /// quint8 in real-time, quint32 in recording play
+//    def::currentMarker = readFromSocket<quint8>(socket);
+    def::currentMarker = readFromSocket<markerType>(socket);
+#endif
+    cout << "AVS Marker: " << name << endl;
 }
 
 void DataReader::dataSliceCame()

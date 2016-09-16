@@ -68,15 +68,17 @@ MainWindow::MainWindow(QWidget *parent) :
 #endif
 
 
+
+#if 0
     /// for test
-//    QSerialPort * comPort;
-//    comPort = new QSerialPort(this);
+    QSerialPort * comPort;
+    comPort = new QSerialPort(this);
 
-//    comPort->setPortName(ui->comPortComboBox->currentText());
-//    comPort->open(QIODevice::WriteOnly);
+    comPort->setPortName(ui->comPortComboBox->currentText());
+    comPort->open(QIODevice::WriteOnly);
 
-//    comPortDataStream.setDevice(comPort);
-
+    comPortDataStream.setDevice(comPort);
+#endif
 
 
 

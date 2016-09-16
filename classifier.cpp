@@ -597,7 +597,7 @@ void net::successiveProcessing(const QString & spectraPath)
     exIndices.clear();
 
 
-    const QString trainMarker = "_train";
+    const QString trainMarker = "_final";
 //    const QString testMarker = "_test";
 //    const QString testMarker = "_3_rr_eyesClean";
 //    const QString testMarker = "_3.";
@@ -605,8 +605,11 @@ void net::successiveProcessing(const QString & spectraPath)
 
     /// clean from first windows
     QString alias = def::ExpName.left(3) + "*_train*.0";
-    QStringList windowsList = QDir(spectraPath).entryList(
-    {alias + "0", alias + "1", alias + "2"});
+    QStringList windowsList = QDir(spectraPath).entryList({
+                                                              alias + "0",
+                                                              alias + "1",
+                                                              alias + "2"
+                                                          });
 
     for(const QString & name : windowsList)
     {

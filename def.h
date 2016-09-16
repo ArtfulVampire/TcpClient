@@ -50,14 +50,14 @@
 #define MY_LINDROWS 0
 #define OFFLINE_SUCCESSIVE 0
 /// 0 1 2 3
-#define VERBOSE_OUTPUT 1
+#define VERBOSE_OUTPUT 0
 
 
 
 
 
-//typedef quint8 markerType; /// online
-typedef quint32 markerType; /// offline
+typedef quint8 markerType; /// online
+//typedef quint32 markerType; /// offline
 
 enum class errorNetType {SME, maxDist};
 
@@ -126,17 +126,19 @@ constexpr double leftFreq = 5.;
 constexpr double rightFreq = 20.;
 
 /// make GUI for these variables
-const QString ExpName = "GAS_train";
+const QString ExpName = "BVX_final";
 #if MY_LINDROWS
 const QString workPath = "/media/Files/Data/RealTime/";
-#elif 0
+#elif 1
 const QString workPath = "D:/MichaelAtanov/workData/";
 #else
 const QString workPath = "C:/RealTime/workData/";
 #endif
+
 /// to read
 const QString spectraPath = workPath + "SpectraSmooth/windows";
 const QString eyesFilePath = workPath + "eyes.txt";
+
 /// to write
 const QString netLogPath = workPath + "log.txt";
 const QString netResPath = workPath + "results.txt";
