@@ -17,9 +17,29 @@ std::string funcName(std::string in)
     return in;
 }
 
-std::ostream & operator << (std::ostream &os, QString toOut)
+std::ostream & operator<< (std::ostream &os, QString toOut)
 {
     os << toOut.toStdString();
+    return os;
+}
+
+template <typename Typ, template <typename> class Cont>
+std::ostream & operator<< (std::ostream &os, const Cont<Typ> & toOut)
+{
+    for(auto in : toOut)
+    {
+        os << in << '\t';
+    }
+    return os;
+}
+
+template <typename Typ, template <typename, typename> class Cont>
+std::ostream & operator<< (std::ostream &os, const Cont<Typ, std::allocator<Typ>> & toOut)
+{
+    for(auto in : toOut)
+    {
+        os << in << '\t';
+    }
     return os;
 }
 
@@ -389,7 +409,8 @@ void writeFileInLine(const QString & filePath,
     file << "Pewpew " << 1 << endl;
     for(auto out : outData)
     {
-        file << doubleRound(out, 3) << '\n';
+        file << out << '\n';
+//        file << doubleRound(out, 3) << '\n';
     }
     file << endl;
     file.close();
@@ -417,18 +438,18 @@ void makeFileLists(const QString & path,
                 {
 //                    nameFilters << QString(def::ExpName.left(3) + "*" + aux + helpString);
                     nameFilters << QString("*" + aux + helpString);
+                    nameFilters << QString(helpString + aux + "*");
                 }
             }
             else
             {
 //                nameFilters << QString(def::ExpName.left(3) + helpString);
                 nameFilters << helpString;
-
             }
         }
         lst.push_back(localDir.entryList(nameFilters,
                                          QDir::Files,
-                                         QDir::Name)); /// Name ~ order
+                                         QDir::Time)); /// Time ~ order
     }
 }
 
@@ -463,7 +484,7 @@ void makeFullFileList(const QString & path,
     }
     lst = localDir.entryList(nameFilters,
                              QDir::Files,
-                             QDir::Name); /// Name ~ order
+                             QDir::Time); /// Time ~ order
 }
 
 void readMatrixFile(const QString & filePath,
@@ -878,7 +899,9 @@ std::string readString(QTcpSocket * inSocket)
     delete[] res;
     return ret;
 }
-
+template std::ostream & operator<< (std::ostream &os, const std::valarray<double> & toOut);
+template std::ostream & operator<< (std::ostream &os, const std::vector<int> & toOut);
+template std::ostream & operator<< (std::ostream &os, const std::vector<double> & toOut);
 
 template qint8 readFromSocket(QTcpSocket * inSocket);
 template quint8 readFromSocket(QTcpSocket * inSocket);

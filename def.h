@@ -50,7 +50,7 @@
 #define MY_LINDROWS 0
 #define OFFLINE_SUCCESSIVE 0
 /// 0 1 2 3
-#define VERBOSE_OUTPUT 0
+#define VERBOSE_OUTPUT 1
 
 
 
@@ -102,6 +102,7 @@ extern bool fullDataFlag;
 extern QString comPortName;
 extern int numOfReal;
 extern int numOfWind;
+extern bool pauseFlag;
 
 /// consts
 constexpr int eegNs = 19;
@@ -126,23 +127,23 @@ constexpr double leftFreq = 5.;
 constexpr double rightFreq = 20.;
 
 /// make GUI for these variables
-const QString ExpName = "BVX_final";
+const QString ExpName = "XXX_feedback";
 #if MY_LINDROWS
-const QString workPath = "/media/Files/Data/RealTime/";
+const QString workPath = "/media/Files/Data/RealTime";
 #elif 1
-const QString workPath = "D:/MichaelAtanov/workData/";
+const QString workPath = "D:/MichaelAtanov/workData";
 #else
-const QString workPath = "C:/RealTime/workData/";
+const QString workPath = "C:/RealTime/workData";
 #endif
 
 /// to read
-const QString spectraPath = workPath + "SpectraSmooth/windows";
-const QString eyesFilePath = workPath + "eyes.txt";
+const QString spectraPath = workPath + "/SpectraSmooth/winds";
+const QString eyesFilePath = workPath + "/eyes.txt";
 
 /// to write
-const QString netLogPath = workPath + "log.txt";
-const QString netResPath = workPath + "results.txt";
-const QString netBadPath = workPath + "badFiles.txt";
+const QString netLogPath = workPath + "/log.txt";
+const QString netResPath = workPath + "/results.txt";
+const QString netBadPath = workPath + "/badFiles.txt";
 
 
 /// funcs (ORDER is important, or extern+cpp)

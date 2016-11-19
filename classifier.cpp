@@ -36,8 +36,6 @@ net::~net()
 
 void net::startOperate()
 {
-//    successivePreclean(def::spectraPath);
-
     Mode = myMode::train_test;
     successiveProcessing(def::spectraPath);
     cout << "classifier waits for work" << endl;
@@ -140,28 +138,6 @@ double net::adjustLearnRate(int lowLimit,
     return res;
 }
 
-//void net::autoClassificationSimple()
-//{
-
-//    std::string helpString;
-//    helpString = this->workPath + slash() + "SpectraSmooth";
-
-//    if(this->Source == source::winds) //generality
-//    {
-//        helpString += slash() + "windows";
-//    }
-//    else if(this->Source == source::bayes)
-//    {
-//        helpString += slash() + "Bayes";
-//    }
-//    else if(this->Source == source::pca)
-//    {
-//        helpString += slash() + "PCA";
-//    }
-//    if(!helpString.empty()) autoClassification(helpString);
-//}
-
-
 std::pair<std::vector<int>, std::vector<int> > net::makeIndicesSetsCross(
         const std::vector<std::vector<int> > & arr,
         const int numOfFold)
@@ -206,8 +182,7 @@ void net::printData()
 
 void net::autoClassification(const QString & spectraDir)
 {
-//    std::string helpString = this->workPath + slash() + "log.txt";
-//    remove(helpString.c_str());
+
     QFile::remove(def::netLogPath);
 
     loadData(spectraDir);
@@ -384,52 +359,25 @@ void net::writeWts(const QString & outPath)
 {
     if(weight.size() != 1) return;
     static int wtsCounter = 0;
-//    std::ofstream weightsFile;
     QString wtsPath;
+    cout << "writeWts: " << wtsCounter << endl;
     if(outPath.isEmpty())
     {
-        while(QFile::exists(def::workPath +
-                            def::ExpName + "_" +
-                            QString::number(wtsCounter) + ".wts"))
-        {
-            ++wtsCounter;
-        }
-        wtsPath = def::workPath +
+//        while(QFile::exists(def::workPath + "/weights/" +
+//                            def::ExpName + "_" +
+//                            QString::number(wtsCounter) + ".wts"))
+//        {
+//            ++wtsCounter;
+//        }
+        wtsPath = def::workPath + "/weights/" +
                   def::ExpName + "_" +
                   QString::number(wtsCounter++) + ".wts";
-//        weightsFile.open((def::workPath +
-//                         def::ExpName + "_" +
-//                         QString::number(wtsCounter++) + ".wts").toStdString());
     }
     else
     {
         wtsPath = outPath;
-//        weightsFile.open(wtsPath);
     }
     writeMatrixFile(wtsPath, weight[0]);
-
-
-//    if(!weightsFile.good())
-//    {
-//        cout << "saveWts: cannot open file = " << wtsPath << endl;
-//        return;
-//    }
-
-
-
-//    for(int i = 0; i < dimensionality.size() - 1; ++i) // numOfLayers
-//    {
-//        for(int j = 0; j < dimensionality[i + 1]; ++j) // NetLength+1 for bias
-//        {
-//            for(int k = 0; k < dimensionality[i] + 1; ++k) // NumOfClasses
-//            {
-//                weightsFile << weight[i][j][k] << '\n';
-//            }
-//            weightsFile << '\n';
-//        }
-//        weightsFile << '\n';
-//    }
-//    weightsFile.close();
 }
 
 void net::reset()
@@ -463,7 +411,6 @@ void net::tallNet()
 
 void net::tallNetIndices(const std::vector<int> & indices)
 {
-//    std::string helpString = this->workPath + slash() + "badFiles.txt";
     std::ofstream badFilesStr;
     badFilesStr.open(def::netBadPath.toStdString(), std::ios_base::app);
 
@@ -478,21 +425,6 @@ void net::tallNetIndices(const std::vector<int> & indices)
             {
                 QFile::remove(def::spectraPath +
                               qslash() + fileNames[ indices[i] ]);
-
-                /// pewpew
-                if(this->Source == source::reals)
-                {
-//                    remove((this->workPath
-//                            + slash() + "SpectraSmooth"
-//                            + slash() + fileNames[ indices[i] ]).c_str());
-                }
-                else if(this->Source == source::winds)
-                {
-//                    remove((this->workPath
-//                            + slash() + "SpectraSmooth"
-//                            + slash() + "windows"
-//                            + slash() + fileNames[ indices[i] ]).c_str());
-                }
                 eraseDatum(indices[i]);
             }
 
@@ -503,9 +435,7 @@ void net::tallNetIndices(const std::vector<int> & indices)
     badFilesStr.close();
 
 
-//    helpString = this->workPath + slash() + "log.txt";
     std::ofstream logStream;
-//    logStream.open(helpString.c_str(), std::ios_base::app);
     logStream.open(def::netLogPath.toStdString(), std::ios_base::app);
 
     for(int i = 0; i < def::numOfClasses(); ++i)
@@ -596,35 +526,30 @@ void net::successiveProcessing(const QString & spectraPath)
     confusionMatrix.fill(0.);
     exIndices.clear();
 
-
-    const QString trainMarker = "_final";
-//    const QString testMarker = "_test";
-//    const QString testMarker = "_3_rr_eyesClean";
-//    const QString testMarker = "_3.";
-
-
     /// clean from first windows
-    QString alias = def::ExpName.left(3) + "*_train*.0";
-    QStringList windowsList = QDir(spectraPath).entryList({
-                                                              alias + "0",
-                                                              alias + "1",
-                                                              alias + "2"
-                                                          });
-
+    QStringList windowsList;
+    {
+        auto filt = [](int in) -> QString
+        {
+            return "*.0" + QString::number(in) + ".psd";
+        };
+        windowsList = QDir(spectraPath).entryList({
+                                                      filt(0),
+                                                      filt(1),
+                                                      filt(2)
+                                                  });
+    }
     for(const QString & name : windowsList)
     {
         QFile::remove(spectraPath + qslash() + name);
     }
 
     /// load
-    loadData(spectraPath, {"*" + trainMarker + "*"});
-
+    loadData(spectraPath, {".ps"});
     /// reduce learning set to (NumClasses * suc::learnSetStay)
-    cout << "reduce learning set AGAIN" << endl;
-
-
+    cout << "reduce learning set" << endl;
     std::vector<double> count = classCount;
-    for(int i = 0; i < dataMatrix.rows(); ++i)
+    for(int i = dataMatrix.rows() - 1; i > 0; --i)
     {
         if(count[ types[i] ] > learnSetStay)
         {
@@ -634,6 +559,13 @@ void net::successiveProcessing(const QString & spectraPath)
     }
     eraseData(eraseIndices);
     eraseIndices.clear();
+
+    /// preclean finished
+//    for(auto in : fileNames)
+//    {
+//        cout << in << endl;
+//    }
+//    exit(0);
 
     /// consts
     errCrit = 0.05;
@@ -677,21 +609,18 @@ void net::dataCame(eegDataType::iterator a, eegDataType::iterator b)
 
     lineType newSpectre = successiveDataToSpectre(a, b);
 
-#if 0    /// spectre
-    writeFileInLine(def::workPath + "windows/SpectraSmooth/" +
-                    def::ExpName +
-                    "." + rightNumber(def::numOfReal, 4) +
-                    def::fileMarkers[def::currentType] +
-                    "." + rightNumber(def::numOfWind, 2) + ".txt",
-                    newSpectre);
-#endif
-
     const QString name = def::ExpName +
                          "." + rightNumber(def::numOfReal, 4) +
                          def::fileMarkers[type] +
-                         "." + rightNumber(def::numOfWind, 2) + ".txt";
-    successiveLearning(newSpectre, type, name);
+                         "." + rightNumber(def::numOfWind, 2) + ".psd";
 
+#if 01    /// spectre
+    writeFileInLine(def::workPath + "/SpectraSmooth/winds/" +
+                    name,
+                    newSpectre);
+#endif
+
+    successiveLearning(newSpectre, type, name);
     ++def::numOfWind;
 }
 
@@ -716,8 +645,8 @@ lineType net::successiveDataToSpectre(
         tmpMat /= 8.; /// account for weight bit
 #if 0
         /// checked - data is ok
-        writePlainData(def::workPath + "windows" +
-                       qslash() + def::ExpName +
+        writePlainData(def::workPath + "/winds/" +
+                       def::ExpName +
                        "." + rightNumber(def::numOfReal, 4) +
                        def::fileMarkers[def::currentType] +
                        "." + rightNumber(def::numOfWind, 2) + ".txt",
@@ -734,9 +663,10 @@ lineType net::successiveDataToSpectre(
             (*it2) -= tmpMat[def::eog1] * coeff[i][0] +
                     tmpMat[def::eog2] * coeff[i][1];
         }
+
 #if 0
         /// eyes - checked, OK
-        writePlainData(def::workPath + "windows" +
+        writePlainData(def::workPath + "/winds/" +
                        qslash() + def::ExpName +
                        "." + rightNumber(def::numOfReal, 4) +
                        def::fileMarkers[def::currentType] +
@@ -745,7 +675,6 @@ lineType net::successiveDataToSpectre(
                        tmpMat.cols());
 #endif
     }
-
     lineType res(def::eegNs * def::spLength());
     /// count spectra, take 5-20 HZ only
     {
@@ -1092,7 +1021,7 @@ void net::eraseData(const std::vector<int> & indices)
 void net::loadData(const QString & spectraPath,
                    const QStringList & filters)
 {
-    vector<QStringList> leest;
+    std::vector<QStringList> leest;
     makeFileLists(spectraPath, leest, filters);
 
     dataMatrix = matrix();
@@ -1306,7 +1235,7 @@ void net::learnNetIndices(std::vector<int> mixNum,
     }
 //    cout << "epoch = " << epoch << "\terror = " << doubleRound(currentError, 4) << endl;
 
-//    writeWts();
+    writeWts();
 
 //    printData();
 }
@@ -1377,7 +1306,7 @@ std::pair<int, double> net::classifyDatum(const int & vecNum)
     /// cout results
 
     std::ofstream resFile;
-    resFile.open((def::workPath + "class.txt").toStdString(),
+    resFile.open((def::workPath + "/class.txt").toStdString(),
                  ios_base::app);
 //    auto tmp = std::cout.rdbuf();
 //    cout.rdbuf(resFile.rdbuf());
@@ -1389,14 +1318,7 @@ std::pair<int, double> net::classifyDatum(const int & vecNum)
         cout << doubleRound(output.back()[i], 3) << '\t';
     }
     cout << ") " << fileNames[vecNum] << "   ";
-    if(type == outClass)
-    {
-        cout << "+";
-    }
-    else
-    {
-        cout << "-";
-    }
+    cout << ((type == outClass) ? "+" : "-");
     cout << "\t" << doubleRound(res, 2);
     cout << endl;
 

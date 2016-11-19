@@ -41,7 +41,7 @@ const std::vector<std::vector<std::string> > defaultFilters = {{"_241"}, {"_247"
 
 inline double doubleRound(const double & in, const int & numSigns)
 {
-    return int(  ceil(in * pow(10., numSigns) - 0.5)  ) / pow(10., numSigns);
+    return std::round(in * pow(10., numSigns)) / pow(10., numSigns);
 }
 
 inline double doubleRound(const double & in)

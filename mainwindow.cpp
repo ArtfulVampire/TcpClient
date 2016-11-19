@@ -44,7 +44,7 @@ MainWindow::MainWindow(QWidget *parent) :
 #endif
 
 
-    ui->serverAddressComboBox->setCurrentText("pew"); /// fix via router, always 192.168.0.104
+//    ui->serverAddressComboBox->setCurrentText("pew"); /// fix via router, always 192.168.0.104
 
 
     /// com

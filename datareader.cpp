@@ -397,9 +397,9 @@ void DataReader::markerCame()
 #endif
 
 #if USE_DATA_STREAM
-    std::string name = readString(socketDataStream); /// unused
+    std::string name = readString(socketDataStream);
 #else
-    std::string name = readString(socket); /// unused
+    std::string name = readString(socket);
 #endif
 
 
@@ -413,6 +413,16 @@ void DataReader::markerCame()
 
     switch(def::currentMarker)
     {
+    case 201:
+    {
+        def::pauseFlag = 1;
+        break;
+    }
+    case 202:
+    {
+        def::pauseFlag = 0;
+        break;
+    }
     case 241:
     {
         def::currentType = 0;
@@ -602,8 +612,9 @@ void DataReaderHandler::receiveSlice(eegSliceType slic)
 
     /// old variant
 //    if(def::slicesCame % def::timeShift == 0 &&
-//       def::slicesCame > def::windowLength) // not >= to delay reaction
-    if((def::slicesCame - def::windowLength) % def::timeShift == 0
+//    def::slicesCame > def::windowLength) // not >= to delay reaction
+    if(!def::pauseFlag
+       && ((def::slicesCame - def::windowLength) % def::timeShift == 0)
        && def::slicesCame >= def::windowLength)
     {
         eegDataType::iterator windowStartIterator = def::eegData.end();

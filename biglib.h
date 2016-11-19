@@ -20,6 +20,13 @@ std::string funcName(std::string in);
 
 std::ostream & operator<< (std::ostream &os, QString toOut);
 
+template <typename Typ, template <typename> class Cont>
+std::ostream & operator<< (std::ostream &os, const Cont<Typ> & toOut);
+
+
+template <typename Typ, template <typename, typename = std::allocator<Typ>> class Cont>
+std::ostream & operator<< (std::ostream &os, const Cont<Typ> & toOut);
+
 QString rightNumber(const unsigned int input, int N);
 
 

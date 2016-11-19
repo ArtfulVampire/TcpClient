@@ -13,6 +13,7 @@ bool fullDataFlag{true};
 QString comPortName{"COM5"};
 int numOfReal = 0;
 int numOfWind = 0;
+bool pauseFlag = 0;
 
 //double freq = 250.;
 //int fftLength = 1024;
