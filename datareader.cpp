@@ -214,7 +214,7 @@ void DataReader::readStartInfo()
 //            cout << endl << "channel " << i << endl;
 
             std::string channelName = readString(socketDataStream);
-//            cout << channelName << endl;
+//			cout << channelName << endl;
 
             double bitWeight;
             socketDataStream >> bitWeight;

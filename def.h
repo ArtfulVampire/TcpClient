@@ -56,8 +56,8 @@
 
 
 
-typedef quint8 markerType; /// online
-//typedef quint32 markerType; /// offline
+//typedef quint8 markerType; /// online
+typedef quint32 markerType; /// offline
 
 enum class errorNetType {SME, maxDist};
 
@@ -110,8 +110,8 @@ constexpr int ns = 24;
 constexpr int markerChannel = 22;
 constexpr int eog1 = 22;
 constexpr int eog2 = 23;
-const QSet<int> dropChannels{};
-//const QSet<int> dropChannels{7, 11};
+constexpr int numOfSmooth = 5;
+const QSet<int> dropChannels{1, 2, 3, 7}; /// from 1
 const errorNetType errType = errorNetType::SME; /// how to calculate
 constexpr double errorThreshold = 0.9;
 

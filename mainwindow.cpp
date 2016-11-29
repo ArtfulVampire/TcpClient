@@ -70,12 +70,25 @@ MainWindow::MainWindow(QWidget *parent) :
 
 
 #if 0
-    /// for test
+    /// COM test
     QSerialPort * comPort;
     comPort = new QSerialPort(this);
 
     comPort->setPortName(ui->comPortComboBox->currentText());
     comPort->open(QIODevice::WriteOnly);
+
+    if(comPort->isOpen())
+    {
+//        cout << comPort->errorString() << endl;
+        cout << "serialPort opened: " + def::comPortName << endl;
+        cout << "portName: " << comPort->portName().toStdString() << endl;
+        cout << "dataBits: " << comPort->dataBits() << endl;
+        cout << "baudRate: " << comPort->baudRate() << endl;
+        cout << "dataTerminalReady: " << comPort->isDataTerminalReady() << endl;
+        cout << "flowControl: " << comPort->flowControl() << endl;
+        cout << "requestToSend: " << comPort->isRequestToSend() << endl;
+        cout << "stopBits: " << comPort->stopBits() << endl << endl;
+    }
 
     comPortDataStream.setDevice(comPort);
 #endif

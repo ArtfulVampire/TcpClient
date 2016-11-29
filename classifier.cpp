@@ -557,6 +557,11 @@ void net::successiveProcessing(const QString & spectraPath)
             count[ types[i] ] -= 1.;
         }
     }
+//	for(auto ind : eraseIndices)
+//	{
+//		std::cout << def::spectraPath + "/" + fileNames[ind] << std::endl;
+//		QFile::remove(def::spectraPath + "/" + fileNames[ind]);
+//	}
     eraseData(eraseIndices);
     eraseIndices.clear();
 
@@ -566,6 +571,8 @@ void net::successiveProcessing(const QString & spectraPath)
 //        cout << in << endl;
 //    }
 //    exit(0);
+
+    /// load newest weights ???
 
     /// consts
     errCrit = 0.05;
@@ -614,7 +621,8 @@ void net::dataCame(eegDataType::iterator a, eegDataType::iterator b)
                          def::fileMarkers[type] +
                          "." + rightNumber(def::numOfWind, 2) + ".psd";
 
-#if 01    /// spectre
+#if 01
+	/// spectre
     writeFileInLine(def::workPath + "/SpectraSmooth/winds/" +
                     name,
                     newSpectre);
@@ -649,7 +657,7 @@ lineType net::successiveDataToSpectre(
                        def::ExpName +
                        "." + rightNumber(def::numOfReal, 4) +
                        def::fileMarkers[def::currentType] +
-                       "." + rightNumber(def::numOfWind, 2) + ".txt",
+					   "." + rightNumber(def::numOfWind, 2) + ".scg",
                        tmpMat,
                        tmpMat.cols());
 #endif
@@ -666,33 +674,33 @@ lineType net::successiveDataToSpectre(
 
 #if 0
         /// eyes - checked, OK
-        writePlainData(def::workPath + "/winds/" +
-                       qslash() + def::ExpName +
+		writePlainData(def::workPath + "/winds/" +
+					   def::ExpName +
                        "." + rightNumber(def::numOfReal, 4) +
                        def::fileMarkers[def::currentType] +
-                       "." + rightNumber(def::numOfWind, 2) + ".txt",
+					   "." + rightNumber(def::numOfWind, 2) +  "_ec.scg",
                        tmpMat,
                        tmpMat.cols());
 #endif
     }
-    lineType res(def::eegNs * def::spLength());
+	lineType res(0., def::eegNs * def::spLength());
     /// count spectra, take 5-20 HZ only
     {
-        lineType tmpSpec(def::spLength());
+		lineType tmpSpec(def::spLength());
         for(int i = 0; i < def::eegNs; ++i)
         {
-            tmpSpec = 0.;
-            if(!def::dropChannels.contains(i))
+			tmpSpec = 0.;
+			if(!def::dropChannels.contains(i + 1)) /// dropChannels from 1
             {
                 calcSpectre(tmpMat[i],
-                            tmpSpec,
+							tmpSpec,
                             1024, /// fftLength consts
-                            5 /// numOfSmooth consts
+                            def::numOfSmooth
                             );
-            }
-            std::copy(std::begin(tmpSpec) + def::left(),
-                      std::begin(tmpSpec) + def::right(),
-                      std::begin(res) + i * def::spLength());
+				std::copy(std::begin(tmpSpec) + def::left(),
+						  std::begin(tmpSpec) + def::right(),
+						  std::begin(res) + i * def::spLength());
+			}
         }
 
     }
