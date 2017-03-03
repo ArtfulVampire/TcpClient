@@ -1,11 +1,5 @@
 #include "datareader.h"
 
-using namespace std;
-using namespace std::chrono;
-using namespace enc;
-
-
-
 DataReader::DataReader(QObject * inParent)
 {
 	this->setParent(inParent);
@@ -30,7 +24,7 @@ DataReader::DataReader(QObject * inParent)
 	QObject::connect(socket, SIGNAL(readyRead()),
 					 this, SLOT(receiveData()));
 
-	oneSlice.resize(def::ns); /// pewpewpew
+	oneSlice.resize(def::ns); /// whaaaat
 }
 
 
@@ -42,7 +36,7 @@ DataReader::~DataReader()
 	}
 	if(!socketDataStream.atEnd())
 	{
-		cout << "still not at end" << endl;
+		std::cout << "still not at end" << std::endl;
 	}
 	socket->disconnectFromHost();
 	socket->close();
@@ -57,7 +51,7 @@ void DataReader::sendStartRequest()
 	}
 
 	enc::Pack startPack;
-	startPack.packSize = sizeof(DWORD);
+	startPack.packSize = sizeof(enc::DWORD);
 	if(this->fullDataFlag)
 	{
 		startPack.packId = 0x000C;
@@ -68,8 +62,8 @@ void DataReader::sendStartRequest()
 	}
 
 	auto bytesWritten = socket->write(reinterpret_cast<char *>(&startPack),
-									  startPack.packSize + sizeof(DWORD));
-	cout << "sendStartRequest: written " << bytesWritten << " bytes" << endl;
+									  startPack.packSize + sizeof(enc::DWORD));
+	std::cout << "sendStartRequest: written " << bytesWritten << " bytes" << std::endl;
 }
 
 void DataReader::socketConnectedSlot()
@@ -109,9 +103,9 @@ void DataReader::receiveData()
 	   inPack.packSize > 2000 ||
 	   inPack.packSize < 0)
 	{
-		cout << "BAD PACK: "
+		std::cout << "BAD PACK: "
 			 << "packSize = " << inPack.packSize << "\t"
-			 << "packId = " << inPack.packId << endl;
+			 << "packId = " << inPack.packId << std::endl;
 		//        inPack = enc::Pack();
 		//        return;
 	}
@@ -123,7 +117,7 @@ void DataReader::receiveData()
 	}
 #if (VERBOSE_OUTPUT >= 3) || 0
 	if(inPack.packId != 8)
-		cout << inPack.packSize << '\t' << inPack.packId << endl;
+		std::cout << inPack.packSize << '\t' << inPack.packId << std::endl;
 #endif
 
 	switch(inPack.packId)
@@ -171,7 +165,7 @@ void DataReader::receiveData()
 		}
 		default:
 		{
-			cout << "unknown data-pack came, OMG " << inPack.packId << endl;
+			std::cout << "unknown data-pack came, OMG " << inPack.packId << std::endl;
 			exit(0);
 			socketDataStream.readRawData(tmpData, inPack.packSize);
 			break;
@@ -193,78 +187,82 @@ void DataReader::readStartInfo()
 	{
 		QString patientName = readString(socketDataStream); // cyrillic "net pacienta"
 
-		//        cout << patientName << endl;
+		//        std::cout << patientName << std::endl;
 
 		socketDataStream >> numOfChannels;
-		//        cout << numOfChannels << endl;
+		def::ns = numOfChannels; /// whaaaaat
+		oneSlice.resize(def::ns); /// whaaaat
+		//        std::cout << numOfChannels << std::endl;
 		for(int i = 0; i < numOfChannels; ++i)
 		{
-			//            cout << endl << "channel " << i << endl;
+			//            std::cout << endl << "channel " << i << std::endl;
 
 			QString channelName = readString(socketDataStream);
-			//			cout << channelName << endl;
+			//			std::cout << channelName << std::endl;
 
 			double bitWeight;
 			socketDataStream >> bitWeight;
-			//            cout << bitWeight << endl;
+			//            std::cout << bitWeight << std::endl;
 
 			double samplingRate;
 			socketDataStream >> samplingRate;
-			//            cout << samplingRate << endl;
+			//            std::cout << samplingRate << std::endl;
 
 			QString metrica = readString(socketDataStream);
-			//            cout << metrica << endl;
+			//            std::cout << metrica << std::endl;
 
 			double LFF;
 			socketDataStream >> LFF;
-			//            cout << LFF << endl;
+			//            std::cout << LFF << std::endl;
 
 			double HFF;
 			socketDataStream >> HFF;
-			//            cout << HFF << endl;
+			//            std::cout << HFF << std::endl;
 
 			int levelHFF;
 			socketDataStream >> levelHFF;
-			//            cout << levelHFF << endl;
+			//            std::cout << levelHFF << std::endl;
 
 			double rejector;
 			socketDataStream >> rejector;
-			//            cout << rejector << endl;
+			//            std::cout << rejector << std::endl;
 
 			double defSans;
 			socketDataStream >> defSans;
-			//            cout << defSans << endl;
-			//            cout << endl;
+			//            std::cout << defSans << std::endl;
+			//            std::cout << std::endl;
 		}
 		QString scheme = readString(socketDataStream);
 	}
 	else
 	{
 		QString patientName = readString(socketDataStream); // cyrillic "net pacienta"
-		//        cout << patientName << endl;
+		//        std::cout << patientName << std::endl;
 
 		socketDataStream >> numOfChannels;
-		//        cout << numOfChannels << endl;
+		def::ns = numOfChannels; /// whaaaaat
+		oneSlice.resize(def::ns); /// whaaaat
+		//        std::cout << numOfChannels << std::endl;
 
 		for(int i = 0; i < numOfChannels; ++i)
 		{
-			//            cout << endl << "channel " << i << endl;
+			//            std::cout << endl << "channel " << i << std::endl;
 
 			QString channelName = readString(socketDataStream);
-			//            cout << channelName << endl;
+			//            std::cout << channelName << std::endl;
 
 		}
 		QString scheme = readString(socketDataStream);
-		//        cout << scheme << endl;
+		//        std::cout << scheme << std::endl;
 
 		socketDataStream >> bitWeight;
-		//        cout << bitWeight << endl;
+		//        std::cout << bitWeight << std::endl;
 
 		socketDataStream >> samplingRate;
-		//        cout << samplingRate << endl;
+		//        std::cout << samplingRate << std::endl;
 		//        exit(0);
 	}
-	cout << "start info was read" << endl;
+	std::cout << "start info was read" << std::endl;
 }
 
 
@@ -292,7 +290,7 @@ void DataReader::startStopTransmisson()
 		}
 		if(!socketDataStream.atEnd())
 		{
-			cout << "still not at end" << endl;
+			std::cout << "still not at end" << std::endl;
 		}
 	}
 }
@@ -302,7 +300,6 @@ void DataReader::markerCame()
 	qint32 sliceNumber;
 	socketDataStream >> sliceNumber;
 	QString name = readString(socketDataStream);
-
 	socketDataStream >> def::currentMarker;
 
 	switch(def::currentMarker)
@@ -323,6 +320,7 @@ void DataReader::markerCame()
 			def::slicesCame = 0;
 			++def::numOfReal;
 			def::numOfWind = 0;
+			def::solved = def::solveType::right;
 			break;
 		}
 		case 247:
@@ -331,6 +329,7 @@ void DataReader::markerCame()
 			def::slicesCame = 0;
 			++def::numOfReal;
 			def::numOfWind = 0;
+			def::solved = def::solveType::right;
 			break;
 		}
 		case 254:
@@ -355,7 +354,7 @@ void DataReader::markerCame()
 			break;
 		}
 	}
-	cout << "Marker: " << name << ", " << int(def::currentMarker) << endl;
+	std::cout << "Marker: " << name << ", " << int(def::currentMarker) << std::endl;
 }
 
 
@@ -364,7 +363,7 @@ void DataReader::markerCameAVS()
 	qint32 sliceNumber;
 	socketDataStream >> sliceNumber;
 	QString name = readString(socketDataStream);
-	cout << "AVS Marker: " << name << endl;
+	std::cout << "AVS Marker: " << name << std::endl;
 }
 
 void DataReader::dataSliceCame()
@@ -393,10 +392,10 @@ void DataReader::dataSliceCame()
 
 #if VERBOSE_OUTPUT >= 2
 		//        if(sliceNumber % 250 == 0)
-		cout << sliceNumber << '\t'
+		std::cout << sliceNumber << '\t'
 			 << numOfChans << '\t'
 			 << numOfSlices
-			 << endl;
+			 << std::endl;
 #endif
 
 		for(int i = 0; i < numOfSlices; ++i)

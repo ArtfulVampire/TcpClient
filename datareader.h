@@ -42,9 +42,8 @@ private:
 
 
 	eegSliceType oneSlice;
-	qint32 sliceNumberPrevious = 0;
+	qint32 sliceNumberPrevious = 0; /// currently unused. to fill zeros instead of missing slices
 
-	QBuffer * myBuffer;
 	bool inProcess = false;
 
 	QTcpSocket * socket = nullptr;
@@ -62,6 +61,7 @@ public:
 
 	~DataReaderHandler();
 
+	/// whaaaat?
 	void dealWithMarkers(const eegSliceType & slic, int & slicesCam);
 
 protected:

@@ -1,10 +1,6 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
-
-using namespace enc;
-using namespace std;
-using namespace std::chrono;
-
+#include <QShortcut>
 
 MainWindow::MainWindow(QWidget *parent) :
 	QMainWindow(parent),
@@ -51,9 +47,6 @@ MainWindow::MainWindow(QWidget *parent) :
 
 	ui->fullDataCheckBox->setChecked(true);
 
-
-
-
 #if 0
 	/// COM test
 	QSerialPort * comPort;
@@ -64,16 +57,16 @@ MainWindow::MainWindow(QWidget *parent) :
 
 	if(comPort->isOpen())
 	{
-		cout << comPort->error() << endl;
-		cout << comPort->errorString() << endl;
-		cout << "serialPort opened: " + def::comPortName << endl;
-		cout << "portName: " << comPort->portName().toStdString() << endl;
-		cout << "dataBits: " << comPort->dataBits() << endl;
-		cout << "baudRate: " << comPort->baudRate() << endl;
-		cout << "dataTerminalReady: " << comPort->isDataTerminalReady() << endl;
-		cout << "flowControl: " << comPort->flowControl() << endl;
-		cout << "requestToSend: " << comPort->isRequestToSend() << endl;
-		cout << "stopBits: " << comPort->stopBits() << endl << endl;
+		std::cout << comPort->error() << std::endl;
+		std::cout << comPort->errorString() << std::endl;
+		std::cout << "serialPort opened: " + def::comPortName << std::endl;
+		std::cout << "portName: " << comPort->portName().toStdString() << std::endl;
+		std::cout << "dataBits: " << comPort->dataBits() << std::endl;
+		std::cout << "baudRate: " << comPort->baudRate() << std::endl;
+		std::cout << "dataTerminalReady: " << comPort->isDataTerminalReady() << std::endl;
+		std::cout << "flowControl: " << comPort->flowControl() << std::endl;
+		std::cout << "requestToSend: " << comPort->isRequestToSend() << std::endl;
+		std::cout << "stopBits: " << comPort->stopBits() << endl << std::endl;
 	}
 
 	comPortDataStream.setDevice(comPort);
@@ -88,10 +81,35 @@ MainWindow::MainWindow(QWidget *parent) :
 #endif
 
 
+
+
+	/// right/wrong shortcuts
+	QShortcut * rightShortcut = new QShortcut(QKeySequence(def::rightKey), this);
+	QShortcut * wrongShortcut = new QShortcut(QKeySequence(def::wrongKey), this);
+
+	QObject::connect(rightShortcut,
+					 &QShortcut::activated,
+					 []()
+	{
+		std::cout << "right" << std::endl;
+		def::solved = def::solveType::right;
+	});
+
+	QObject::connect(wrongShortcut,
+					 &QShortcut::activated,
+					 []()
+	{
+		std::cout << "wrong" << std::endl;
+		def::solved = def::solveType::wrong;
+	});
+
+
+	/// start/stop
 	QObject::connect(this->ui->startPushButton, SIGNAL(clicked()),
 					 this, SLOT(startSlot()));
 	QObject::connect(this->ui->endPushButton, SIGNAL(clicked()),
 					 this, SLOT(endSlot()));
+
 
 
 	/// DataProcessor

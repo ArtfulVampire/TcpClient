@@ -1,6 +1,5 @@
 #include "biglib.h"
 
-using namespace std;
 
 QString funcName(QString in)
 {
@@ -95,7 +94,7 @@ std::vector<std::vector<QString>> contents(const QString & dirPath,
 										   const std::vector<std::vector<QString> > & filtersList)
 {
 	const int numOfClasses = filtersList.size();
-	cout << numOfClasses << endl;
+	std::cout << numOfClasses << std::endl;
 	std::vector< std::vector<QString>> res(numOfClasses);
 	for(int i = 0; i < numOfClasses; ++i)
 	{
@@ -117,10 +116,10 @@ template <typename signalType>
 void readFileInLine(const QString & filePath,
 					signalType & result)
 {
-	ifstream file(filePath.toStdString());
+	std::ifstream file(filePath.toStdString());
 	if(!file.good())
 	{
-		cout << "readFileInLine: bad file " << filePath << endl;
+		std::cout << "readFileInLine: bad file " << filePath << std::endl;
 		return;
 	}
 	int rows;
@@ -143,26 +142,26 @@ template <typename signalType>
 void writeFileInLine(const QString & filePath,
 					 const signalType & outData)
 {
-	ofstream file(filePath.toStdString());
+	std::ofstream file(filePath.toStdString());
 	if(!file.good())
 	{
-		cout << "bad file" << endl;
+		std::cout << "bad file" << std::endl;
 		return;
 	}
 	file << "FileLen " << outData.size() << '\t';
-	file << "Pewpew " << 1 << endl;
+	file << "Pewpew " << 1 << std::endl;
 	for(auto out : outData)
 	{
 		file << out << '\n';
 		//        file << doubleRound(out, 3) << '\n';
 	}
-	file << endl;
+	file << std::endl;
 	file.close();
 }
 
 
 void makeFileLists(const QString & path,
-				   vector<QStringList> & lst,
+				   std::vector<QStringList> & lst,
 				   const QStringList & auxFilters)
 {
 	QDir localDir(path);
@@ -234,10 +233,10 @@ void makeFullFileList(const QString & path,
 void readMatrixFile(const QString & filePath,
 					matrix & outData)
 {
-	ifstream file(filePath.toStdString());
+	std::ifstream file(filePath.toStdString());
 	if(!file.good())
 	{
-		cout << "readMatrixFile: bad input file " << filePath << endl;
+		std::cout << "readMatrixFile: bad input file " << filePath << std::endl;
 		return;
 	}
 	int rows;
@@ -264,15 +263,15 @@ void writeMatrixFile(const QString & filePath,
 					 const QString & rowsString,
 					 const QString & colsString)
 {
-	ofstream file(filePath.toStdString());
+	std::ofstream file(filePath.toStdString());
 	if(!file.good())
 	{
-		cout << "writeMatrixFile: bad output file\n" << filePath.toStdString() << endl;
+		std::cout << "writeMatrixFile: bad output file\n" << filePath.toStdString() << std::endl;
 		return;
 	}
 
 	file << rowsString << " " << outData.rows() << '\t';
-	file << colsString << " " << outData.cols() << endl;
+	file << colsString << " " << outData.cols() << std::endl;
 
 	for(int i = 0; i < outData.rows(); ++i)
 	{
@@ -280,7 +279,7 @@ void writeMatrixFile(const QString & filePath,
 		{
 			file << doubleRound(outData[i][j], 3) << '\t';
 		}
-		file << endl;
+		file << std::endl;
 	}
 	file.close();
 }
@@ -292,22 +291,22 @@ void writePlainData(const QString outPath,
 					int numOfSlices,
 					const int & start)
 {
-	numOfSlices = min(numOfSlices,
-					  data.cols() - start);
+	numOfSlices = std::min(numOfSlices,
+						   data.cols() - start);
 
 	//    if(numOfSlices < 250) return; /// used for sliceWindFromReal() but Cut::cut() ...
 
-	ofstream outStr;
+	std::ofstream outStr;
 	outStr.open(outPath.toStdString());
 	outStr << "NumOfSlices " << numOfSlices << '\t';
-	outStr << "NumOfChannels " << data.rows() << endl;
+	outStr << "NumOfChannels " << data.rows() << std::endl;
 	for (int i = 0; i < numOfSlices; ++i)
 	{
 		for(int j = 0; j < data.rows(); ++j)
 		{
 			outStr << doubleRound(data[j][i + start], 3) << '\t';
 		}
-		outStr << endl;
+		outStr << std::endl;
 	}
 	outStr.flush();
 	outStr.close();
@@ -319,11 +318,11 @@ void readPlainData(const QString & inPath,
 				   int & numOfSlices,
 				   const int & start)
 {
-	ifstream inStr;
+	std::ifstream inStr;
 	inStr.open(inPath.toStdString());
 	if(!inStr.good())
 	{
-		cout << "readPlainData: cannot open file\n" << inPath << endl;
+		std::cout << "readPlainData: cannot open file\n" << inPath << std::endl;
 		return;
 	}
 	int localNs;
@@ -502,9 +501,9 @@ void resizeValar(std::valarray<double> & in, int num)
 {
 	std::valarray<double> temp = in;
 	in.resize(num);
-	std::copy(begin(temp),
-			  begin(temp) + min(in.size(), temp.size()),
-			  begin(in));
+	std::copy(std::begin(temp),
+			  std::begin(temp) + std::min(in.size(), temp.size()),
+			  std::begin(in));
 }
 
 template <typename signalType = std::valarray<double>>
@@ -517,7 +516,7 @@ void calcSpectre(const signalType & inSignal,
 {
 	if(inSignal.size() != fftLength)
 	{
-		cout << "calcSpectre: inappropriate signal length" << endl;
+		std::cout << "calcSpectre: inappropriate signal length" << std::endl;
 		return;
 	}
 
@@ -620,7 +619,7 @@ QString readString(QDataStream & in)
 {
 	qint32 numOfChars;
 	in >> numOfChars;
-	cout << "numChars = " << numOfChars << endl;
+	std::cout << "numChars = " << numOfChars << std::endl;
 
 	char * res = new char [numOfChars + 1];
 	for(int i = 0; i < numOfChars; ++i)
@@ -648,6 +647,44 @@ QString readString(QTcpSocket * inSocket)
 	delete[] res;
 	return ret;
 }
+
+template <typename Cont>
+Cont range(int beg, int en)
+{
+	Cont res(en - beg + 1);
+	std::iota(std::begin(res), std::end(res), beg);
+	return res;
+}
+
+template <typename Cont>
+Cont unite(const std::vector<Cont> & ranges)
+{
+	int siz = 0;
+	for(const auto & in : ranges)
+	{
+		siz += in.size();
+	}
+	Cont res(siz);
+	siz = 0;
+	for(const auto & in : ranges)
+	{
+		std::copy(std::begin(in),
+				  std::end(in),
+				  std::begin(res) + siz);
+		siz += in.size();
+	}
+	return res;
+}
+
+template std::vector<int> range(int beg, int en);
+template std::vector<double> range(int beg, int en);
+template std::valarray<int> range(int beg, int en);
+template std::valarray<double> range(int beg, int en);
+
+template std::vector<int> unite(const std::vector<std::vector<int>> & ranges);
+template std::vector<double> unite(const std::vector<std::vector<double>> & ranges);
+template std::valarray<int> unite(const std::vector<std::valarray<int>> & ranges);
+template std::valarray<double> unite(const std::vector<std::valarray<double>> & ranges);
 template std::ostream & operator<< (std::ostream &os, const std::valarray<double> & toOut);
 template std::ostream & operator<< (std::ostream &os, const std::vector<int> & toOut);
 template std::ostream & operator<< (std::ostream &os, const std::vector<double> & toOut);

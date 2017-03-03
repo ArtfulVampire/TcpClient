@@ -1,8 +1,5 @@
 #include "classifier.h"
 
-using namespace std;
-
-
 net::net(QObject * par)
 {
 	this->setParent(par);
@@ -11,20 +8,22 @@ net::net(QObject * par)
 	readMatrixFile(def::eyesFilePath,
 				   coeff); // num eog channels
 
+	QDir(def::workPath).mkdir("weights");
+
 	comPort = new QSerialPort(this);
 	comPort->setPortName(def::comPortName);
 	comPort->open(QIODevice::WriteOnly);
 	comPortDataStream.setDevice(comPort);
 	if(comPort->isOpen())
 	{
-		cout << "serialPort opened: " + def::comPortName << endl;
-		cout << "portName: " << comPort->portName().toStdString() << endl;
-		cout << "dataBits: " << comPort->dataBits() << endl;
-		cout << "baudRate: " << comPort->baudRate() << endl;
-		cout << "dataTerminalReady: " << comPort->isDataTerminalReady() << endl;
-		cout << "flowControl: " << comPort->flowControl() << endl;
-		cout << "requestToSend: " << comPort->isRequestToSend() << endl;
-		cout << "stopBits: " << comPort->stopBits() << endl << endl;
+		std::cout << "serialPort opened: " + def::comPortName << std::endl;
+		std::cout << "portName: " << comPort->portName().toStdString() << std::endl;
+		std::cout << "dataBits: " << comPort->dataBits() << std::endl;
+		std::cout << "baudRate: " << comPort->baudRate() << std::endl;
+		std::cout << "dataTerminalReady: " << comPort->isDataTerminalReady() << std::endl;
+		std::cout << "flowControl: " << comPort->flowControl() << std::endl;
+		std::cout << "requestToSend: " << comPort->isRequestToSend() << std::endl;
+		std::cout << "stopBits: " << comPort->stopBits() << endl << std::endl;
 	}
 
 }
@@ -38,7 +37,7 @@ void net::startOperate()
 {
 	Mode = myMode::train_test;
 	successiveProcessing(def::spectraPath);
-	cout << "classifier waits for work" << endl;
+	std::cout << "classifier waits for work" << std::endl;
 }
 
 std::vector<int> net::makeLearnIndexSet()
@@ -82,7 +81,7 @@ std::vector<int> net::makeLearnIndexSet()
 double net::adjustLearnRate(int lowLimit,
 							int highLimit)
 {
-	cout << "adjustLearnRate: start" << endl;
+	std::cout << "adjustLearnRate: start" << std::endl;
 
 	const std::vector<int> mixNum = makeLearnIndexSet();
 
@@ -92,7 +91,7 @@ double net::adjustLearnRate(int lowLimit,
 	{
 		/// remake with indices
 		const double currVal = this->learnRate;
-		cout << "lrate = " << currVal << '\t';
+		std::cout << "lrate = " << currVal << '\t';
 
 		learnNetIndices(mixNum);
 
@@ -123,7 +122,7 @@ double net::adjustLearnRate(int lowLimit,
 		}
 		++counter;
 	} while (counter < 15);
-	cout << endl;
+	std::cout << std::endl;
 	this->learnRate = doubleRound(this->learnRate, 3);
 	return res;
 }
@@ -158,14 +157,14 @@ std::pair<std::vector<int>, std::vector<int> > net::makeIndicesSetsCross(
 
 void net::printData()
 {
-	cout << "size of learning set:" << dataMatrix.rows() << " = ";
-	cout << std::count(std::begin(types), std::end(types), 0) << " + ";
-	cout << std::count(std::begin(types), std::end(types), 1) << " + ";
-	cout << std::count(std::begin(types), std::end(types), 2) << endl;
-	cout << "OR = ";
-	cout << classCount[0] << " + ";
-	cout << classCount[1] << " + ";
-	cout << classCount[2] << endl;
+	std::cout << "size of learning set:" << dataMatrix.rows() << " = ";
+	std::cout << std::count(std::begin(types), std::end(types), 0) << " + ";
+	std::cout << std::count(std::begin(types), std::end(types), 1) << " + ";
+	std::cout << std::count(std::begin(types), std::end(types), 2) << std::endl;
+	std::cout << "OR = ";
+	std::cout << classCount[0] << " + ";
+	std::cout << classCount[1] << " + ";
+	std::cout << classCount[2] << std::endl;
 
 }
 
@@ -278,12 +277,12 @@ void net::averageClassification()
 
 	res << doubleRound(averageAccuracy, 2) << '\t';
 	res << doubleRound(kappa, 3) << '\t';
-	res << def::ExpName.toStdString() << endl;
+	res << def::ExpName.toStdString() << std::endl;
 	res.close();
 
 	confusionMatrix.print();
-	cout << "average accuracy = " << doubleRound(averageAccuracy, 2) << endl;
-	cout << "kappa = " << kappa << endl;
+	std::cout << "average accuracy = " << doubleRound(averageAccuracy, 2) << std::endl;
+	std::cout << "kappa = " << kappa << std::endl;
 }
 
 void net::writeWts(const QString & outPath)
@@ -291,7 +290,7 @@ void net::writeWts(const QString & outPath)
 	if(weight.size() != 1) return;
 	static int wtsCounter = 0;
 	QString wtsPath;
-	cout << "writeWts: " << wtsCounter << endl;
+	std::cout << "writeWts: " << wtsCounter << std::endl;
 	if(outPath.isEmpty())
 	{
 		//        while(QFile::exists(def::workPath + "/weights/" +
@@ -351,7 +350,7 @@ void net::tallNetIndices(const std::vector<int> & indices)
 		const int outClass = classifyDatum(indices[i]).first;
 		if(types[ indices[i] ] != outClass )
 		{
-			badFilesStr << fileNames[ indices[i] ] << endl;
+			badFilesStr << fileNames[ indices[i] ] << std::endl;
 			if(tallCleanFlag)
 			{
 				QFile::remove(def::spectraPath +
@@ -390,7 +389,7 @@ void net::tallNetIndices(const std::vector<int> & indices)
 	}
 	averageAccuracy = corrSum / indices.size() * 100.;
 
-	logStream << doubleRound(averageAccuracy, 2) << endl;
+	logStream << doubleRound(averageAccuracy, 2) << std::endl;
 	logStream.close();
 }
 
@@ -402,7 +401,7 @@ void net::successivePreclean(const QString & spectraPath)
 	QStringList leest;
 	makeFullFileList(spectraPath, leest, {"*train*"});
 	// clean from first 2 winds
-	cout << "clean first 2 winds" << endl;
+	std::cout << "clean first 2 winds" << std::endl;
 	for(auto str : leest)
 	{
 		if(str.endsWith(".00") || str.endsWith(".01"))
@@ -412,8 +411,8 @@ void net::successivePreclean(const QString & spectraPath)
 	}
 
 	// clean by learnSetStay
-	cout << "clean by learnSetStay" << endl;
-	vector<QStringList> leest2;
+	std::cout << "clean by learnSetStay" << std::endl;
+	std::vector<QStringList> leest2;
 	makeFileLists(spectraPath, leest2);
 
 	for(int j = 0; j < def::numOfClasses(); ++j)
@@ -430,7 +429,7 @@ void net::successivePreclean(const QString & spectraPath)
 	Mode = myMode::N_fold;
 
 	// N-fold cleaning
-	cout << "N-fold cleaning" << endl;
+	std::cout << "N-fold cleaning" << std::endl;
 	tallCleanFlag = true;
 	for(int i = 0; i < 3; ++i)
 	{
@@ -472,7 +471,7 @@ void net::successiveProcessing(const QString & spectraPath)
 	/// load
 	loadData(spectraPath, {".ps"});
 	/// reduce learning set to (NumClasses * suc::learnSetStay)
-	cout << "reduce learning set" << endl;
+	std::cout << "reduce learning set" << std::endl;
 	std::vector<double> count = classCount;
 	for(int i = dataMatrix.rows() - 1; i > 0; --i)
 	{
@@ -493,7 +492,7 @@ void net::successiveProcessing(const QString & spectraPath)
 	/// preclean finished
 	//    for(auto in : fileNames)
 	//    {
-	//        cout << in << endl;
+	//        std::cout << in << std::endl;
 	//    }
 	//    exit(0);
 
@@ -506,14 +505,14 @@ void net::successiveProcessing(const QString & spectraPath)
 	adjustLearnRate(this->lowLimit,
 					this->highLimit);
 
-	cout << "get initial weights on train set" << endl;
+	std::cout << "get initial weights on train set" << std::endl;
 	learnNet();
 
 	errCrit = 0.02;
 	learnRate = 0.02;
 
-	cout << "successive: initial learn done" << endl;
-	cout << "successive itself" << endl;
+	std::cout << "successive: initial learn done" << std::endl;
+	std::cout << "successive itself" << std::endl;
 
 #if OFFLINE_SUCCESSIVE
 	std::valarray<double> tempArr;
@@ -637,6 +636,9 @@ void net::successiveLearning(const std::valarray<double> & newSpectre,
 							 const int newType,
 							 const QString & newFileName)
 {
+	static std::vector<int> succOldIndices{};
+	static auto findIt = std::begin(types);
+
 	/// dataMatrix is learning matrix
 	std::valarray<double> newData = (newSpectre - averageDatum) / (sigmaVector * loadDataNorm);
 
@@ -664,23 +666,58 @@ void net::successiveLearning(const std::valarray<double> & newSpectre,
 	   || passed[newType] < learnSetStay
 	   )
 	{
+#if NEW_SUCC
+		findIt = std::find(findIt, std::end(types), newType);
+		int num = findIt - std::begin(types);
+		succOldIndices.push_back(num);
+		++findIt;
+#else
 		const int num = std::find(std::begin(types), std::end(types),
 								  newType)
 						- std::begin(types);
 		eraseDatum(num);
 		++numGoodNew;
+#endif
+
 	}
 	else
 	{
 		popBackDatum();
 	}
+
 	++passed[newType];
 
+
+#if NEW_SUCC
+	if(def::solved == def::solveType::right)
+	{
+		std::cout << "excluded inds : " << succOldIndices << std::endl;
+
+		eraseData(succOldIndices);
+		successiveRelearn();
+
+		succOldIndices.clear();
+		def::solved = def::solveType::notYet;
+		findIt = std::begin(types);
+	}
+	else if(def::solved == def::solveType::wrong)
+	{
+		/// erase all last added
+		std::cout << "size before: " << dataMatrix.size() << std::endl;
+		eraseData(range<std::vector<int>>(3 * this->learnSetStay, dataMatrix.rows() - 1));
+		std::cout << "size after: " << dataMatrix.size() << std::endl;
+
+		succOldIndices.clear();
+		def::solved = def::solveType::notYet;
+		findIt = std::begin(types);
+	}
+#else
 	if(numGoodNew == numGoodNewLimit)
 	{
 		successiveRelearn();
 		numGoodNew = 0;
 	}
+#endif
 }
 
 void net::successiveRelearn()
@@ -705,7 +742,7 @@ void net::readWts(const QString & fileName,
 	std::ifstream wtsStr(fileName.toStdString());
 	if(!wtsStr.good())
 	{
-		cout << "readWtsByName: wtsStr is not good() " << endl;
+		std::cout << "readWtsByName: wtsStr is not good() " << std::endl;
 		return;
 	}
 	if(wtsMatrix == nullptr)
@@ -743,7 +780,7 @@ void net::leaveOneOutClassification()
 	if(this->Source == source::pca)
 	{
 #if 0
-		ofstream outStr;
+		std::ofstream outStr;
 		outStr.open((this->workPath
 					 + "/" + "pcaRes.txt"));
 		// auto pca classification
@@ -751,21 +788,21 @@ void net::leaveOneOutClassification()
 			i >= ui->autoPCAMinSpinBox->value();
 			i -= ui->autoPCAStepSpinBox->value())
 		{
-			cout << "numOfPc = " << i  << " \t";
+			std::cout << "numOfPc = " << i  << " \t";
 			dataMatrix.resizeCols(i);
 
 			adjustLearnRate(this->lowLimit,
 							this->highLimit);
 
 			leaveOneOut();
-			outStr << i << "\t" << averageAccuracy << endl;
+			outStr << i << "\t" << averageAccuracy << std::endl;
 		}
 		outStr.close();
 #endif
 	}
 	else
 	{
-		cout << "Net: autoclass (max " << dataMatrix.rows() << "):" << endl;
+		std::cout << "Net: autoclass (max " << dataMatrix.rows() << "):" << std::endl;
 		leaveOneOut();
 	}
 
@@ -780,12 +817,12 @@ void net::crossClassification()
 	{
 		arr[ types[i] ].push_back(i);
 	}
-	cout << "Net: autoclass (max " << this->numOfPairs << "):" << endl;
+	std::cout << "Net: autoclass (max " << this->numOfPairs << "):" << std::endl;
 
 	for(int i = 0; i < this->numOfPairs; ++i)
 	{
-		cout << i + 1;
-		cout << " "; cout.flush();
+		std::cout << i + 1;
+		std::cout << " "; std::cout.flush();
 
 		// mix arr for one "pair"-iteration
 		for(int i = 0; i < def::numOfClasses(); ++i)
@@ -805,8 +842,8 @@ void net::crossClassification()
 			tallNetIndices(sets.second);
 		}
 	}
-	cout << endl;
-	cout << "cross classification - ";
+	std::cout << std::endl;
+	std::cout << "cross classification - ";
 	averageClassification();
 }
 
@@ -822,12 +859,12 @@ void net::halfHalfClassification()
 	}
 	if(learnIndices.empty() || tallIndices.empty())
 	{
-		cout << "trainTest: indicesArray empty, return" << endl;
+		std::cout << "trainTest: indicesArray empty, return" << std::endl;
 		return;
 	}
 	learnNetIndices(learnIndices);
 	tallNetIndices(tallIndices);
-	cout << "half-half classification - ";
+	std::cout << "half-half classification - ";
 	averageClassification();
 }
 
@@ -849,12 +886,12 @@ void net::trainTestClassification(const QString & trainTemplate,
 	}
 	if(learnIndices.empty() || tallIndices.empty())
 	{
-		cout << "teainTest: indicesArray empty, return" << endl;
+		std::cout << "teainTest: indicesArray empty, return" << std::endl;
 		return;
 	}
 	learnNetIndices(learnIndices);
 	tallNetIndices(tallIndices);
-	cout << "train-test classification - ";
+	std::cout << "train-test classification - ";
 	averageClassification();
 }
 
@@ -864,8 +901,8 @@ void net::leaveOneOut()
 	int i = 0;
 	while(i < dataMatrix.rows())
 	{
-		cout << i + 1;
-		cout << " "; cout.flush();
+		std::cout << i + 1;
+		std::cout << " "; std::cout.flush();
 
 		/// iota ?
 		learnIndices.clear();
@@ -889,8 +926,8 @@ void net::leaveOneOut()
 		++i;
 
 	}
-	cout << endl;
-	cout << "N-fold cross-validation:" << endl;
+	std::cout << std::endl;
+	std::cout << "N-fold cross-validation:" << std::endl;
 	averageClassification();
 }
 
@@ -925,10 +962,12 @@ void net::eraseData(const std::vector<int> & indices)
 {
 	dataMatrix.eraseRows(indices);
 	eraseItems(fileNames, indices);
+
 	for(int index : indices)
 	{
-		classCount[ types[index] ] -= 1.;
+		classCount[ types[index] ] -= 1.; /// doubling indices not prevented
 	}
+
 	eraseItems(types, indices);
 }
 
@@ -1065,13 +1104,13 @@ void net::learnNetIndices(std::vector<int> mixNum,
 					err += pow((output.back()[j] - int(type == j) ), 2.);
 				}
 				err = sqrt(err);
-				if(def::errType == errorNetType::SME)
+				if(def::errType == def::errorNetType::SME)
 				{
 					currentError += err;
 				}
-				else if(def::errType == errorNetType::maxDist)
+				else if(def::errType == def::errorNetType::maxDist)
 				{
-					currentError = max(err, currentError);
+					currentError = std::max(err, currentError);
 				}
 			}
 
@@ -1143,12 +1182,12 @@ void net::learnNetIndices(std::vector<int> mixNum,
 #endif
 		}
 		++epoch;
-		if(def::errType == errorNetType::SME)
+		if(def::errType == def::errorNetType::SME)
 		{
 			currentError /= mixNum.size();
 		}
 	}
-	//    cout << "epoch = " << epoch << "\terror = " << doubleRound(currentError, 4) << endl;
+	//    std::cout << "epoch = " << epoch << "\terror = " << doubleRound(currentError, 4) << std::endl;
 
 	writeWts();
 
@@ -1193,24 +1232,24 @@ std::pair<int, double> net::classifyDatum(const int & vecNum)
 	res = sqrt(res);
 
 #if VERBOSE_OUTPUT >= 1
-	/// cout results
+	/// std::cout results
 
 	std::ofstream resFile;
 	resFile.open((def::workPath + "/class.txt").toStdString(),
-				 ios_base::app);
+				 std::ios_base::app);
 	//    auto tmp = std::cout.rdbuf();
 	//    cout.rdbuf(resFile.rdbuf());
 
 
-	cout << "type = " << type << '\t' << "(";
+	std::cout << "type = " << type << '\t' << "(";
 	for(int i = 0; i < def::numOfClasses(); ++i)
 	{
-		cout << doubleRound(output.back()[i], 3) << '\t';
+		std::cout << doubleRound(output.back()[i], 3) << '\t';
 	}
-	cout << ") " << fileNames[vecNum] << "   ";
-	cout << ((type == outClass) ? "+" : "-");
-	cout << "\t" << doubleRound(res, 2);
-	cout << endl;
+	std::cout << ") " << fileNames[vecNum] << "   ";
+	std::cout << ((type == outClass) ? "+" : "-");
+	std::cout << "\t" << doubleRound(res, 2);
+	std::cout << std::endl;
 
 
 	//    cout.rdbuf(tmp);

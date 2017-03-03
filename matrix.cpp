@@ -1,7 +1,5 @@
 #include "matrix.h"
 
-using namespace std;
-
 matrix::matrix()
 {
 
@@ -74,7 +72,7 @@ matrix::matrix(const std::valarray<double> & vect, int inRows)
 {
 	if(vect.size() % inRows != 0)
 	{
-		cout << "not appropriate size" << endl;
+		std::cout << "not appropriate size" << std::endl;
 		return;
 	}
 	int newCols = vect.size() / inRows;
@@ -138,7 +136,7 @@ matrix operator + (const matrix & lhs, const matrix & rhs)
 	if(lhs.rows() != rhs.rows()
 	   || lhs.cols() != rhs.cols())
 	{
-		cout << "matrix sum failed, dimensions" << endl;
+		std::cout << "matrix sum failed, dimensions" << std::endl;
 		return lhs;
 	}
 	matrix result(lhs.rows(), lhs.cols());
@@ -164,7 +162,7 @@ matrix matrix::operator += (const matrix & other)
 	if(this->rows() != other.rows()
 	   || this->cols() != other.cols())
 	{
-		cout << "matrix sum failed" << endl;
+		std::cout << "matrix sum failed" << std::endl;
 		return *this;
 	}
 	for(int i = 0; i < this->rows(); ++i)
@@ -188,7 +186,7 @@ matrix operator - (const matrix & lhs, const matrix & rhs)
 	if(lhs.rows() != rhs.rows()
 	   || lhs.cols() != rhs.cols())
 	{
-		cout << "matrix sum failed, dimensions" << endl;
+		std::cout << "matrix sum failed, dimensions" << std::endl;
 		return lhs;
 	}
 	matrix result(lhs.rows(), lhs.cols());
@@ -214,7 +212,7 @@ matrix matrix::operator -= (const matrix & other)
 	if(this->rows() != other.rows()
 	   || this->cols() != other.cols())
 	{
-		cout << "matrix sum failed" << endl;
+		std::cout << "matrix sum failed" << std::endl;
 		return *this;
 	}
 	for(int i = 0; i < this->rows(); ++i)
@@ -237,7 +235,7 @@ matrix operator * (const matrix & lhs, const matrix & rhs)
 {
 	if(lhs.cols() != rhs.rows())
 	{
-		cout << "matrixProduct (operator *): input matrices are not productable" << endl;
+		std::cout << "matrixProduct (operator *): input matrices are not productable" << std::endl;
 		return lhs;
 	}
 
@@ -345,7 +343,7 @@ void matrix::resize(int newRows, int newCols)
 		std::valarray<double> temp = in;
 		in.resize(newCols);
 		std::copy(std::begin(temp),
-				  std::begin(temp) + min(newCols, int(temp.size())),
+				  std::begin(temp) + std::min(newCols, int(temp.size())),
 				  std::begin(in));
 	});
 
@@ -365,7 +363,7 @@ void matrix::resizeRows(int newRows)
 			std::valarray<double> temp = in;
 			in.resize(cols);
 			std::copy(std::begin(temp),
-					  std::begin(temp) + min(cols, int(temp.size())),
+					  std::begin(temp) + std::min(cols, int(temp.size())),
 					  std::begin(in));
 		});
 	}
@@ -381,7 +379,7 @@ void matrix::resizeCols(int newCols)
 		std::valarray<double> temp = in;
 		in.resize(newCols);
 		std::copy(std::begin(temp),
-				  std::begin(temp) + min(newCols, int(temp.size())),
+				  std::begin(temp) + std::min(newCols, int(temp.size())),
 				  std::begin(in));
 	});
 
@@ -399,7 +397,7 @@ double matrix::maxVal() const
 	std::for_each(std::begin(myData), std::end(myData),
 				  [&res](const std::valarray<double> & in)
 	{
-		res = max(res, in.max());
+		res = std::max(res, in.max());
 	});
 
 	return res;
@@ -410,7 +408,7 @@ double matrix::minVal() const
 	std::for_each(std::begin(myData), std::end(myData),
 				  [&res](const std::valarray<double> & in)
 	{
-		res = min(res, in.max());
+		res = std::min(res, in.max());
 	});
 
 	return res;
@@ -520,11 +518,11 @@ void matrix::print(int rows, int cols) const
 	{
 		for(int j = 0; j < cols; ++j)
 		{
-			cout << doubleRound(myData[i][j], 3) << "\t";
+			std::cout << doubleRound(myData[i][j], 3) << "\t";
 		}
-		cout << endl;
+		std::cout << std::endl;
 	}
-	cout << endl;
+	std::cout << std::endl;
 }
 
 void matrix::push_back(const std::valarray<double> & in)
@@ -564,7 +562,7 @@ void matrix::invert()
 {
 	if(this->rows() != this->cols())
 	{
-		cout << "matrix::invert: matrix is not square" << endl;
+		std::cout << "matrix::invert: matrix is not square" << std::endl;
 		return;
 	}
 
@@ -637,7 +635,7 @@ void matrix::eraseRow(int i)
 
 
 /// looks like okay
-void matrix::eraseRows(const vector<int> & indices)
+void matrix::eraseRows(const std::vector<int> & indices)
 {
 	eraseItems(myData, indices);
 }

@@ -4,6 +4,8 @@
 #include "biglib.h"
 #include <chrono>
 
+#define NEW_SUCC 1
+
 class net : public QObject
 {
 	Q_OBJECT
@@ -21,6 +23,8 @@ private:
 	const double loadDataNorm = 10.; // for windows, empirical
 	std::valarray<double> averageDatum;
 	std::valarray<double> sigmaVector;
+
+	matrix windsBuffer; /// to save temporary windows
 
 	matrix confusionMatrix; // rows - realClass, cols - outClass
 
@@ -48,7 +52,6 @@ private:
 	double errCrit = 0.05;
 	double learnRate = 0.05;
 
-
 	static const int lowLimit = 85;
 	static const int highLimit = 130;
 
@@ -74,27 +77,29 @@ public slots:
 	void dataCame(eegDataType::iterator a, eegDataType::iterator b);
 	void averageClassification();
 
+private:
+	// private methods
+	void printData();
+	std::vector<int> makeLearnIndexSet();
+	std::pair<std::vector<int>, std::vector<int> > makeIndicesSetsCross(const std::vector<std::vector<int> > & arr,
+																		const int numOfFold);
+	std::valarray<double> (*activation)(const std::valarray<double> & in,
+										double temp) = softmax;
 
 public:
 	void startOperate();
 	double adjustLearnRate(int lowLimit,
 						   int highLimit);
-	std::pair<int, double> classifyDatum(const int & vecNum);
 
-
-	std::vector<int> makeLearnIndexSet();
-	std::pair<std::vector<int>, std::vector<int> > makeIndicesSetsCross(const std::vector<std::vector<int> > & arr,
-																		const int numOfFold);
-	std::valarray<double> (*activation)(const std::valarray<double> & in, double temp) = softmax;
 
 	void autoClassification(const QString & spectraDir);
-	//    void autoClassificationSimple();
 	void leaveOneOut();
 	void crossClassification();
 	void leaveOneOutClassification();
 	void halfHalfClassification();
 	void trainTestClassification(const QString & trainTemplate = "_train",
 								 const QString & testTemplate = "_test");
+	std::pair<int, double> classifyDatum(const int & vecNum);
 
 	void learnNetIndices(std::vector<int> mixNum,
 						 const bool resetFlag = true);
@@ -109,9 +114,6 @@ public:
 	int getEpoch();
 	double getLrate();
 
-	void aaDefaultSettings();
-	void printData();
-
 
 
 	void loadData(const QString & spectraPath = QString(),
@@ -124,11 +126,10 @@ public:
 	void eraseData(const std::vector<int> & indices);
 
 
-
-
 	void writeWts(const QString & outPath = QString());
 	void readWts(const QString & fileName,
 				 wtsType * wtsMatrix = nullptr);
+
 
 	void successivePreclean(const QString & spectraPath = QString());
 
@@ -144,6 +145,8 @@ public:
 
 
 };
+
+
 
 class NetHandler : public QObject
 {

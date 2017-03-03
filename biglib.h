@@ -18,6 +18,12 @@
 
 QString funcName(QString input);
 
+template <typename Cont>
+Cont range(int beg, int en);
+
+template <typename Cont>
+Cont unite(const std::vector<Cont> & ranges);
+
 std::ostream & operator<< (std::ostream &os, QString toOut);
 
 template <typename Typ, template <typename> class Cont>
