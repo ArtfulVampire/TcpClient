@@ -17,33 +17,33 @@ class MainWindow;
 
 class MainWindow : public QMainWindow
 {
-    Q_OBJECT
+	Q_OBJECT
 
 public:
-    explicit MainWindow(QWidget *parent = 0);
-    ~MainWindow();
+	explicit MainWindow(QWidget *parent = 0);
+	~MainWindow();
 
 
 
 signals:
 
 public slots:
-    // ui slots
-    void serverAddressSlot(int a);
-    void startSlot();
-    void endSlot(); /// is needed?
+	// ui slots
+	void serverAddressSlot(int a);
+	void startSlot();
+	void endSlot(); /// is needed?
 
-    void retranslateMessageSlot(QString); /// from dataReader
+	void retranslateMessageSlot(QString); /// from dataReader
 
 
 private:
 	Ui::MainWindow * ui;
 
-    QThread * myDataThread = nullptr;
-    DataReaderHandler * myDataReaderHandler = nullptr;
+	QThread * myDataThread = nullptr;
+	DataReaderHandler * myDataReaderHandler = nullptr;
 
-    QThread * myNetThread = nullptr;
-    NetHandler * myNetHandler = nullptr;
+	QThread * myNetThread = nullptr;
+	NetHandler * myNetHandler = nullptr;
 
 	QDataStream comPortDataStream; /// needed for comPort test in main
 };

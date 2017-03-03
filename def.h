@@ -68,15 +68,15 @@ typedef double Double;
 
 struct String
 {
-    int numChars;
-    char * str;
+	int numChars;
+	char * str;
 };
 
 struct Pack
 {
-    Int packSize = 0;
-    DWORD packId = 0;
-    QByteArray packData;
+	Int packSize = 0;
+	DWORD packId = 0;
+	QByteArray packData;
 };
 
 }
@@ -143,7 +143,7 @@ const QString netBadPath = workPath + "/badFiles.txt";
 /// funcs (ORDER is important, or extern+cpp)
 constexpr int fftLimit(const double & inFreq)
 {
-    return ceil(inFreq / def::freq * def::fftLength - 0.5);
+	return ceil(inFreq / def::freq * def::fftLength - 0.5);
 }
 inline int numOfClasses() {return def::fileMarkers.length();}
 constexpr double spStep() {return def::freq / def::fftLength;}

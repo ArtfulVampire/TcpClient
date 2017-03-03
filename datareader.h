@@ -7,80 +7,80 @@
 
 class DataReader : public QObject
 {
-    Q_OBJECT
+	Q_OBJECT
 
 public:
-    DataReader(QObject * inParent = nullptr);
-    ~DataReader();
+	DataReader(QObject * inParent = nullptr);
+	~DataReader();
 
-   void readStartInfo();
-   void startStopTransmisson();
-   void dataSliceCame();
-   void markerCame();
-   void markerCameAVS();
-   void sendStartRequest();
+	void readStartInfo();
+	void startStopTransmisson();
+	void dataSliceCame();
+	void markerCame();
+	void markerCameAVS();
+	void sendStartRequest();
 
 
 signals:
-   void sliceReady(eegSliceType slice);
-   void retranslateMessage(QString);
+	void sliceReady(eegSliceType slice);
+	void retranslateMessage(QString);
 
 public slots:
-   void receiveData();
-   void socketConnectedSlot();
-   void socketDisconnectedSlot();
-   void socketErrorSlot();
+	void receiveData();
+	void socketConnectedSlot();
+	void socketDisconnectedSlot();
+	void socketErrorSlot();
 
 private:
 
-   bool fullDataFlag = true;
+	bool fullDataFlag = true;
 
-   double bitWeight{};
-   double samplingRate{};
-   int numOfChannels{};
+	double bitWeight{};
+	double samplingRate{};
+	int numOfChannels{};
 
 
 
-   eegSliceType oneSlice;
-   qint32 sliceNumberPrevious = 0;
+	eegSliceType oneSlice;
+	qint32 sliceNumberPrevious = 0;
 
-   QBuffer * myBuffer;
-   bool inProcess = false;
+	QBuffer * myBuffer;
+	bool inProcess = false;
 
-   QTcpSocket * socket = nullptr;
-   QDataStream socketDataStream;
-   char * tmpData = new char [10000]; /// for unknown incoming data
+	QTcpSocket * socket = nullptr;
+	QDataStream socketDataStream;
+	char * tmpData = new char [10000]; /// for unknown incoming data
 };
 
 
 
 class DataReaderHandler : public QObject
 {
-    Q_OBJECT
+	Q_OBJECT
 public:
-    DataReaderHandler();
+	DataReaderHandler();
 
-    ~DataReaderHandler();
+	~DataReaderHandler();
 
-    void dealWithMarkers(const eegSliceType & slic, int & slicesCam);
+	void dealWithMarkers(const eegSliceType & slic, int & slicesCam);
 
 protected:
-   void timerEvent(QTimerEvent *event);
+	void timerEvent(QTimerEvent *event);
 
 public slots:
-    void startReadData();
-    void stopReadData();
+	void startReadData();
+	void stopReadData();
 
-    void receiveSlice(eegSliceType slice);
-    void retranslateMessageSlot(QString);
+	void receiveSlice(eegSliceType slice);
+	void retranslateMessageSlot(QString);
 
 signals:
-    void finishReadData(); /// optional?private:
-    void dataSend(eegDataType::iterator, eegDataType::iterator);
-    void retranslateMessage(QString);
+	void finishReadData(); /// optional?private:
+	void dataSend(eegDataType::iterator, eegDataType::iterator);
+	void retranslateMessage(QString);
 
 private:
-    DataReader * myReader;
+	DataReader * myReader;
 
 };
 
