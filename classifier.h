@@ -23,6 +23,7 @@ private:
 	const double loadDataNorm = 10.; // for windows, empirical
 	std::valarray<double> averageDatum;
 	std::valarray<double> sigmaVector;
+	bool badWindowFlag = false;
 
 	matrix windsBuffer; /// to save temporary windows
 
@@ -99,7 +100,8 @@ public:
 	void halfHalfClassification();
 	void trainTestClassification(const QString & trainTemplate = "_train",
 								 const QString & testTemplate = "_test");
-	std::pair<int, double> classifyDatum(const int & vecNum);
+	std::pair<int, double> classifyDatum(int vecNum);
+	std::valarray<double> classifyDatum1(int vecNum);
 
 	void learnNetIndices(std::vector<int> mixNum,
 						 const bool resetFlag = true);

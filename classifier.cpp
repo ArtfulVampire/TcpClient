@@ -532,6 +532,10 @@ void net::successiveProcessing(const QString & spectraPath)
 
 void net::dataCame(eegDataType::iterator a, eegDataType::iterator b)
 {
+	auto t0 = std::chrono::high_resolution_clock::now();
+
+
+	badWindowFlag = false;
 	const int type = def::currentType;
 	if(type < 0)
 	{
@@ -539,21 +543,33 @@ void net::dataCame(eegDataType::iterator a, eegDataType::iterator b)
 	}
 
 	std::valarray<double> newSpectre = successiveDataToSpectre(a, b);
+	if(badWindowFlag)
+	{
+//		std::cout << "bad window" << std::endl;
+		return;
+	}
+
 
 	const QString name = def::ExpName +
 						 "." + rightNumber(def::numOfReal, 4) +
 						 def::fileMarkers[type] +
 						 "." + rightNumber(def::numOfWind, 2) + ".psd";
 
-#if 01
+#if 0
 	/// spectre
 	writeFileInLine(def::workPath + "/SpectraSmooth/winds/" +
 					name,
 					newSpectre);
 #endif
 
+
 	successiveLearning(newSpectre, type, name);
 	++def::numOfWind;
+
+	auto t1 = std::chrono::high_resolution_clock::now();
+	std::cout << "processing = "
+			  << std::chrono::duration_cast<std::chrono::milliseconds>(t1-t0).count() / 1000.
+			  << " sec" << std::endl;
 }
 
 std::valarray<double> net::successiveDataToSpectre(
@@ -597,7 +613,7 @@ std::valarray<double> net::successiveDataToSpectre(
 					tmpMat[def::eog2] * coeff[i][1];
 		}
 
-#if 0
+#if 01
 		/// eyes - checked, OK
 		writePlainData(def::workPath + "/winds/" +
 					   def::ExpName +
@@ -608,6 +624,15 @@ std::valarray<double> net::successiveDataToSpectre(
 				tmpMat.cols());
 #endif
 	}
+
+	/// check amplitudes
+	if(tmpMat.maxAbsVal() > def::amplitudeThreshold)
+	{
+		this->badWindowFlag = true;
+		std::cout << "ampl : " << tmpMat.maxAbsVal() << std::endl;
+		return {};
+	}
+
 	std::valarray<double> res(0., def::eegNs * def::spLength());
 	/// count spectra, take 5-20 HZ only
 	{
@@ -619,16 +644,40 @@ std::valarray<double> net::successiveDataToSpectre(
 			{
 				calcSpectre(tmpMat[i],
 							tmpSpec,
-							1024, /// fftLength consts
+							def::fftLength,
 							def::numOfSmooth
 							);
+
+				/// check spectra amplitude
+				double a =  std::accumulate(std::begin(tmpSpec) + def::fftLimit(30.),
+											std::begin(tmpSpec) + def::fftLimit(40.),
+											0.);
+				if(a > def::spectreBetaThreshold)
+				{
+					this->badWindowFlag = true;
+					std::cout << "beta (ch = " << i << ") : " << a << std::endl;
+//					return {};
+				}
+				double b = std::accumulate(std::begin(tmpSpec) + def::fftLimit(5.),
+										   std::begin(tmpSpec) + def::fftLimit(6.5),
+										   0.);
+				if(b > def::spectreThetaThreshold)
+				{
+					this->badWindowFlag = true;
+					std::cout << "theta (ch = " << i << ") : " << b << std::endl;
+//					return {};
+				}
+				if(this->badWindowFlag) return {};
+
 				std::copy(std::begin(tmpSpec) + def::left(),
 						  std::begin(tmpSpec) + def::right(),
 						  std::begin(res) + i * def::spLength());
 			}
 		}
-
 	}
+
+	/// check whole spectra ???
+
 	return res;
 }
 
@@ -638,31 +687,60 @@ void net::successiveLearning(const std::valarray<double> & newSpectre,
 {
 	static std::vector<int> succOldIndices{};
 	static auto findIt = std::begin(types);
+	static std::valarray<double> fbVal(0., def::numOfClasses());
 
 	/// dataMatrix is learning matrix
 	std::valarray<double> newData = (newSpectre - averageDatum) / (sigmaVector * loadDataNorm);
 
 	pushBackDatum(newData, newType, newFileName);
 
-	const std::pair<int, double> outType = classifyDatum(dataMatrix.rows() - 1); // take the last
-	confusionMatrix[newType][outType.first] += 1.;
+	const int vecNum = dataMatrix.rows() - 1;
+	const std::valarray<double> outVal = classifyDatum1(vecNum); // take the last
+	int outType = indexOfMax(outVal);
+	double outError = 0.;
+	for(int j = 0; j < def::numOfClasses(); ++j)
+	{
+		outError += pow((outVal[j] - int(types[vecNum] == j) ), 2.);
+	}
+	outError = sqrt(outError);
 
-	/// if correct classification
+	fbVal *= def::inertiaCoef;
+	fbVal += outVal;
+
+	confusionMatrix[newType][outType] += 1.;
+
+#if VERBOSE_OUTPUT >= 1
+	std::cout << "type = " << outType << '\t' << "(";
+	for(int i = 0; i < def::numOfClasses(); ++i)
+	{
+		std::cout << doubleRound(outVal[i], 3) << '\t';
+	}
+	std::cout << ") " << fileNames[vecNum] << "   ";
+	std::cout << ((outType == newType) ? "+" : "-");
+	std::cout << "\t" << doubleRound(outError, 2);
+#endif
+
+	/// FEEDBACK ITSELF - if not rest
 	if(newType == 0 || newType == 1)
 	{
-		if(outType.first == newType)
-		{
-			comPortDataStream << qint8(1);
-		}
-		else
-		{
-			comPortDataStream << qint8(2);
-		}
+		/// decide how good classification is
+		/// 1 - no class,
+		/// def::numFbGradation + 1 - max
+		quint8 a = qint8(std::round(fbVal[newType] / fbVal.sum() * def::numFbGradation) + 1);
+#if VERBOSE_OUTPUT >= 1
+		std::cout << "\tfb = " << int(a) << "\tvals = " << fbVal << std::endl;
+#endif
+		comPortDataStream << a;
 	}
+	else
+	{
+		std::cout << std::endl;
+	}
+
 
 	static std::vector<int> passed(3, 0);
 
-	if((outType.first == newType && outType.second < def::errorThreshold)
+	if((outType == newType && outError < def::errorThreshold)
 	   || passed[newType] < learnSetStay
 	   )
 	{
@@ -688,28 +766,29 @@ void net::successiveLearning(const std::valarray<double> & newSpectre,
 	++passed[newType];
 
 
+	/// when the answer was given
 #if NEW_SUCC
 	if(def::solved == def::solveType::right)
 	{
-		std::cout << "excluded inds : " << succOldIndices << std::endl;
-
 		eraseData(succOldIndices);
 		successiveRelearn();
 
+		/// both part
 		succOldIndices.clear();
 		def::solved = def::solveType::notYet;
 		findIt = std::begin(types);
+		fbVal = 0.;
 	}
 	else if(def::solved == def::solveType::wrong)
 	{
 		/// erase all last added
-		std::cout << "size before: " << dataMatrix.size() << std::endl;
 		eraseData(range<std::vector<int>>(3 * this->learnSetStay, dataMatrix.rows() - 1));
-		std::cout << "size after: " << dataMatrix.size() << std::endl;
 
+		/// both part
 		succOldIndices.clear();
 		def::solved = def::solveType::notYet;
 		findIt = std::begin(types);
+		fbVal = 0.;
 	}
 #else
 	if(numGoodNew == numGoodNewLimit)
@@ -1194,10 +1273,8 @@ void net::learnNetIndices(std::vector<int> mixNum,
 	//    printData();
 }
 
-
-std::pair<int, double> net::classifyDatum(const int & vecNum)
+std::valarray<double> net::classifyDatum1(int vecNum)
 {
-	const int type = types[vecNum]; // true class
 	const int numOfLayers = dimensionality.size();
 
 	std::vector<std::valarray<double> > output(numOfLayers);
@@ -1221,40 +1298,23 @@ std::pair<int, double> net::classifyDatum(const int & vecNum)
 	}
 
 	resizeValar(output.back(), def::numOfClasses());
-	int outClass = indexOfMax(output.back());
+
+	return output.back();
+}
+
+std::pair<int, double> net::classifyDatum(int vecNum)
+{
+	std::valarray<double> out = classifyDatum1(vecNum);
+	int outClass = indexOfMax(out);
 
 	/// effect on successive procedure
 	double res = 0.;
 	for(int j = 0; j < dimensionality.back(); ++j)
 	{
-		res += pow((output.back()[j] - int(type == j) ), 2.);
+		res += pow((out[j] - int(types[vecNum] == j) ), 2.);
 	}
 	res = sqrt(res);
 
-#if VERBOSE_OUTPUT >= 1
-	/// std::cout results
-
-	std::ofstream resFile;
-	resFile.open((def::workPath + "/class.txt").toStdString(),
-				 std::ios_base::app);
-	//    auto tmp = std::cout.rdbuf();
-	//    cout.rdbuf(resFile.rdbuf());
-
-
-	std::cout << "type = " << type << '\t' << "(";
-	for(int i = 0; i < def::numOfClasses(); ++i)
-	{
-		std::cout << doubleRound(output.back()[i], 3) << '\t';
-	}
-	std::cout << ") " << fileNames[vecNum] << "   ";
-	std::cout << ((type == outClass) ? "+" : "-");
-	std::cout << "\t" << doubleRound(res, 2);
-	std::cout << std::endl;
-
-
-	//    cout.rdbuf(tmp);
-	resFile.close();
-#endif
 
 	return std::make_pair(outClass,
 						  res);

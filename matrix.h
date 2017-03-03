@@ -42,6 +42,7 @@ public:
 	int rows() const;
 	double maxVal() const;
 	double minVal() const;
+	double maxAbsVal() const;
 	double sum() const;
 	std::vector<std::valarray<double>>::iterator begin();
 	std::vector<std::valarray<double>>::iterator end();

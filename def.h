@@ -106,7 +106,6 @@ const QString rightKey = QObject::tr("z");
 const QString wrongKey = QObject::tr("x");
 
 const errorNetType errType = errorNetType::SME; /// how to calculate
-
 constexpr double errorThreshold = 0.9;
 
 const std::vector<qint16> markers{241, 247, 254};
@@ -114,11 +113,20 @@ const QStringList fileMarkers{"_241", "_247", "_254"}; /// needed?
 
 constexpr double freq = 250.;
 constexpr int fftLength = 1024;
-constexpr int timeShift = 125; /// should be lower
+constexpr int timeShift = 50; /// should be lower
 constexpr int windowLength = 1024;
-
 constexpr double leftFreq = 5.;
 constexpr double rightFreq = 20.;
+
+/// CHECK THESE VALUES WHAAAAAAT
+const double amplitudeThreshold = 150.;
+const double spectreBetaThreshold = 80.;
+const double spectreThetaThreshold = 60.;
+
+const int numFbGradation = 10;
+constexpr int numPrevResInertia = 10;
+constexpr double inertiaCoef = exp(-5. / numPrevResInertia);
+
 
 /// make GUI for these variables ?
 const QString ExpName = "XXX_feedback";

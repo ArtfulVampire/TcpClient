@@ -413,6 +413,19 @@ double matrix::minVal() const
 
 	return res;
 }
+
+double matrix::maxAbsVal() const
+{
+	double res = myData[0][0];
+	std::for_each(std::begin(myData),
+				  std::end(myData),
+				  [&res](const std::valarray<double> & in)
+	{
+		res = std::max(res, std::abs(in).max());
+	});
+	return res;
+}
+
 double matrix::sum() const
 {
 	double res = 0.;

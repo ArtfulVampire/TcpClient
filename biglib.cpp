@@ -619,7 +619,7 @@ QString readString(QDataStream & in)
 {
 	qint32 numOfChars;
 	in >> numOfChars;
-	std::cout << "numChars = " << numOfChars << std::endl;
+//	std::cout << "numChars = " << numOfChars << std::endl;
 
 	char * res = new char [numOfChars + 1];
 	for(int i = 0; i < numOfChars; ++i)
