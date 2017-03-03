@@ -65,15 +65,15 @@ std::vector<int> net::makeLearnIndexSet()
     {
 		mixNum.resize(dataMatrix.rows());
         unsigned seed = std::chrono::system_clock::now().time_since_epoch().count();
-        std::iota(mixNum.begin(), mixNum.end(), 0);
-        std::shuffle(mixNum.begin(), mixNum.end(),
+		std::iota(std::begin(mixNum), std::end(mixNum), 0);
+		std::shuffle(std::begin(mixNum), std::end(mixNum),
 					 std::default_random_engine(seed));
         mixNum.resize(mixNum.size() * (folds - 1) / folds);
     }
     else if(this->Mode == myMode::half_half)
     {
 		mixNum.resize(dataMatrix.rows() / 2);
-		std::iota(mixNum.begin(), mixNum.end(), 0);
+		std::iota(std::begin(mixNum), std::end(mixNum), 0);
     }
     return mixNum;
 }
@@ -159,9 +159,9 @@ std::pair<std::vector<int>, std::vector<int> > net::makeIndicesSetsCross(
 void net::printData()
 {
     cout << "size of learning set:" << dataMatrix.rows() << " = ";
-    cout << std::count(types.begin(), types.end(), 0) << " + ";
-    cout << std::count(types.begin(), types.end(), 1) << " + ";
-    cout << std::count(types.begin(), types.end(), 2) << endl;
+	cout << std::count(std::begin(types), std::end(types), 0) << " + ";
+	cout << std::count(std::begin(types), std::end(types), 1) << " + ";
+	cout << std::count(std::begin(types), std::end(types), 2) << endl;
     cout << "OR = ";
     cout << classCount[0] << " + ";
     cout << classCount[1] << " + ";
@@ -418,7 +418,7 @@ void net::successivePreclean(const QString & spectraPath)
 
     for(int j = 0; j < def::numOfClasses(); ++j)
     {
-        auto it = leest2[j].begin();
+		auto it = std::begin(leest2[j]);
         for(int i = 0;
             i < leest2[j].size() - learnSetStay * 1.3; /// consts generality
             ++i, ++it)
@@ -569,7 +569,8 @@ std::valarray<double> net::successiveDataToSpectre(
         auto it = eegDataStart;
         for(int j = 0; j < def::windowLength; ++j, ++it)
         {
-            auto itt = (*it).begin();
+			//// whaaaaaat
+			auto itt = std::begin(*it);
             for(int i = 0; i < def::ns; ++i, ++itt)
             {
                 tmpMat[i][j] = (*itt);
@@ -590,7 +591,7 @@ std::valarray<double> net::successiveDataToSpectre(
     /// clean from eyes
     if(QFile::exists(def::eyesFilePath))
     {
-        auto it2 = tmpMat.begin();
+		auto it2 = std::begin(tmpMat);
         for(int i = 0; i < def::eegNs; ++i, ++it2)
         {
             (*it2) -= tmpMat[def::eog1] * coeff[i][0] +
@@ -663,10 +664,9 @@ void net::successiveLearning(const std::valarray<double> & newSpectre,
        || passed[newType] < learnSetStay
        )
     {
-        const int num = std::find(types.begin(),
-                                  types.end(),
+		const int num = std::find(std::begin(types), std::end(types),
                                   newType)
-                - types.begin();
+				- std::begin(types);
         eraseDatum(num);
         ++numGoodNew;
     }
@@ -689,8 +689,8 @@ void net::successiveRelearn()
     const double rat = decayRate;
     for(int i = 0; i < dimensionality.size() - 1; ++i)
     {
-        std::for_each(weight[i].begin(),
-                      weight[i].end(),
+		std::for_each(std::begin(weight[i]),
+					  std::end(weight[i]),
 					  [rat](std::valarray<double> & in)
         {
             in *= 1. - rat;
@@ -791,8 +791,8 @@ void net::crossClassification()
         for(int i = 0; i < def::numOfClasses(); ++i)
 		{
             unsigned seed = std::chrono::system_clock::now().time_since_epoch().count();
-            std::shuffle(arr[i].begin(),
-                         arr[i].end(),
+			std::shuffle(std::begin(arr[i]),
+						 std::end(arr[i]),
 						 std::default_random_engine(seed));
         }
 
@@ -917,8 +917,8 @@ void net::eraseDatum(const int & index)
 {
     dataMatrix.eraseRow(index);
     classCount[ types[index] ] -= 1.;
-    types.erase(types.begin() + index);
-    fileNames.erase(fileNames.begin() + index);
+	types.erase(std::begin(types) + index);
+	fileNames.erase(std::begin(fileNames) + index);
 }
 
 void net::eraseData(const std::vector<int> & indices)
@@ -983,7 +983,7 @@ void net::loadData(const QString & spectraPath,
 void net::learnNet(const bool resetFlag)
 {
     std::vector<int> mixNum(dataMatrix.rows());
-    std::iota(mixNum.begin(), mixNum.end(), 0);
+	std::iota(std::begin(mixNum), std::end(mixNum), 0);
     learnNetIndices(mixNum, resetFlag);
 }
 
@@ -1027,8 +1027,7 @@ void net::learnNetIndices(std::vector<int> mixNum,
     {
         /// mix the sequence of input vectors
         unsigned seed = std::chrono::system_clock::now().time_since_epoch().count();
-        std::shuffle(mixNum.begin(),
-                     mixNum.end(),
+		std::shuffle(std::begin(mixNum), std::end(mixNum),
                      std::default_random_engine(seed));
 
 
@@ -1037,9 +1036,9 @@ void net::learnNetIndices(std::vector<int> mixNum,
         for(const int & index : mixNum)
         {
             /// add data
-            std::copy(begin(dataMatrix[index]),
-                      end(dataMatrix[index]),
-                      begin(output[0]));
+			std::copy(std::begin(dataMatrix[index]),
+					  std::end(dataMatrix[index]),
+					  std::begin(output[0]));
 
 
             /// add bias

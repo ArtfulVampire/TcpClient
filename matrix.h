@@ -5,7 +5,7 @@
 #include "lib.h"
 
 
-class matrix : public std::vector<std::valarray<double>>
+class matrix
 {
 public:
     matrix();
@@ -18,9 +18,9 @@ public:
 	matrix(const std::vector<std::valarray<double>> & other);
 
     matrix(matrix && other)
-        :data{other.data}
+		:myData{other.myData}
     {
-		other.data = std::vector<std::valarray<double>>();
+		other.myData = {};
     }
 
     matrix(std::initializer_list<std::valarray<double>> lst);
@@ -59,23 +59,16 @@ public:
     void push_back(const std::vector<double> &in);
 
     // for compability with vector < vector<Type> >
-    void clear() {this->data.clear();}
-    int size() const {return data.size();}
+	void clear() {myData.clear();}
+	int size() const {return myData.size();}
 
     void resize(int rows, int cols, double val);
     void resize(int rows, int cols);
-    void resize(int i) {data.resize(i);}
+	void resize(int i) {myData.resize(i);}
 
 
-    std::valarray<double> & operator [](int i)
-    {
-        return data[i];
-
-    }
-    const std::valarray<double> & operator [](int i) const
-    {
-        return data[i];
-    }
+	std::valarray<double> & operator [](int i) {return myData[i];}
+	const std::valarray<double> & operator [](int i) const {return myData[i];}
 
     matrix operator = (const matrix & other);
 	matrix operator = (const std::vector<std::valarray<double>> & other);
@@ -102,10 +95,10 @@ public:
     void zero();
     void one();
     void eraseRow(int i);
-	void eraseRows(const vector<int> & indices);
+	void eraseRows(const std::vector<int> & indices);
 
 public:
-	std::vector<std::valarray<double>> data = std::vector<std::valarray<double>>();
+	std::vector<std::valarray<double>> myData = std::vector<std::valarray<double>>();
 
 };
 

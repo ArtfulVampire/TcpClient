@@ -25,27 +25,27 @@ matrix::matrix(int rows, int cols)
 
 matrix::matrix(const matrix & other) : matrix()
 {
-    this->data = other.data;
+	myData = other.myData;
 }
 
 
 matrix::matrix(const std::vector<std::valarray<double>> & other)
 {
-    this->data = other;
+	myData = other;
 }
 matrix::matrix(const std::valarray<double> & vect, bool orientH)
 {
     if(orientH)
     {
         this->resize(1, vect.size());
-        this->data[0] = vect;
+		myData[0] = vect;
     }
     else
     {
         this->resize(vect.size(), 1);
         for(int i = 0; i < vect.size(); ++i)
         {
-            this->data[i][0] = vect[i];
+			myData[i][0] = vect[i];
         }
     }
 }
@@ -54,14 +54,14 @@ matrix::matrix(const std::valarray<double> & vect, char orient)
     if(orient == 'h' || orient == 'H')
     {
         this->resize(1, vect.size());
-        this->data[0] = vect;
+		myData[0] = vect;
     }
     else if(orient == 'v' || orient == 'V')
     {
         this->resize(vect.size(), 1);
         for(int i = 0; i < vect.size(); ++i)
         {
-            this->data[i][0] = vect[i];
+			myData[i][0] = vect[i];
         }
     }
     else
@@ -84,27 +84,27 @@ matrix::matrix(const std::valarray<double> & vect, int inRows)
     {
         std::copy(std::begin(vect) + i * newCols,
                   std::begin(vect) + (i + 1) * newCols,
-                  std::begin(this->data[i]));
+				  std::begin(myData[i]));
     }
 }
 
 matrix::matrix(const std::valarray<double> & vect1, const std::valarray<double> & vect2)
 {
-    this->data.clear();
+	myData.clear();
     for(int i = 0; i < vect1.size(); ++i)
     {
-        this->data.push_back(vect1[i] * vect2);
+		myData.push_back(vect1[i] * vect2);
     }
 }
 
 matrix::matrix(std::initializer_list<std::valarray<double>> lst)
 {
     this->resize(0, 0);
-    std::for_each(lst.begin(),
-                  lst.end(),
+	std::for_each(std::begin(lst),
+				  std::end(lst),
                   [this](std::valarray<double> in)
     {
-        this->data.push_back(in);
+		myData.push_back(in);
     });
 }
 
@@ -115,20 +115,20 @@ matrix::matrix(std::initializer_list<double> lst) // diagonal
     int count = 0;
     for(int item : lst)
     {
-        this->data[count][count] = item;
+		myData[count][count] = item;
         ++count;
     }
 }
 
 matrix matrix::operator = (const matrix & other)
 {
-    this->data = other.data;
+	myData = other.myData;
 
     return *this;
 }
 matrix matrix::operator = (const std::vector<std::valarray<double>> & other)
 {
-    this->data = other;
+	myData = other;
 
     return *this;
 }
@@ -283,7 +283,7 @@ matrix matrix::operator *= (const double & other)
 {
     for(int i = 0; i < this->rows(); ++i)
     {
-        this->data[i] *= other;
+		myData[i] *= other;
     }
     return *this;
 }
@@ -309,7 +309,7 @@ matrix matrix::operator /= (const double & other)
 {
     for(int i = 0; i < this->rows(); ++i)
     {
-        this->data[i] /= other;
+		myData[i] /= other;
 
     }
     return *this;
@@ -324,9 +324,9 @@ matrix::matrix(int rows, int cols, double value)
 
 void matrix::fill(double value)
 {
-    for(std::vector<std::valarray<double> >::iterator it = data.begin(); it < data.end(); ++it)
+	for(auto & row : myData)
     {
-        (*it) = value;
+		row = value;
     }
 }
 
@@ -338,9 +338,8 @@ void matrix::resize(int rows, int cols, double val)
 
 void matrix::resize(int newRows, int newCols)
 {
-    this->data.resize(newRows);
-    std::for_each(data.begin(),
-                  data.end(),
+	myData.resize(newRows);
+	std::for_each(std::begin(myData), std::end(myData),
                   [newCols](std::valarray<double> & in)
     {
         std::valarray<double> temp = in;
@@ -357,11 +356,10 @@ void matrix::resizeRows(int newRows)
 {
     int cols = this->cols();
     int oldRows = this->rows();
-	data.resize(newRows);
+	myData.resize(newRows);
     if(oldRows < newRows) /// why?
     {
-        std::for_each(data.begin() + oldRows,
-                      data.end(),
+		std::for_each(std::begin(myData) + oldRows, std::end(myData),
                       [cols](std::valarray<double> & in)
         {
             std::valarray<double> temp = in;
@@ -376,8 +374,7 @@ void matrix::resizeRows(int newRows)
 
 void matrix::resizeCols(int newCols)
 {
-    std::for_each(data.begin(),
-                  data.end(),
+	std::for_each(std::begin(myData), std::end(myData),
                   [newCols](std::valarray<double> & in)
     {
         /// not resizeValar from library
@@ -392,15 +389,14 @@ void matrix::resizeCols(int newCols)
 
 int matrix::rows() const
 {
-   return data.size();
+   return myData.size();
 }
 
 
 double matrix::maxVal() const
 {
 	double res = 0.;
-    std::for_each(this->data.begin(),
-                  this->data.end(),
+	std::for_each(std::begin(myData), std::end(myData),
                   [&res](const std::valarray<double> & in)
     {
         res = max(res, in.max());
@@ -410,9 +406,8 @@ double matrix::maxVal() const
 }
 double matrix::minVal() const
 {
-	double res = data[0][0];
-    std::for_each(this->data.begin(),
-                  this->data.end(),
+	double res = myData[0][0];
+	std::for_each(std::begin(myData), std::end(myData),
                   [&res](const std::valarray<double> & in)
     {
         res = min(res, in.max());
@@ -423,8 +418,7 @@ double matrix::minVal() const
 double matrix::sum() const
 {
 	double res = 0.;
-    std::for_each(this->data.begin(),
-                  this->data.end(),
+	std::for_each(std::begin(myData), std::end(myData),
                   [&res](const std::valarray<double> & in)
     {
        res += in.sum();
@@ -436,22 +430,22 @@ double matrix::sum() const
 
 std::vector<std::valarray<double>>::iterator matrix::begin()
 {
-    return this->data.begin();
+	return std::begin(myData);
 }
 
 std::vector<std::valarray<double>>::iterator matrix::end()
 {
-    return this->data.end();
+	return std::end(myData);
 }
 
 std::vector<std::valarray<double>>::const_iterator matrix::begin() const
 {
-    return this->data.begin();
+	return std::begin(myData);
 }
 
 std::vector<std::valarray<double>>::const_iterator matrix::end() const
 {
-    return this->data.end();
+	return std::end(myData);
 }
 
 std::valarray<double> matrix::toVectorByRows() const
@@ -459,8 +453,8 @@ std::valarray<double> matrix::toVectorByRows() const
     std::valarray<double> res(this->rows() * this->cols());
     for(int i = 0; i < this->rows(); ++i)
     {
-        std::copy(std::begin(this->data[i]),
-                  std::end(this->data[i]),
+		std::copy(std::begin(myData[i]),
+				  std::end(myData[i]),
                   std::begin(res) + this->cols() * i);
     }
     return res;
@@ -474,7 +468,7 @@ std::valarray<double> matrix::toVectorByCols() const
     {
         for(int j = 0; j < this->rows(); ++j)
         {
-            res[count++] = this->data[j][i];
+			res[count++] = myData[j][i];
         }
     }
     return res;
@@ -485,7 +479,7 @@ std::valarray<double> matrix::averageRow() const
     std::valarray<double> res(0., this->cols());
     for(int i = 0; i < this->rows(); ++i)
     {
-        res += this->data[i];
+		res += myData[i];
     }
     res /= this->rows();
     return res;
@@ -496,7 +490,7 @@ std::valarray<double> matrix::averageCol() const
     std::valarray<double> res(this->rows());
     for(int i = 0; i < this->rows(); ++i)
     {
-        res[i] = this->data[i].sum() / this->data[i].size();
+		res[i] = myData[i].sum() / myData[i].size();
     }
     return res;
 }
@@ -507,14 +501,14 @@ std::valarray<double> matrix::getCol(int i, int numCols) const
     std::valarray<double> res(numCols);
     for(int j = 0; j < numCols; ++j)
     {
-        res[j] = this->data[j][i];
+		res[j] = myData[j][i];
     }
     return res;
 }
 
 void matrix::pop_back()
 {
-    this->data.pop_back();
+	myData.pop_back();
 }
 
 void matrix::print(int rows, int cols) const
@@ -526,7 +520,7 @@ void matrix::print(int rows, int cols) const
     {
         for(int j = 0; j < cols; ++j)
         {
-            cout << doubleRound(data[i][j], 3) << "\t";
+			cout << doubleRound(myData[i][j], 3) << "\t";
         }
         cout << endl;
     }
@@ -535,21 +529,21 @@ void matrix::print(int rows, int cols) const
 
 void matrix::push_back(const std::valarray<double> & in)
 {
-    this->data.push_back(in);
+	myData.push_back(in);
 }
 
 void matrix::push_back(const std::vector<double> & in)
 {
     std::valarray<double> temp(in.data(), in.size());
-    this->data.push_back(temp);
+	myData.push_back(temp);
 }
 
 int matrix::cols() const
 {
-    return data[0].size();
+	return myData[0].size();
 }
 
-matrix matrix::transpose(const matrix &input)
+matrix matrix::transpose(const matrix & input)
 {
     matrix res(input.cols(), input.rows());
     for(int i = 0; i < input.rows(); ++i)
@@ -627,24 +621,24 @@ void matrix::swapCols(int i, int j)
 {
     for(int k = 0; k < this->rows(); ++k)
     {
-        std::swap(this->data[k][i], this->data[k][j]);
+		std::swap(myData[k][i], myData[k][j]);
     }
 }
 void matrix::swapRows(int i, int j)
 {
-    std::swap(this->data[i], this->data[j]);
+	std::swap(myData[i], myData[j]);
 }
 
 void matrix::eraseRow(int i)
 {
     if(i >= this->rows()) return;
-    this->data.erase(data.begin() + i);
+	myData.erase(std::begin(myData) + i);
 }
 
 
 /// looks like okay
 void matrix::eraseRows(const vector<int> & indices)
 {
-	eraseItems(this->data, indices);
+	eraseItems(myData, indices);
 }
 
