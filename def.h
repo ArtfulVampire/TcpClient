@@ -111,7 +111,7 @@ constexpr int markerChannel = 22;
 constexpr int eog1 = 22;
 constexpr int eog2 = 23;
 constexpr int numOfSmooth = 5;
-const QSet<int> dropChannels{1, 2, 3, 7}; /// from 1
+const QSet<int> dropChannels{1, 2, 3, 7, 8, 12}; /// from 1
 const errorNetType errType = errorNetType::SME; /// how to calculate
 constexpr double errorThreshold = 0.9;
 

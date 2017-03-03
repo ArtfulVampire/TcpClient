@@ -79,7 +79,8 @@ MainWindow::MainWindow(QWidget *parent) :
 
     if(comPort->isOpen())
     {
-//        cout << comPort->errorString() << endl;
+		cout << comPort->error() << endl;
+		cout << comPort->errorString() << endl;
         cout << "serialPort opened: " + def::comPortName << endl;
         cout << "portName: " << comPort->portName().toStdString() << endl;
         cout << "dataBits: " << comPort->dataBits() << endl;
