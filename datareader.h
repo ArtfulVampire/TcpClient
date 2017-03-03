@@ -48,9 +48,7 @@ private:
    bool inProcess = false;
 
    QTcpSocket * socket = nullptr;
-#if USE_DATA_STREAM
    QDataStream socketDataStream;
-#endif
    char * tmpData = new char [10000]; /// for unknown incoming data
 };
 

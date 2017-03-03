@@ -1,17 +1,16 @@
 #include "biglib.h"
 
 using namespace std;
-//namespace fs = boost::filesystem;
 
-std::string funcName(std::string in)
+QString funcName(QString in)
 {
-    in.resize(in.find('('));
+	in = in.left(in.indexOf('('));
     for(char a : {' ', '='})
     {
-        auto b = in.rfind(a);
-        if(b != std::string::npos)
+		int b = in.lastIndexOf(a);
+		if(b < in.size())
         {
-            in = in.substr(b + 1);
+			in = in.mid(b + 1);
         }
     }
     return in;
@@ -43,44 +42,12 @@ std::ostream & operator<< (std::ostream &os, const Cont<Typ, std::allocator<Typ>
     return os;
 }
 
-bool fileExists(const QString & filePath)
-{
-    if(QFile::exists(filePath))
-    {
-        return true;
-    }
-    return false;
-}
-
-
-std::string slash()
-{
-    return "/";
-}
-
-QString qslash()
-{
-    return QString('/');
-}
-
-int typeOfFileName(const std::string & filePath)
-{
-    std::vector<std::string> fileMarkers = makeDefFilters();
-    for(int i = 0; i < fileMarkers.size(); ++i)
-    {
-        if(contains(filePath, fileMarkers[i]))
-        {
-            return i;
-        }
-    }
-    return -1;
-}
 
 int typeOfFileName(const QString & fileName)
 {
     QStringList leest;
     int res = 0;
-    for(const QString & marker : def::fileMarkers)
+	for(const QString & marker : def::fileMarkers) /// each "marker" is a set of markers
     {
         leest.clear();
         leest = marker.split(QRegExp("[,; ]"), QString::SkipEmptyParts);
@@ -96,278 +63,55 @@ int typeOfFileName(const QString & fileName)
     return -1;
 }
 
-bool endsWith(const std::string & inStr,
-              const std::string & filter)
+std::vector<QString> contents(const QString & dirPath,
+							  const QString & filter)
 {
-    int a = inStr.rfind(filter); // search from the back
-    if(a != std::string::npos && (a + filter.size() == inStr.size()))
-    {
-        return true;
-    }
-    return false;
+	std::vector<QString> res;
+	QStringList lst = QDir(dirPath).entryList({"*" + filter + "*"});
+	for(const QString & str : lst)
+	{
+		res.push_back(dirPath + "/" + str);
+	}
+	return res;
 }
 
-bool contains(const std::string & inStr,
-              const std::string & filter)
+std::vector<std::vector<QString>> contents(const QString & dirPath,
+								  const std::vector<QString> & filtersList)
 {
-    if(inStr.find(filter) != std::string::npos)
-    {
-        return true;
-    }
-    return false;
-}
-
-bool contains(const std::string & inStr,
-              const std::vector<std::string> & filters)
-{
-    for(int i = 0; i < filters.size(); ++i)
-    {
-        if(inStr.find(filters[i]) != std::string::npos)
-        {
-            return true;
-        }
-    }
-    return false;
-}
-
-std::vector<std::string> contents(const std::string & dirPath,
-                                  const std::string & filter)
-{
-    std::vector<std::string> res;
-#if !MY_QT
-    fs::path myPath(dirPath);
-
-    if(fs::is_directory(myPath))
-    {
-#if CPP_11
-        for(const fs::directory_entry & pew : fs::directory_iterator(myPath))
-        {
-            const std::string pth = pew.path().native();
-#else
-        for(fs::directory_iterator it = fs::directory_iterator(myPath);
-            it != fs::directory_iterator();
-            ++it)
-        {
-            const std::string pth = (*it).path().native();
-#endif
-            if(contains(pth, filter))
-            {
-                res.push_back(pth);
-            }
-        }
-    }
-    else
-    {
-        cout << "error" << endl;
-    }
-#else
-    const QString qDirPath = QString(dirPath.c_str());
-    QStringList lst = QDir(qDirPath).entryList({"*" + QString(filter.c_str()) + "*"});
-    for(const QString & str : lst)
-    {
-        res.push_back((qDirPath + qslash() + str).toStdString());
-    }
-#endif
-    return res;
-}
-
-std::vector<std::vector<std::string> > contents(const std::string & dirPath,
-                                  const std::vector<std::string> & filtersList)
-{
-    const int numOfClasses = filtersList.size();
-//    cout << numOfClasses << endl;
-    std::vector< std::vector<std::string> > res(numOfClasses);
-#if !MY_QT
-    fs::path myPath(dirPath);
-
-
-    if(fs::is_directory(myPath))
-    {
-#if CPP_11
-        for(const fs::directory_entry & pew : fs::directory_iterator(myPath))
-        {
-            const std::string pth = pew.path().native();
-#else
-        for(fs::directory_iterator it = fs::directory_iterator(myPath);
-            it != fs::directory_iterator();
-            ++it)
-        {
-            const std::string pth = (*it).path().native();
-#endif
-            for(int i = 0; i < numOfClasses; ++i)
-            {
-                if(contains(pth, filtersList[i]))
-                {
-                    res[i].push_back(pth);
-                }
-            }
-        }
-    }
-    else
-    {
-        cout << "error" << endl;
-    }  
-#else
-
-    const QString qDirPath = QString(dirPath.c_str());
+	const int numOfClasses = filtersList.size();
+	std::vector< std::vector<QString>> res(numOfClasses);
     for(int i = 0; i < numOfClasses; ++i)
     {
-        QStringList lst = QDir(qDirPath).entryList({"*" + QString(filtersList[i].c_str()) + "*"});
+		QStringList lst = QDir(dirPath).entryList({"*" + filtersList[i] + "*"});
         for(const QString & str : lst)
         {
-            res[i].push_back((qDirPath + qslash() + str).toStdString());
+			res[i].push_back(dirPath + "/" + str);
         }
-    }
-#endif
+	}
     return res;
 }
 
-std::vector<std::vector<std::string> > contents(const std::string & dirPath,
-                                  const std::vector<std::vector<std::string> > & filtersList)
+std::vector<std::vector<QString>> contents(const QString & dirPath,
+								  const std::vector<std::vector<QString> > & filtersList)
 {
     const int numOfClasses = filtersList.size();
     cout << numOfClasses << endl;
-    std::vector< std::vector<std::string> > res(numOfClasses);
-
-#if !MY_QT
-    fs::path myPath(dirPath);
-
-
-    if(fs::is_directory(myPath))
-    {
-#if CPP_11
-        for(const fs::directory_entry & pew : fs::directory_iterator(myPath))
-        {
-            const std::string pth = pew.path().native();
-#else
-        for(fs::directory_iterator it = fs::directory_iterator(myPath);
-            it != fs::directory_iterator();
-            ++it)
-        {
-            const std::string pth = (*it).path().native();
-#endif
-            for(int i = 0; i < numOfClasses; ++i)
-            {
-                if(contains(pth, filtersList[i]))
-                {
-                    res[i].push_back(pth);
-                }
-            }
-        }
-    }
-    else
-    {
-        cout << "error" << endl;
-    }
-#else
-    const QString qDirPath = QString(dirPath.c_str());
+	std::vector< std::vector<QString>> res(numOfClasses);
     for(int i = 0; i < numOfClasses; ++i)
     {
         QStringList filts;
-        for(const std::string & str : filtersList[i])
+		for(const QString & str : filtersList[i])
         {
-            filts << "*" + QString(str.c_str()) + "*";
+			filts << "*" + str + "*";
         }
-        QStringList lst = QDir(qDirPath).entryList(filts);
+		QStringList lst = QDir(dirPath).entryList(filts);
         for(const QString & str : lst)
         {
-            res[i].push_back((qDirPath + qslash() + str).toStdString());
+			res[i].push_back(dirPath + "/" + str);
         }
-    }
-#endif
+	}
     return res;
 }
-
-void myIota(std::vector<int> & in)
-{
-    std::vector<int>::iterator it = in.begin();
-    for(int i = 0;
-        it != in.end();
-        ++i, ++it)
-    {
-        *it = i;
-    }
-}
-
-void myShuffle(std::vector<int> & in)
-{
-    srand(time(nullptr));
-    for(int i = 0; i < in.size() * 5; ++i)
-    {
-        int a = rand()%in.size();
-        int b = rand()%in.size();
-        std::swap(in[a], in[b]);
-    }
-}
-
-int myLess(int a, int b)
-{
-    return (a<b)?a:b;
-}
-
-//template <typename T>
-//void eraseItems(std::vector<T> & inVect,
-//                const std::vector<int> & indices)
-//{
-//#if CPP_11
-//    const int initSize = inVect.size();
-//    std::set<int, std::less<int> > excludeSet; // less first
-//    for(auto item : indices)
-//    {
-
-//        excludeSet.emplace(item);
-//    }
-//    std::vector<int> excludeVector;
-//    for(auto a : excludeSet)
-//    {
-//        excludeVector.push_back(a);
-//    }
-//    excludeVector.push_back(initSize); // for the last elements' shift
-
-//    for(int i = 0; i < excludeVector.size() - 1; ++i)
-//    {
-//        for(int j = excludeVector[i] - i; j < excludeVector[i + 1] - i - 1; ++j)
-//        {
-//            inVect[j] = std::move(inVect[j + 1 + i]);
-//        }
-//    }
-//    inVect.resize(initSize - excludeSet.size());
-
-
-//#else
-//    const int initSize = inVect.size();
-//    std::set<int> excludeSet; // less first
-
-//    for(std::vector<int>::const_iterator it = indices.begin();
-//        it != indices.end();
-//        ++it)
-//    {
-//        excludeSet.insert(*it);
-//    }
-//    /// check size
-////    std::sort(excludeSet.begin(), excludeSet.end()); // default: less first
-
-//    std::vector<int> excludeVector(excludeSet.size());
-//    std::copy(excludeSet.begin(), excludeSet.end(), excludeVector.begin());
-
-//    std::sort(excludeVector.begin(), excludeVector.end()); // default: less first
-
-//    excludeVector.push_back(initSize); // for the last elements' shift
-
-//    for(int i = 0; i < excludeVector.size() - 1; ++i)
-//    {
-//        for(int j = excludeVector[i] - i; j < excludeVector[i + 1] - i - 1; ++j)
-//        {
-//#if CPP_11
-//            inVect[j] = std::move(inVect[j + 1 + i]);
-//#else
-//            inVect[j] = inVect[j + 1 + i];
-//#endif
-//        }
-//    }
-//    inVect.resize(initSize - excludeSet.size());
-//#endif
-//}
 
 template <typename signalType>
 void readFileInLine(const QString & filePath,
@@ -673,7 +417,7 @@ retType spectre(const signalType & data)
     int fftLen = fftL(length); // nearest exceeding power of 2
     double norm = sqrt(fftLen / double(length));
 
-    vectType tempSpectre(2 * fftLen, 0.);
+	std::vector<double> tempSpectre(2 * fftLen, 0.);
     for(int i = 0; i < length; ++i)
     {
         tempSpectre[ 2 * i + 0 ] = data[i] * norm;
@@ -754,16 +498,16 @@ int indexOfMax(const Container & cont)
     return ans;
 }
 
-void resizeValar(lineType & in, int num)
+void resizeValar(std::valarray<double> & in, int num)
 {
-    lineType temp = in;
+	std::valarray<double> temp = in;
     in.resize(num);
     std::copy(begin(temp),
               begin(temp) + min(in.size(), temp.size()),
               begin(in));
 }
 
-template <typename signalType = lineType>
+template <typename signalType = std::valarray<double>>
 void calcSpectre(const signalType & inSignal,
                  signalType & outSpectre,
                  const int & fftLength,
@@ -871,22 +615,26 @@ std::bitset<8 * sizeof(Typ)> bits(Typ in)
     return std::bitset<8 * sizeof(Typ)>(in);
 }
 
-std::string readString(QDataStream & in)
+/// check
+QString readString(QDataStream & in)
 {
     qint32 numOfChars;
     in >> numOfChars;
-//    cout << "numChars = " << numOfChars << endl;
-    std::string res;
-    res.resize(numOfChars);
+	cout << "numChars = " << numOfChars << endl;
+
+	char * res = new char [numOfChars + 1];
     for(int i = 0; i < numOfChars; ++i)
     {
         in.readRawData(&(res[i]), 1);
-    }
-//    cout << res << endl;
-    return res;
+	}
+	res[numOfChars] = '\0';
+
+	QString ret(res);
+	delete[] res;
+	return ret;
 }
 
-std::string readString(QTcpSocket * inSocket)
+QString readString(QTcpSocket * inSocket)
 {
     int numOfChars = readFromSocket<qint32>(inSocket);
     char * res = new char [numOfChars + 1];
@@ -895,7 +643,8 @@ std::string readString(QTcpSocket * inSocket)
         inSocket->read(&(res[i]), 1);
     }
     res[numOfChars] = '\0';
-    std::string ret(res);
+
+	QString ret(res);
     delete[] res;
     return ret;
 }
@@ -931,22 +680,16 @@ template int indexOfMax(const std::vector<double> & cont);
 template int indexOfMax(const std::valarray<double> & cont);
 template int indexOfMax(const std::list<double> & cont);
 
-//template void eraseItems(std::vector<std::string> & inVect, const std::vector<int> & indices);
-//template void eraseItems(std::vector<lineType> & inVect, const std::vector<int> & indices);
-//template void eraseItems(std::vector<int> & inVect, const std::vector<int> & indices);
-//template void eraseItems(std::vector<double> & inVect, const std::vector<int> & indices);
+template std::valarray<double> smoothSpectre(const std::valarray<double> & inSpectre, const int numOfSmooth);
 
-template lineType smoothSpectre(const lineType & inSpectre, const int numOfSmooth);
+template void readFileInLine(const QString & filePath, std::valarray<double> & outData);
 
-template void readFileInLine(const QString & filePath, lineType & outData);
-//template void readFileInLine(const std::string & filePath, vectType & outData);
+template void writeFileInLine(const QString & filePath, const std::valarray<double> & outData);
 
-template void writeFileInLine(const QString & filePath, const lineType & outData);
+template std::valarray<double> spectre(const std::vector<double> & data);
+template std::valarray<double> spectre(const std::valarray<double> & data);
 
-template lineType spectre(const vectType & data);
-template lineType spectre(const lineType & data);
-
-template void calcSpectre(const lineType & inSignal, lineType & outSpectre,
+template void calcSpectre(const std::valarray<double> & inSignal, std::valarray<double> & outSpectre,
 const int & fftLength, const int & NumOfSmooth, const int & Eyes, const double & powArg);
 
-template lineType four2(const lineType & inRealData, int fftLen, int isign);
+template std::valarray<double> four2(const std::valarray<double> & inRealData, int fftLen, int isign);

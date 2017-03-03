@@ -1,14 +1,9 @@
 #ifndef SMALLFUNCS_H
 #define SMALLFUNCS_H
 
-
-
 #include "def.h"
 
 
-
-typedef std::vector<double> vectType;
-typedef std::valarray<double> lineType;
 template <typename Typ>
 class trivector : public std::vector<std::vector<std::vector<Typ> > >
 {};
@@ -18,26 +13,16 @@ class twovector : public std::vector<std::vector<Typ> >
 
 const long double pi = 3.14159265358979323846L;
 
-static inline std::vector<std::string> makeDefFilters()
+static inline std::vector<QString> makeDefFilters()
 {
-    std::vector<std::string> res;
+	std::vector<QString> res;
     res.push_back("_241");
     res.push_back("_247");
     res.push_back("_254");
     return res;
 }
 
-#if CPP_11
-const std::vector<std::vector<std::string> > defaultFilters = {{"_241"}, {"_247"}, {"_254"}};
-#else
-//std::initializer_list<std::string> lst("_241", "_247", "_254");
-//std::vector<std::string> defaultFilters = makeDefFilters();
-#endif
-
-//bool fileExists(const QString & filePath);
-
-//std::string slash();
-//QString qslash();
+const std::vector<std::vector<QString>> defaultFilters = {{"_241"}, {"_247"}, {"_254"}};
 
 inline double doubleRound(const double & in, const int & numSigns)
 {
@@ -85,7 +70,7 @@ inline int fftL(const int & in)
 
 
 
-inline double prod(const lineType & in1, const lineType & in2)
+inline double prod(const std::valarray<double> & in1, const std::valarray<double> & in2)
 {
 //    return (in1 * in2).sum(); // very slow
 
@@ -95,51 +80,51 @@ inline double prod(const lineType & in1, const lineType & in2)
                               0.);
 }
 
-inline double normaSq(const lineType & in)
+inline double normaSq(const std::valarray<double> & in)
 {
     return prod(in, in);
 }
-inline double mean(const lineType & arr)
+inline double mean(const std::valarray<double> & arr)
 {
     return arr.sum() / arr.size();
 }
 
-inline double variance(const lineType & arr)
+inline double variance(const std::valarray<double> & arr)
 {
     return normaSq(arr - mean(arr)) / arr.size();
 }
 
-inline double sigma(const lineType & arr)
+inline double sigma(const std::valarray<double> & arr)
 {
     return sqrt(variance(arr));
 }
 
-inline double covariance(const lineType & arr1, const lineType & arr2)
+inline double covariance(const std::valarray<double> & arr1, const std::valarray<double> & arr2)
 {
     return prod(arr1 - mean(arr1), arr2 - mean(arr2));
 }
 
-inline double correlation(const lineType & arr1, const lineType & arr2)
+inline double correlation(const std::valarray<double> & arr1, const std::valarray<double> & arr2)
 {
     return covariance(arr1, arr2) / (sigma(arr1) * sigma(arr2));
 }
 
-inline double norma(const lineType & in)
+inline double norma(const std::valarray<double> & in)
 {
     return sqrt(normaSq(in));
 }
 
-inline void normalize(lineType & in)
+inline void normalize(std::valarray<double> & in)
 {
     in /= norma(in);
 }
 
-inline double distance(const lineType & in1,
-                       const lineType & in2)
+inline double distance(const std::valarray<double> & in1,
+					   const std::valarray<double> & in2)
 {
     if(in1.size() != in2.size())
     {
-        std::cout << "distance: lineTypes of different size" << std::endl;
+		std::cout << "distance: std::valarray<double>s of different size" << std::endl;
         return 0.; /// exception
     }
     return norma(in1 - in2);
@@ -148,7 +133,6 @@ template <typename T>
 void eraseItems(std::vector<T> & inVect,
                 const std::vector<int> & indices)
 {
-#if CPP_11
     const int initSize = inVect.size();
     std::set<int, std::less<int> > excludeSet; // less first
     for(auto item : indices)
@@ -171,95 +155,11 @@ void eraseItems(std::vector<T> & inVect,
         }
     }
     inVect.resize(initSize - excludeSet.size());
-
-
-#else
-    const int initSize = inVect.size();
-    std::set<int> excludeSet; // less first
-
-    for(std::vector<int>::const_iterator it = indices.begin();
-        it != indices.end();
-        ++it)
-    {
-        excludeSet.insert(*it);
-    }
-    /// check size
-//    std::sort(excludeSet.begin(), excludeSet.end()); // default: less first
-
-    std::vector<int> excludeVector(excludeSet.size());
-    std::copy(excludeSet.begin(), excludeSet.end(), excludeVector.begin());
-
-    std::sort(excludeVector.begin(), excludeVector.end()); // default: less first
-
-    excludeVector.push_back(initSize); // for the last elements' shift
-
-    for(int i = 0; i < excludeVector.size() - 1; ++i)
-    {
-        for(int j = excludeVector[i] - i; j < excludeVector[i + 1] - i - 1; ++j)
-        {
-#if CPP_11
-            inVect[j] = std::move(inVect[j + 1 + i]);
-#else
-            inVect[j] = inVect[j + 1 + i];
-#endif
-        }
-    }
-    inVect.resize(initSize - excludeSet.size());
-#endif
 }
-template void eraseItems(std::vector<lineType> & inVect, const std::vector<int> & indices);
+template void eraseItems(std::vector<std::valarray<double>> & inVect, const std::vector<int> & indices);
 template void eraseItems(std::vector<int> & inVect, const std::vector<int> & indices);
 template void eraseItems(std::vector<double> & inVect, const std::vector<int> & indices);
-template void eraseItems(std::vector<std::string> & inVect, const std::vector<int> & indices);
+template void eraseItems(std::vector<QString> & inVect, const std::vector<int> & indices);
 
-//template <typename signalType>
-//void readFileInLine(const std::string & filePath,
-//                    signalType & result);
-
-//template <typename T>
-//void eraseItems(std::vector<T> & inVect,
-//                const std::vector<int> & indices);
-
-//std::vector<std::string> contents(const std::string & dirPath,
-//                                  const std::string & filter);
-//std::vector<std::vector<std::string> > contents(const std::string & dirPath,
-//                                  const std::vector<std::vector<std::string> > & filtersList);
-
-//std::vector<std::vector<std::string> > contents(const std::string & dirPath,
-//                                  const std::vector<std::string> & filtersList);
-//bool endsWith(const std::string & inStr,
-//              const std::string & filter);
-//bool contains(const std::string & inStr,
-//              const std::string & filter);
-//bool contains(const std::string & inStr,
-//              const std::vector<std::string> & filters);
-
-//int typeOfFileName(const std::string & filePath);
-
-//void myIota(std::vector<int> & in);
-//void myShuffle(std::vector<int> & in);
-//int myLess(int a, int b); // for sort in eraseItems
-
-//void four1(double * dataF, int nn, int isign);
-
-//void readMatrixFile(const QString & filePath,
-//                     matrix & outData,
-//                     int rows,
-//                     int cols);
-
-//template <typename signalType = lineType, typename retType = lineType>
-//retType spectre(const signalType & data);
-
-//template <typename signalType = lineType>
-//void calcSpectre(const signalType & inSignal,
-//                 signalType & outSpectre,
-//                 const int & fftLength = def::fftLength,
-//                 const int & NumOfSmooth = 5.,
-//                 const int & Eyes = 0.,
-//                 const double & powArg = 1.);
-
-
-//template <typename signalType = lineType>
-//signalType four2(const signalType & inRealData, int nn = def::fftLength, int isign = 1);
 
 #endif // SMALLFUNCS_H

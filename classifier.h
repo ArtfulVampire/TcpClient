@@ -1,15 +1,8 @@
 #ifndef CLASSIFIER_H
 #define CLASSIFIER_H
 
-#define DRAWS 0
-
 #include "biglib.h"
-
-#if CPP_11
 #include <chrono>
-#endif
-
-
 
 class net : public QObject
 {
@@ -26,12 +19,11 @@ private:
     std::vector<double> classCount; // really int but...
 
     const double loadDataNorm = 10.; // for windows, empirical
-    lineType averageDatum;
-    lineType sigmaVector;
+    std::valarray<double> averageDatum;
+    std::valarray<double> sigmaVector;
 
     matrix confusionMatrix; // rows - realClass, cols - outClass
 
-//    typedef twovector<lineType> wtsType;
     typedef std::vector<matrix> wtsType;
     wtsType weight;
     std::vector<int> dimensionality; // for backprop
@@ -45,19 +37,11 @@ private:
     int epoch = 0;
     const int maxEpoch = 250;
 
-#if CPP_11
     enum class myMode {N_fold, k_fold, train_test,  half_half};
     enum class source {winds, reals, pca, bayes};
 
     myMode Mode = myMode::N_fold;
-    source Source = source::winds;
-#else
-    enum myMode{N_fold, k_fold, train_test,  half_half};
-    enum source{winds, reals, pca, bayes};
-
-    myMode Mode = N_fold;
-    source Source = winds;
-#endif
+	source Source = source::winds;
 
     const double temp = 10.;
     // softmax
@@ -74,17 +58,10 @@ private:
 
     int numGoodNew = 0;
 
-#if CPP_11
-    std::vector<int> exIndices{};
-#else
-    std::vector<int> exIndices;
-#endif
-
-
+	std::vector<int> exIndices{};
 
     int numOfPairs = 15;
-    int folds = 8;
-    double rdcCoeff = 1.; // deprecated
+	int folds = 8;
 
     QSerialPort * comPort = nullptr;
     QDataStream comPortDataStream{};
@@ -102,8 +79,7 @@ public:
     void startOperate();
     double adjustLearnRate(int lowLimit,
                            int highLimit);
-    std::pair<int, double> classifyDatum(const int & vecNum);
-    double errorNet();
+	std::pair<int, double> classifyDatum(const int & vecNum);
 
 
     std::vector<int> makeLearnIndexSet();
@@ -129,8 +105,7 @@ public:
 
 
     double getAverageAccuracy();
-    double getKappa();
-    double getReduceCoeff();
+	double getKappa();
     int getEpoch();
     double getLrate();
 
@@ -142,7 +117,7 @@ public:
     void loadData(const QString & spectraPath = QString(),
                   const QStringList & filters = {"*_train*"});
     void popBackDatum();
-    void pushBackDatum(const lineType & inDatum,
+    void pushBackDatum(const std::valarray<double> & inDatum,
                        const int & inType,
                        const QString & inFileName);
     void eraseDatum(const int & index);
@@ -151,23 +126,18 @@ public:
 
 
 
-    void writeWts(const QString & outPath = QString());
-#if DRAWS
-    void drawWts(std::string wtsPath = std::string(),
-                 std::string picPath = std::string());
-#endif
-    void readWts(const std::string & fileName,
+	void writeWts(const QString & outPath = QString());
+	void readWts(const QString & fileName,
                  wtsType * wtsMatrix = nullptr);
-
 
     void successivePreclean(const QString & spectraPath = QString());
 
     void successiveProcessing(const QString & spectraPath = QString());
 
-    lineType successiveDataToSpectre(const eegDataType::iterator eegDataStart,
+    std::valarray<double> successiveDataToSpectre(const eegDataType::iterator eegDataStart,
                                      const eegDataType::iterator eegDataEnd);
 
-    void successiveLearning(const lineType & newSpectre,
+    void successiveLearning(const std::valarray<double> & newSpectre,
                             const int newType,
                             const QString & newFileName);
     void successiveRelearn();

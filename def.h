@@ -28,9 +28,7 @@
 
 
 /// if one changes one of these - certain death
-#define MY_QT 1
 
-#if MY_QT
 #include <QtCore>
 #include <QDir>
 #include <QFile>
@@ -38,11 +36,7 @@
 #include <QtNetwork>
 #include <QSerialPort>
 #include <QSerialPortInfo>
-#endif
 
-#define CPP_11 1
-#define USE_DATA_STREAM 1
-#define SOCKET_IN_MAIN 0
 #define COM_IN_MAIN 0
 #define DATA_READER 1
 

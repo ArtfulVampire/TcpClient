@@ -63,27 +63,17 @@ std::vector<int> net::makeLearnIndexSet()
     }
     else if(this->Mode == myMode::k_fold)
     {
-        mixNum.resize(dataMatrix.rows());
-#if CPP_11
+		mixNum.resize(dataMatrix.rows());
         unsigned seed = std::chrono::system_clock::now().time_since_epoch().count();
         std::iota(mixNum.begin(), mixNum.end(), 0);
         std::shuffle(mixNum.begin(), mixNum.end(),
-                     std::default_random_engine(seed));
-#else
-        myIota(mixNum);
-        myShuffle(mixNum);
-
-#endif
+					 std::default_random_engine(seed));
         mixNum.resize(mixNum.size() * (folds - 1) / folds);
     }
     else if(this->Mode == myMode::half_half)
     {
-        mixNum.resize(dataMatrix.rows() / 2);
-#if CPP_11
-        std::iota(mixNum.begin(), mixNum.end(), 0);
-#else
-        myIota(mixNum);
-#endif
+		mixNum.resize(dataMatrix.rows() / 2);
+		std::iota(mixNum.begin(), mixNum.end(), 0);
     }
     return mixNum;
 }
@@ -226,20 +216,10 @@ double net::getKappa()
     return this->kappa;
 }
 
-double net::getReduceCoeff()
-{
-    return this->rdcCoeff;
-}
-
 int net::getEpoch()
 {
     return this->epoch;
 }
-
-//void net::setReduceCoeff(double coeff)
-//{
-//    this->ui->rdcCoeffSpinBox->setValue(coeff);
-//}
 
 //void net::setErrCrit(double in)
 //{
@@ -306,55 +286,6 @@ void net::averageClassification()
     cout << "kappa = " << kappa << endl;
 }
 
-#if DRAWS
-void net::drawWts(std::string wtsPath,
-                  std::string picPath)  //generality
-{
-    if( dimensionality.size() != 2 ) return;
-
-    if(!fileExists(wtsPath))
-    {
-        wtsPath = this->workPath
-                  + slash() + this->ExpName + ".wts";
-        if(!fileExists(wtsPath))
-        {
-            cout << "drawWts: bad filePath" << endl;
-            return;
-        }
-    }
-    wtsType tempWeights;
-    readWtsByName(wtsPath, &tempWeights);
-
-    matrix drawWts; // 3 arrays of weights
-#if 0
-    vec tempVec;
-    for(int i = 0; i < def::numOfClasses(); ++i)
-    {
-        tempVec.clear();
-        for(int j = 0; j < dataMatrix.cols(); ++j)
-        {
-            tempVec.push_back(tempWeights[0][j][i]); // 0 is for 2 layers
-        }
-        drawWts.push_back(tempVec);
-    }
-#else
-    drawWts = tempWeights[0];
-    drawWts.resizeCols(drawWts.cols() - 1); // fck the bias?
-#endif
-
-    if(picPath.empty())
-    {
-        picPath = wtsPath;
-        picPath.replace(".wts", "_wts.jpg"); /// make default suffixes
-    }
-    drawTemplate(picPath);
-    drawArrays(picPath,
-               drawWts,
-               true);
-}
-#endif
-
-
 void net::writeWts(const QString & outPath)
 {
     if(weight.size() != 1) return;
@@ -393,7 +324,7 @@ void net::reset()
         weight[i].resize(dimensionality[i + 1]);
         for(int j = 0; j < dimensionality[i + 1]; ++j) // to j'th in i+1 layer
         {
-            // resizing lineType -> fill zeros
+			// resizing std::valarray<double> -> fill zeros
             weight[i][j].resize(dimensionality[i] + 1); // from k'th in i layer
         }
     }
@@ -424,7 +355,7 @@ void net::tallNetIndices(const std::vector<int> & indices)
             if(tallCleanFlag)
             {
                 QFile::remove(def::spectraPath +
-                              qslash() + fileNames[ indices[i] ]);
+							  "/" + fileNames[ indices[i] ]);
                 eraseDatum(indices[i]);
             }
 
@@ -476,7 +407,7 @@ void net::successivePreclean(const QString & spectraPath)
     {
         if(str.endsWith(".00") || str.endsWith(".01"))
         {
-            QFile::remove(spectraPath + qslash() + str);
+			QFile::remove(spectraPath + "/" + str);
         }
     }
 
@@ -492,7 +423,7 @@ void net::successivePreclean(const QString & spectraPath)
             i < leest2[j].size() - learnSetStay * 1.3; /// consts generality
             ++i, ++it)
         {
-            QFile::remove(spectraPath + qslash() + (*it));
+			QFile::remove(spectraPath + "/" + (*it));
         }
     }
     Source = source::winds;
@@ -514,13 +445,7 @@ void net::successivePreclean(const QString & spectraPath)
 
 void net::successiveProcessing(const QString & spectraPath)
 {
-
-
-#if CPP_11
-    std::vector<int> eraseIndices{};
-#else
-    std::vector<int> eraseIndices;
-#endif
+	std::vector<int> eraseIndices{};
 
     numGoodNew = 0;
     confusionMatrix.fill(0.);
@@ -541,7 +466,7 @@ void net::successiveProcessing(const QString & spectraPath)
     }
     for(const QString & name : windowsList)
     {
-        QFile::remove(spectraPath + qslash() + name);
+		QFile::remove(spectraPath + "/" + name);
     }
 
     /// load
@@ -591,12 +516,12 @@ void net::successiveProcessing(const QString & spectraPath)
     cout << "successive itself" << endl;
 
 #if OFFLINE_SUCCESSIVE
-    lineType tempArr;
+	std::valarray<double> tempArr;
     int type = -1;
     QStringList leest = QDir(spectraPath).entryList({'*' + testMarker + '*'}); /// special generality
     for(const QString & fileNam : leest)
     {
-        readFileInLine(spectraPath + qslash() + fileNam,
+		readFileInLine(spectraPath + "/" + fileNam,
                        tempArr);
         type = typeOfFileName(fileNam);
         successiveLearning(tempArr, type, fileNam);
@@ -614,7 +539,7 @@ void net::dataCame(eegDataType::iterator a, eegDataType::iterator b)
         return;
     }
 
-    lineType newSpectre = successiveDataToSpectre(a, b);
+	std::valarray<double> newSpectre = successiveDataToSpectre(a, b);
 
     const QString name = def::ExpName +
                          "." + rightNumber(def::numOfReal, 4) +
@@ -632,7 +557,7 @@ void net::dataCame(eegDataType::iterator a, eegDataType::iterator b)
     ++def::numOfWind;
 }
 
-lineType net::successiveDataToSpectre(
+std::valarray<double> net::successiveDataToSpectre(
         const eegDataType::iterator eegDataStart,
         const eegDataType::iterator eegDataEnd)
 {
@@ -683,10 +608,10 @@ lineType net::successiveDataToSpectre(
                        tmpMat.cols());
 #endif
     }
-	lineType res(0., def::eegNs * def::spLength());
+	std::valarray<double> res(0., def::eegNs * def::spLength());
     /// count spectra, take 5-20 HZ only
     {
-		lineType tmpSpec(def::spLength());
+		std::valarray<double> tmpSpec(def::spLength());
         for(int i = 0; i < def::eegNs; ++i)
         {
 			tmpSpec = 0.;
@@ -707,12 +632,12 @@ lineType net::successiveDataToSpectre(
     return res;
 }
 
-void net::successiveLearning(const lineType & newSpectre,
+void net::successiveLearning(const std::valarray<double> & newSpectre,
                              const int newType,
                              const QString & newFileName)
 {
     /// dataMatrix is learning matrix
-    lineType newData = (newSpectre - averageDatum) / (sigmaVector * loadDataNorm);
+	std::valarray<double> newData = (newSpectre - averageDatum) / (sigmaVector * loadDataNorm);
 
     pushBackDatum(newData, newType, newFileName);
 
@@ -766,7 +691,7 @@ void net::successiveRelearn()
     {
         std::for_each(weight[i].begin(),
                       weight[i].end(),
-                      [rat](lineType & in)
+					  [rat](std::valarray<double> & in)
         {
             in *= 1. - rat;
         });
@@ -774,10 +699,10 @@ void net::successiveRelearn()
     learnNet(false); // relearn w/o weights reset
 }
 
-void net::readWts(const std::string & fileName,
-                  wtsType * wtsMatrix)
+void net::readWts(const QString & fileName,
+				  wtsType * wtsMatrix)
 {
-    std::ifstream wtsStr(fileName.c_str());
+	std::ifstream wtsStr(fileName.toStdString());
     if(!wtsStr.good())
     {
         cout << "readWtsByName: wtsStr is not good() " << endl;
@@ -820,7 +745,7 @@ void net::leaveOneOutClassification()
 #if 0
         ofstream outStr;
         outStr.open((this->workPath
-                    + slash() + "pcaRes.txt"));
+					+ "/" + "pcaRes.txt"));
         // auto pca classification
         for(int i = ui->autoPCAMaxSpinBox->value();
             i >= ui->autoPCAMinSpinBox->value();
@@ -864,15 +789,11 @@ void net::crossClassification()
 
         // mix arr for one "pair"-iteration
         for(int i = 0; i < def::numOfClasses(); ++i)
-        {
-#if CPP_11
+		{
             unsigned seed = std::chrono::system_clock::now().time_since_epoch().count();
             std::shuffle(arr[i].begin(),
                          arr[i].end(),
-                         std::default_random_engine(seed));
-#else
-            myShuffle(arr[i]);
-#endif
+						 std::default_random_engine(seed));
         }
 
         /// new with indices
@@ -953,12 +874,8 @@ void net::leaveOneOut()
             if(j == i) continue;
             learnIndices.push_back(j);
         }
-        learnNetIndices(learnIndices);
-#if CPP_11
-        tallNetIndices({i});
-#else
-        tallNetIndices(std::vector<int>(1, i));
-#endif
+		learnNetIndices(learnIndices);
+		tallNetIndices({i});
 
         /// not so fast
         /// what with softmax/logistic ?
@@ -978,7 +895,7 @@ void net::leaveOneOut()
 }
 
 
-void net::pushBackDatum(const lineType & inDatum,
+void net::pushBackDatum(const std::valarray<double> & inDatum,
                       const int & inType,
                       const QString & inFileName)
 {
@@ -1007,20 +924,11 @@ void net::eraseDatum(const int & index)
 void net::eraseData(const std::vector<int> & indices)
 {
     dataMatrix.eraseRows(indices);
-    eraseItems(fileNames, indices);
-#if CPP_11
+	eraseItems(fileNames, indices);
     for(int index : indices)
     {
         classCount[ types[index] ] -= 1.;
-    }
-#else
-    for(std::vector<int>::const_iterator i = indices.begin();
-        i != indices.end();
-        ++i)
-    {
-        classCount[ types[*i] ] -= 1.;
-    }
-#endif
+	}
     eraseItems(types, indices);
 }
 
@@ -1037,14 +945,14 @@ void net::loadData(const QString & spectraPath,
     types.clear();
     fileNames.clear();
 
-    lineType tempArr;
+	std::valarray<double> tempArr;
     for(int i = 0; i < leest.size(); ++i)
     {
         classCount[i] = 0.;
         for(QString fileName : leest[i])
         {
 
-            readFileInLine(spectraPath + qslash() + fileName,
+			readFileInLine(spectraPath + "/" + fileName,
                            tempArr);
 
 
@@ -1248,26 +1156,6 @@ void net::learnNetIndices(std::vector<int> mixNum,
 //    printData();
 }
 
-double net::errorNet()
-{
-//    double tmp;
-//    for(int j = 0; j < dimensionality.back(); ++j)
-//    {
-//        tmp = pow((output.back()[j] - int(type == j) ), 2.);
-//    }
-//    if(activation == logistic)
-//    {
-//        err1 = sqrt(tmp);
-//        currentError += err1;
-//    }
-//    if(activation == softmax)
-//    {
-//        err1 = max(err1, tmp);
-//    }
-//    return tmp;
-}
-
-
 
 std::pair<int, double> net::classifyDatum(const int & vecNum)
 {
@@ -1277,14 +1165,9 @@ std::pair<int, double> net::classifyDatum(const int & vecNum)
     std::vector<std::valarray<double> > output(numOfLayers);
     output[0].resize(dimensionality[0] + 1); // +1 for biases
 
-#if CPP_11
     std::copy(std::begin(dataMatrix[vecNum]),
               std::end(dataMatrix[vecNum]),
-              std::begin(output[0]));
-#else
-    output[0] = dataMatrix[vecNum];
-#endif
-
+			  std::begin(output[0]));
 
     output[0][output[0].size() - 1] = 1.; //bias
 
@@ -1334,6 +1217,7 @@ std::pair<int, double> net::classifyDatum(const int & vecNum)
 //    cout.rdbuf(tmp);
     resFile.close();
 #endif
+
     return std::make_pair(outClass,
                           res);
 }

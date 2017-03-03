@@ -16,7 +16,7 @@
         << " mcsec" << std::endl;\
     } while(false)
 
-std::string funcName(std::string in);
+QString funcName(QString input);
 
 std::ostream & operator<< (std::ostream &os, QString toOut);
 
@@ -42,26 +42,16 @@ void writeFileInLine(const QString & filePath,
 //void eraseItems(std::vector<T> & inVect,
 //                const std::vector<int> & indices);
 
-std::vector<std::string> contents(const std::string & dirPath,
-                                  const std::string & filter);
-std::vector<std::vector<std::string> > contents(const std::string & dirPath,
-                                  const std::vector<std::vector<std::string> > & filtersList);
+std::vector<QString> contents(const QString & dirPath,
+								  const QString & filter);
+std::vector<std::vector<QString> > contents(const QString & dirPath,
+								  const std::vector<std::vector<QString>> & filtersList);
 
-std::vector<std::vector<std::string> > contents(const std::string & dirPath,
-                                  const std::vector<std::string> & filtersList);
-bool endsWith(const std::string & inStr,
-              const std::string & filter);
-bool contains(const std::string & inStr,
-              const std::string & filter);
-bool contains(const std::string & inStr,
-              const std::vector<std::string> & filters);
+std::vector<std::vector<QString> > contents(const QString & dirPath,
+								  const std::vector<QString> & filtersList);
 
-int typeOfFileName(const std::string & filePath);
+
 int typeOfFileName(const QString & fileName);
-
-void myIota(std::vector<int> & in);
-void myShuffle(std::vector<int> & in);
-int myLess(int a, int b); // for sort in eraseItems
 
 void four1(double * dataF, int nn, int isign);
 
@@ -94,10 +84,10 @@ void writeMatrixFile(const QString & filePath,
 
 void fixFilesSlashN(const QString & path);
 
-template <typename signalType = lineType, typename retType = lineType>
+template <typename signalType = std::valarray<double>, typename retType = std::valarray<double>>
 retType spectre(const signalType & data);
 
-template <typename signalType = lineType>
+template <typename signalType = std::valarray<double>>
 void calcSpectre(const signalType & inSignal,
                  signalType & outSpectre,
                  const int & fftLength = def::fftLength,
@@ -109,16 +99,15 @@ template <typename Container>
 int indexOfMax(const Container & cont);
 
 
-void resizeValar(lineType & in, int num);
+void resizeValar(std::valarray<double> & in, int num);
 
 
-template <typename signalType = lineType>
+template <typename signalType = std::valarray<double>>
 signalType four2(const signalType & inRealData, int nn = def::fftLength, int isign = 1);
 
-bool fileExists(const QString & filePath);
+QString readString(QDataStream & in);
 
-std::string readString(QDataStream & in);
-std::string readString(QTcpSocket * inSocket);
+QString readString(QTcpSocket * inSocket);
 
 template <typename Typ>
 Typ readFromSocket(QTcpSocket * inSocket);
@@ -128,9 +117,5 @@ Typ peekFromSocket(QTcpSocket * inSocket);
 
 template <typename Typ>
 std::bitset<8 * sizeof(Typ)> bits(Typ in);
-
-std::string slash();
-QString qslash();
-
 
 #endif // BIGLIB_H
