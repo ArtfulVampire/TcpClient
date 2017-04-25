@@ -651,6 +651,8 @@ QString readString(QTcpSocket * inSocket)
 template <typename Cont>
 Cont range(int beg, int en)
 {
+	if(en < beg) return Cont{};
+
 	Cont res(en - beg + 1);
 	std::iota(std::begin(res), std::end(res), beg);
 	return res;

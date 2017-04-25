@@ -165,7 +165,6 @@ void net::printData()
 	std::cout << classCount[0] << " + ";
 	std::cout << classCount[1] << " + ";
 	std::cout << classCount[2] << std::endl;
-
 }
 
 
@@ -457,11 +456,9 @@ void net::successiveProcessing(const QString & spectraPath)
 		{
 			return "*.0" + QString::number(in) + ".psd";
 		};
-		windowsList = QDir(spectraPath).entryList({
-													  filt(0),
-													  filt(1),
-													  filt(2)
-												  });
+		QStringList filts;
+		for(int i = 0; i <= 1; ++i) filts << filt(i);
+		windowsList = QDir(spectraPath).entryList(filts);
 	}
 	for(const QString & name : windowsList)
 	{
@@ -469,7 +466,16 @@ void net::successiveProcessing(const QString & spectraPath)
 	}
 
 	/// load
-	loadData(spectraPath, {".ps"});
+	loadData(spectraPath, {".psd"});
+
+	if(*std::min_element(std::begin(classCount), std::end(classCount))
+	   < this->learnSetStay)
+	{
+		std::cout << "TOO SMALL LEARNING SET!!!!!!!!!!!11111111" << "\t"
+				  << classCount << std::endl;
+		exit(0);
+	}
+
 	/// reduce learning set to (NumClasses * suc::learnSetStay)
 	std::cout << "reduce learning set" << std::endl;
 	std::vector<double> count = classCount;
@@ -481,22 +487,12 @@ void net::successiveProcessing(const QString & spectraPath)
 			count[ types[i] ] -= 1.;
 		}
 	}
-	//	for(auto ind : eraseIndices)
-	//	{
-	//		std::cout << def::spectraPath + "/" + fileNames[ind] << std::endl;
-	//		QFile::remove(def::spectraPath + "/" + fileNames[ind]);
-	//	}
 	eraseData(eraseIndices);
 	eraseIndices.clear();
 
 	/// preclean finished
-	//    for(auto in : fileNames)
-	//    {
-	//        std::cout << in << std::endl;
-	//    }
-	//    exit(0);
 
-	/// load newest weights ???
+	/// load newest weights or not ???
 
 	/// consts
 	errCrit = 0.05;
@@ -517,6 +513,7 @@ void net::successiveProcessing(const QString & spectraPath)
 #if OFFLINE_SUCCESSIVE
 	std::valarray<double> tempArr;
 	int type = -1;
+	const QString testMarker = "_test";
 	QStringList leest = QDir(spectraPath).entryList({'*' + testMarker + '*'}); /// special generality
 	for(const QString & fileNam : leest)
 	{
@@ -567,9 +564,9 @@ void net::dataCame(eegDataType::iterator a, eegDataType::iterator b)
 	++def::numOfWind;
 
 	auto t1 = std::chrono::high_resolution_clock::now();
-	std::cout << "processing = "
-			  << std::chrono::duration_cast<std::chrono::milliseconds>(t1-t0).count() / 1000.
-			  << " sec" << std::endl;
+//	std::cout << "dataCame() processing = "
+//			  << std::chrono::duration_cast<std::chrono::milliseconds>(t1-t0).count() / 1000.
+//			  << " sec" << std::endl;
 }
 
 std::valarray<double> net::successiveDataToSpectre(
@@ -613,7 +610,7 @@ std::valarray<double> net::successiveDataToSpectre(
 					tmpMat[def::eog2] * coeff[i][1];
 		}
 
-#if 01
+#if 0
 		/// eyes - checked, OK
 		writePlainData(def::workPath + "/winds/" +
 					   def::ExpName +
@@ -648,7 +645,7 @@ std::valarray<double> net::successiveDataToSpectre(
 							def::numOfSmooth
 							);
 
-				/// check spectra amplitude
+				/// check spectra amplitude - beta
 				double a =  std::accumulate(std::begin(tmpSpec) + def::fftLimit(30.),
 											std::begin(tmpSpec) + def::fftLimit(40.),
 											0.);
@@ -658,6 +655,8 @@ std::valarray<double> net::successiveDataToSpectre(
 					std::cout << "beta (ch = " << i << ") : " << a << std::endl;
 //					return {};
 				}
+
+				/// check spectra amplitude - theta
 				double b = std::accumulate(std::begin(tmpSpec) + def::fftLimit(5.),
 										   std::begin(tmpSpec) + def::fftLimit(6.5),
 										   0.);
@@ -710,14 +709,16 @@ void net::successiveLearning(const std::valarray<double> & newSpectre,
 	confusionMatrix[newType][outType] += 1.;
 
 #if VERBOSE_OUTPUT >= 1
-	std::cout << "type = " << outType << '\t' << "(";
+	std::cout << "type = " << outType << "\t";
+
+	std::cout << "(";
 	for(int i = 0; i < def::numOfClasses(); ++i)
 	{
-		std::cout << doubleRound(outVal[i], 3) << '\t';
+		std::cout << doubleRound(outVal[i], 3) << "\t";
 	}
-	std::cout << ") " << fileNames[vecNum] << "   ";
-	std::cout << ((outType == newType) ? "+" : "-");
-	std::cout << "\t" << doubleRound(outError, 2);
+	std::cout << ") " << fileNames[vecNum] << "\t";
+	std::cout << ((outType == newType) ? "+" : "-")<< "\t";
+	std::cout << doubleRound(outError, 2) << "\t";
 #endif
 
 	/// FEEDBACK ITSELF - if not rest
@@ -726,16 +727,15 @@ void net::successiveLearning(const std::valarray<double> & newSpectre,
 		/// decide how good classification is
 		/// 1 - no class,
 		/// def::numFbGradation + 1 - max
-		quint8 a = qint8(std::round(fbVal[newType] / fbVal.sum() * def::numFbGradation) + 1);
+		qint8 a = qint8(std::round(fbVal[newType] / fbVal.sum() * def::numFbGradation) + 1);
 #if VERBOSE_OUTPUT >= 1
-		std::cout << "\tfb = " << int(a) << "\tvals = " << fbVal << std::endl;
+		std::cout << "fb = " << int(a) << "\t"
+				  << "vals = " << fbVal << "\t"
+					 ;
 #endif
 		comPortDataStream << a;
 	}
-	else
-	{
-		std::cout << std::endl;
-	}
+	std::cout << std::endl;
 
 
 	static std::vector<int> passed(3, 0);
@@ -766,8 +766,8 @@ void net::successiveLearning(const std::valarray<double> & newSpectre,
 	++passed[newType];
 
 
-	/// when the answer was given
 #if NEW_SUCC
+	/// if the answer was given
 	if(def::solved == def::solveType::right)
 	{
 		eraseData(succOldIndices);
@@ -778,6 +778,7 @@ void net::successiveLearning(const std::valarray<double> & newSpectre,
 		def::solved = def::solveType::notYet;
 		findIt = std::begin(types);
 		fbVal = 0.;
+//		comPortDataStream << qint8(1);
 	}
 	else if(def::solved == def::solveType::wrong)
 	{
@@ -789,6 +790,7 @@ void net::successiveLearning(const std::valarray<double> & newSpectre,
 		def::solved = def::solveType::notYet;
 		findIt = std::begin(types);
 		fbVal = 0.;
+//		comPortDataStream << qint8(1);
 	}
 #else
 	if(numGoodNew == numGoodNewLimit)

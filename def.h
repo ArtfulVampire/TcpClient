@@ -32,6 +32,7 @@
 #include <QSerialPortInfo>
 
 #define OFFLINE_SUCCESSIVE 0
+
 /// 0 1 2 3
 #define VERBOSE_OUTPUT 1
 
@@ -39,8 +40,8 @@
 
 
 
-//typedef quint8 markerType; /// online
-typedef quint32 markerType; /// offline
+typedef quint8 markerType; /// online
+//typedef quint32 markerType; /// imitation
 
 
 template <typename T> class eegContType : public std::list<T>{}; /// Type Of Container
@@ -94,14 +95,17 @@ extern solveType solved;
 
 /// consts
 constexpr int eegNs = 19;
-constexpr int markerChannel = 22;
+constexpr int markerChannel = 22; /// unused
 constexpr int eog1 = 22;
 constexpr int eog2 = 23;
 constexpr int numOfSmooth = 5;
-const QSet<int> dropChannels{1, 2, // Fp1, Fp2
-							 3, 7, // F7, F8
-							 8, 12 // T3, T4
-							}; /// from 1
+const QSet<int> dropChannels{
+	1, 2		// Fp1, Fp2
+	,3, 7		// F7, F8
+	,8, 12		// T3, T4
+//	,13, 17		// T5, T6
+}; /// from 1
+
 const QString rightKey = QObject::tr("z");
 const QString wrongKey = QObject::tr("x");
 
@@ -113,24 +117,32 @@ const QStringList fileMarkers{"_241", "_247", "_254"}; /// needed?
 
 constexpr double freq = 250.;
 constexpr int fftLength = 1024;
-constexpr int timeShift = 50; /// should be lower
+constexpr int timeShift = 100; /// should be lower as much as possible
 constexpr int windowLength = 1024;
 constexpr double leftFreq = 5.;
 constexpr double rightFreq = 20.;
 
 /// CHECK THESE VALUES WHAAAAAAT
+#if 01
 const double amplitudeThreshold = 150.;
-const double spectreBetaThreshold = 80.;
-const double spectreThetaThreshold = 60.;
+const double spectreBetaThreshold = 100.;
+const double spectreThetaThreshold = 80.;
+#else
+const double amplitudeThreshold = 1500.;
+const double spectreBetaThreshold = 1000.;
+const double spectreThetaThreshold = 800.;
+#endif
 
-const int numFbGradation = 10;
-constexpr int numPrevResInertia = 10;
+
+const int numFbGradation = 50;
+constexpr int numPrevResInertia = 20;
 constexpr double inertiaCoef = exp(-5. / numPrevResInertia);
 
 
 /// make GUI for these variables ?
 const QString ExpName = "XXX_feedback";
-#if 01
+
+#if 0
 const QString workPath = "/media/Files/Data/RealTime";
 #else
 const QString workPath = "D:/MichaelAtanov/workData";

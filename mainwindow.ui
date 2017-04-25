@@ -149,6 +149,19 @@
        </property>
       </widget>
      </item>
+     <item row="5" column="2">
+      <widget class="QPushButton" name="comPortSendPushButton">
+       <property name="text">
+        <string>send</string>
+       </property>
+       <property name="shortcut">
+        <string>2</string>
+       </property>
+      </widget>
+     </item>
+     <item row="6" column="2">
+      <widget class="QSpinBox" name="comPortSpinBox"/>
+     </item>
     </layout>
    </widget>
   </widget>

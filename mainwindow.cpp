@@ -60,16 +60,17 @@ MainWindow::MainWindow(QWidget *parent) :
 		std::cout << comPort->error() << std::endl;
 		std::cout << comPort->errorString() << std::endl;
 		std::cout << "serialPort opened: " + def::comPortName << std::endl;
-		std::cout << "portName: " << comPort->portName().toStdString() << std::endl;
-		std::cout << "dataBits: " << comPort->dataBits() << std::endl;
-		std::cout << "baudRate: " << comPort->baudRate() << std::endl;
-		std::cout << "dataTerminalReady: " << comPort->isDataTerminalReady() << std::endl;
-		std::cout << "flowControl: " << comPort->flowControl() << std::endl;
-		std::cout << "requestToSend: " << comPort->isRequestToSend() << std::endl;
-		std::cout << "stopBits: " << comPort->stopBits() << endl << std::endl;
+//		std::cout << "portName: " << comPort->portName().toStdString() << std::endl;
+//		std::cout << "dataBits: " << comPort->dataBits() << std::endl;
+//		std::cout << "baudRate: " << comPort->baudRate() << std::endl;
+//		std::cout << "dataTerminalReady: " << comPort->isDataTerminalReady() << std::endl;
+//		std::cout << "flowControl: " << comPort->flowControl() << std::endl;
+//		std::cout << "requestToSend: " << comPort->isRequestToSend() << std::endl;
+//		std::cout << "stopBits: " << comPort->stopBits() << endl << std::endl;
 	}
 
 	comPortDataStream.setDevice(comPort);
+	ui->comPortSpinBox->setMaximum(def::numFbGradation);
 
 
 	/// "static" COM-port sending
@@ -77,6 +78,8 @@ MainWindow::MainWindow(QWidget *parent) :
 					 [this](){this->comPortDataStream << qint8(1);});
 	QObject::connect(this->ui->comPortSendTwoPushButton, &QPushButton::clicked,
 					 [this](){this->comPortDataStream << qint8(2);});
+	QObject::connect(this->ui->comPortSendPushButton, &QPushButton::clicked,
+					 [this](){this->comPortDataStream << qint8(ui->comPortSpinBox->value());});
 
 #endif
 
