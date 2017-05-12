@@ -486,9 +486,11 @@ void net::successiveProcessing(const QString & spectraPath)
 			eraseIndices.push_back(i);
 			count[ types[i] ] -= 1.;
 		}
+
 	}
 	eraseData(eraseIndices);
 	eraseIndices.clear();
+
 
 	/// preclean finished
 
@@ -1059,6 +1061,9 @@ void net::loadData(const QString & spectraPath,
 {
 	std::vector<QStringList> leest;
 	makeFileLists(spectraPath, leest, filters);
+//	std::cout << leest[0].size() << std::endl;
+//	std::cout << leest[1].size() << std::endl;
+//	std::cout << leest[2].size() << std::endl;
 
 	dataMatrix = matrix();
 	classCount.resize(def::numOfClasses(), 0.);
@@ -1074,7 +1079,7 @@ void net::loadData(const QString & spectraPath,
 
 			readFileInLine(spectraPath + "/" + fileName,
 						   tempArr);
-
+//			std::cout << tempArr.size() << std::endl;
 
 			pushBackDatum(tempArr, i, fileName);
 		}
@@ -1086,16 +1091,22 @@ void net::loadData(const QString & spectraPath,
 		dataMatrix[i] -= averageDatum;
 	}
 	dataMatrix.transpose();
+
 	sigmaVector.resize(dataMatrix.rows());
 	for(int i = 0; i < dataMatrix.rows(); ++i)
 	{
 		sigmaVector[i] = sigma(dataMatrix[i]);
-		if(sigmaVector[i] != 0.)
+
+		if(std::abs(sigmaVector[i]) > 1e-5)
 		{
 			dataMatrix[i] /= sigmaVector[i] * loadDataNorm;
 		}
+		else
+		{
+			sigmaVector[i] = 1.; // for net::successiveLearning()
+			dataMatrix[i] /= loadDataNorm;
+		}
 	}
-
 	dataMatrix.transpose();
 #endif
 }

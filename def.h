@@ -117,14 +117,14 @@ const QStringList fileMarkers{"_241", "_247", "_254"}; /// needed?
 
 constexpr double freq = 250.;
 constexpr int fftLength = 1024;
-constexpr int timeShift = 100; /// should be lower as much as possible
+constexpr int timeShift = 25; /// should be lower as much as possible
 constexpr int windowLength = 1024;
 constexpr double leftFreq = 5.;
 constexpr double rightFreq = 20.;
 
 /// CHECK THESE VALUES WHAAAAAAT
 #if 01
-const double amplitudeThreshold = 150.;
+const double amplitudeThreshold = 400.;
 const double spectreBetaThreshold = 100.;
 const double spectreThetaThreshold = 80.;
 #else
@@ -135,7 +135,7 @@ const double spectreThetaThreshold = 800.;
 
 
 const int numFbGradation = 50;
-constexpr int numPrevResInertia = 20;
+constexpr int numPrevResInertia = 50; /// depends on timeShift
 constexpr double inertiaCoef = exp(-5. / numPrevResInertia);
 
 

@@ -47,7 +47,7 @@ MainWindow::MainWindow(QWidget *parent) :
 
 	ui->fullDataCheckBox->setChecked(true);
 
-#if 0
+#if 01
 	/// COM test
 	QSerialPort * comPort;
 	comPort = new QSerialPort(this);
