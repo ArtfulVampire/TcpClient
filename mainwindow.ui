@@ -33,16 +33,19 @@
      <bool>true</bool>
     </property>
    </widget>
-   <widget class="QWidget" name="layoutWidget">
+   <widget class="QWidget" name="">
     <property name="geometry">
      <rect>
-      <x>31</x>
-      <y>31</y>
-      <width>351</width>
-      <height>281</height>
+      <x>34</x>
+      <y>41</y>
+      <width>297</width>
+      <height>309</height>
      </rect>
     </property>
     <layout class="QGridLayout" name="gridLayout">
+     <item row="0" column="0">
+      <widget class="QComboBox" name="serverAddressComboBox"/>
+     </item>
      <item row="0" column="1">
       <widget class="QLineEdit" name="serverAddressLineEdit">
        <property name="focusPolicy">
@@ -57,61 +60,6 @@
        </property>
       </widget>
      </item>
-     <item row="4" column="0">
-      <widget class="QPushButton" name="initSpectraPushButton">
-       <property name="text">
-        <string>init spectra</string>
-       </property>
-      </widget>
-     </item>
-     <item row="3" column="1">
-      <widget class="QPushButton" name="connectComPortPushButton">
-       <property name="text">
-        <string>connect COM</string>
-       </property>
-      </widget>
-     </item>
-     <item row="6" column="0">
-      <widget class="QCheckBox" name="fullDataCheckBox">
-       <property name="text">
-        <string>full data</string>
-       </property>
-      </widget>
-     </item>
-     <item row="7" column="0">
-      <widget class="QPushButton" name="startPushButton">
-       <property name="text">
-        <string>start</string>
-       </property>
-      </widget>
-     </item>
-     <item row="5" column="0">
-      <widget class="QPushButton" name="eyesFilePushButton">
-       <property name="text">
-        <string>eyes file</string>
-       </property>
-      </widget>
-     </item>
-     <item row="0" column="0">
-      <widget class="QComboBox" name="serverAddressComboBox"/>
-     </item>
-     <item row="8" column="2">
-      <widget class="QPushButton" name="askPushButton">
-       <property name="text">
-        <string>ask server</string>
-       </property>
-      </widget>
-     </item>
-     <item row="8" column="0">
-      <widget class="QPushButton" name="endPushButton">
-       <property name="text">
-        <string>end</string>
-       </property>
-      </widget>
-     </item>
-     <item row="3" column="0">
-      <widget class="QComboBox" name="comPortComboBox"/>
-     </item>
      <item row="1" column="1">
       <widget class="QSpinBox" name="serverPortSpinBox"/>
      </item>
@@ -122,14 +70,17 @@
        </property>
       </widget>
      </item>
-     <item row="7" column="1">
-      <widget class="QPushButton" name="startRealTimePushButton">
+     <item row="2" column="0">
+      <widget class="QComboBox" name="comPortComboBox"/>
+     </item>
+     <item row="2" column="1">
+      <widget class="QPushButton" name="connectComPortPushButton">
        <property name="text">
-        <string>start real-time</string>
+        <string>connect COM</string>
        </property>
       </widget>
      </item>
-     <item row="3" column="2">
+     <item row="2" column="2">
       <widget class="QPushButton" name="comPortSendOnePushButton">
        <property name="text">
         <string>send 1</string>
@@ -139,7 +90,14 @@
        </property>
       </widget>
      </item>
-     <item row="4" column="2">
+     <item row="3" column="0">
+      <widget class="QPushButton" name="initSpectraPushButton">
+       <property name="text">
+        <string>init spectra</string>
+       </property>
+      </widget>
+     </item>
+     <item row="3" column="2">
       <widget class="QPushButton" name="comPortSendTwoPushButton">
        <property name="text">
         <string>send 2</string>
@@ -149,7 +107,14 @@
        </property>
       </widget>
      </item>
-     <item row="5" column="2">
+     <item row="4" column="0">
+      <widget class="QPushButton" name="eyesFilePushButton">
+       <property name="text">
+        <string>eyes file</string>
+       </property>
+      </widget>
+     </item>
+     <item row="4" column="2">
       <widget class="QPushButton" name="comPortSendPushButton">
        <property name="text">
         <string>send</string>
@@ -159,8 +124,124 @@
        </property>
       </widget>
      </item>
-     <item row="6" column="2">
+     <item row="5" column="0">
+      <widget class="QCheckBox" name="fullDataCheckBox">
+       <property name="text">
+        <string>full data</string>
+       </property>
+      </widget>
+     </item>
+     <item row="5" column="2">
       <widget class="QSpinBox" name="comPortSpinBox"/>
+     </item>
+     <item row="6" column="0">
+      <widget class="QPushButton" name="startPushButton">
+       <property name="text">
+        <string>start</string>
+       </property>
+      </widget>
+     </item>
+     <item row="6" column="1">
+      <widget class="QPushButton" name="startRealTimePushButton">
+       <property name="text">
+        <string>start real-time</string>
+       </property>
+      </widget>
+     </item>
+     <item row="7" column="0">
+      <widget class="QPushButton" name="endPushButton">
+       <property name="text">
+        <string>end</string>
+       </property>
+      </widget>
+     </item>
+     <item row="7" column="2">
+      <widget class="QPushButton" name="askPushButton">
+       <property name="text">
+        <string>ask server</string>
+       </property>
+      </widget>
+     </item>
+     <item row="8" column="1">
+      <layout class="QHBoxLayout" name="horizontalLayout_3">
+       <item>
+        <spacer name="horizontalSpacer">
+         <property name="orientation">
+          <enum>Qt::Horizontal</enum>
+         </property>
+         <property name="sizeHint" stdset="0">
+          <size>
+           <width>40</width>
+           <height>20</height>
+          </size>
+         </property>
+        </spacer>
+       </item>
+       <item>
+        <widget class="QLabel" name="label">
+         <property name="text">
+          <string>ampl</string>
+         </property>
+        </widget>
+       </item>
+      </layout>
+     </item>
+     <item row="8" column="2">
+      <widget class="QSpinBox" name="amplSpinBox"/>
+     </item>
+     <item row="9" column="1">
+      <layout class="QHBoxLayout" name="horizontalLayout_2">
+       <item>
+        <spacer name="horizontalSpacer_2">
+         <property name="orientation">
+          <enum>Qt::Horizontal</enum>
+         </property>
+         <property name="sizeHint" stdset="0">
+          <size>
+           <width>40</width>
+           <height>20</height>
+          </size>
+         </property>
+        </spacer>
+       </item>
+       <item>
+        <widget class="QLabel" name="label_2">
+         <property name="text">
+          <string>theta</string>
+         </property>
+        </widget>
+       </item>
+      </layout>
+     </item>
+     <item row="9" column="2">
+      <widget class="QSpinBox" name="thetaSpinBox"/>
+     </item>
+     <item row="10" column="1">
+      <layout class="QHBoxLayout" name="horizontalLayout">
+       <item>
+        <spacer name="horizontalSpacer_3">
+         <property name="orientation">
+          <enum>Qt::Horizontal</enum>
+         </property>
+         <property name="sizeHint" stdset="0">
+          <size>
+           <width>40</width>
+           <height>20</height>
+          </size>
+         </property>
+        </spacer>
+       </item>
+       <item>
+        <widget class="QLabel" name="label_3">
+         <property name="text">
+          <string>beta</string>
+         </property>
+        </widget>
+       </item>
+      </layout>
+     </item>
+     <item row="10" column="2">
+      <widget class="QSpinBox" name="betaSpinBox"/>
      </item>
     </layout>
    </widget>

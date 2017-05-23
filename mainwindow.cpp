@@ -47,7 +47,7 @@ MainWindow::MainWindow(QWidget *parent) :
 
 	ui->fullDataCheckBox->setChecked(true);
 
-#if 01
+#if 0
 	/// COM test
 	QSerialPort * comPort;
 	comPort = new QSerialPort(this);
@@ -83,6 +83,40 @@ MainWindow::MainWindow(QWidget *parent) :
 
 #endif
 
+
+	/// thresholds spinBoxes
+	ui->amplSpinBox->setMaximum(500);
+	ui->amplSpinBox->setMinimum(100);
+	ui->amplSpinBox->setValue(def::amplitudeThreshold);
+	ui->amplSpinBox->setSingleStep(20);
+	QObject::connect(this->ui->amplSpinBox, &QSpinBox::editingFinished,
+					 [this]()
+	{
+		def::amplitudeThreshold = this->ui->amplSpinBox->value();
+	}
+	);
+
+	ui->thetaSpinBox->setMaximum(500);
+	ui->thetaSpinBox->setMinimum(50);
+	ui->thetaSpinBox->setValue(def::spectreThetaThreshold);
+	ui->thetaSpinBox->setSingleStep(10);
+	QObject::connect(this->ui->thetaSpinBox, &QSpinBox::editingFinished,
+					 [this]()
+	{
+		def::spectreThetaThreshold = this->ui->thetaSpinBox->value();
+	}
+	);
+
+	ui->betaSpinBox->setMaximum(500);
+	ui->betaSpinBox->setMinimum(50);
+	ui->betaSpinBox->setValue(def::spectreBetaThreshold);
+	ui->betaSpinBox->setSingleStep(10);
+	QObject::connect(this->ui->betaSpinBox, &QSpinBox::editingFinished,
+					 [this]()
+	{
+		def::spectreBetaThreshold = this->ui->betaSpinBox->value();
+	}
+	);
 
 
 
@@ -145,6 +179,17 @@ MainWindow::MainWindow(QWidget *parent) :
 		myNetThread->wait();
 		delete myNetThread;
 	}
+	this->installEventFilter(this);
+}
+
+bool MainWindow::eventFilter(QObject * obj, QEvent * ev)
+{
+	if(obj == this && ev->type() == QEvent::MouseButtonPress)
+	{
+		this->setFocus();
+		return true;
+	}
+	return QWidget::eventFilter(obj, ev);
 }
 
 MainWindow::~MainWindow()

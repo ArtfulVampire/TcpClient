@@ -40,8 +40,8 @@
 
 
 
-typedef quint8 markerType; /// online
-//typedef quint32 markerType; /// imitation
+//typedef quint8 markerType; /// online
+typedef quint32 markerType; /// imitation
 
 
 template <typename T> class eegContType : public std::list<T>{}; /// Type Of Container
@@ -110,7 +110,7 @@ const QString rightKey = QObject::tr("z");
 const QString wrongKey = QObject::tr("x");
 
 const errorNetType errType = errorNetType::SME; /// how to calculate
-constexpr double errorThreshold = 0.9;
+constexpr double errorThreshold = 0.5;
 
 const std::vector<qint16> markers{241, 247, 254};
 const QStringList fileMarkers{"_241", "_247", "_254"}; /// needed?
@@ -124,9 +124,9 @@ constexpr double rightFreq = 20.;
 
 /// CHECK THESE VALUES WHAAAAAAT
 #if 01
-const double amplitudeThreshold = 400.;
-const double spectreBetaThreshold = 100.;
-const double spectreThetaThreshold = 80.;
+extern double amplitudeThreshold;
+extern double spectreBetaThreshold;
+extern double spectreThetaThreshold;
 #else
 const double amplitudeThreshold = 1500.;
 const double spectreBetaThreshold = 1000.;

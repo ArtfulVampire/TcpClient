@@ -416,7 +416,7 @@ double matrix::minVal() const
 
 double matrix::maxAbsVal() const
 {
-	double res = myData[0][0];
+	double res = 0.;
 	std::for_each(std::begin(myData),
 				  std::end(myData),
 				  [&res](const std::valarray<double> & in)

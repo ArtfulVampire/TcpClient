@@ -33,6 +33,7 @@ private:
 	wtsType weight;
 	std::vector<int> dimensionality; // for backprop
 
+//	qint8 previousFbValue; /// to decrease, when bad window
 	double averageAccuracy = 0.;
 	double kappa = 0.; // Cohen's
 

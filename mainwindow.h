@@ -22,10 +22,7 @@ class MainWindow : public QMainWindow
 public:
 	explicit MainWindow(QWidget *parent = 0);
 	~MainWindow();
-
-
-
-signals:
+	bool eventFilter(QObject * obj, QEvent * ev);
 
 public slots:
 	// ui slots

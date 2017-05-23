@@ -542,11 +542,11 @@ void net::dataCame(eegDataType::iterator a, eegDataType::iterator b)
 	}
 
 	std::valarray<double> newSpectre = successiveDataToSpectre(a, b);
-	if(badWindowFlag)
-	{
+//	if(badWindowFlag)
+//	{
 //		std::cout << "bad window" << std::endl;
-		return;
-	}
+//		return;
+//	}
 
 
 	const QString name = def::ExpName +
@@ -587,6 +587,7 @@ std::valarray<double> net::successiveDataToSpectre(
 			auto itt = std::begin(*it);
 			for(int i = 0; i < def::ns; ++i, ++itt)
 			{
+				/// could check dropChannels here, but intentionally not
 				tmpMat[i][j] = (*itt);
 			}
 		}
@@ -612,7 +613,7 @@ std::valarray<double> net::successiveDataToSpectre(
 					tmpMat[def::eog2] * coeff[i][1];
 		}
 
-#if 0
+#if 01
 		/// eyes - checked, OK
 		writePlainData(def::workPath + "/winds/" +
 					   def::ExpName +
@@ -624,11 +625,20 @@ std::valarray<double> net::successiveDataToSpectre(
 #endif
 	}
 
+	/// zero dropped channels
+	for(int i = 0; i < def::eegNs; ++i)
+	{
+		if(def::dropChannels.contains(i + 1))
+		{
+			tmpMat[i] = 0.;
+		}
+	}
+
 	/// check amplitudes
 	if(tmpMat.maxAbsVal() > def::amplitudeThreshold)
 	{
 		this->badWindowFlag = true;
-		std::cout << "ampl : " << tmpMat.maxAbsVal() << std::endl;
+		std::cout << "ampl : " << tmpMat.maxAbsVal() << "\t";
 		return {};
 	}
 
@@ -654,19 +664,19 @@ std::valarray<double> net::successiveDataToSpectre(
 				if(a > def::spectreBetaThreshold)
 				{
 					this->badWindowFlag = true;
-					std::cout << "beta (ch = " << i << ") : " << a << std::endl;
+					std::cout << "beta (ch = " << i << ") : " << a << "\t";
 //					return {};
 				}
 
 				/// check spectra amplitude - theta
-				double b = std::accumulate(std::begin(tmpSpec) + def::fftLimit(5.),
+				double b = std::accumulate(std::begin(tmpSpec) + def::fftLimit(4.5),
 										   std::begin(tmpSpec) + def::fftLimit(6.5),
 										   0.);
 				if(b > def::spectreThetaThreshold)
 				{
 					this->badWindowFlag = true;
-					std::cout << "theta (ch = " << i << ") : " << b << std::endl;
-//					return {};
+					std::cout << "theta (ch = " << i << ") : " << b << "\t";
+					return {};
 				}
 				if(this->badWindowFlag) return {};
 
@@ -689,6 +699,27 @@ void net::successiveLearning(const std::valarray<double> & newSpectre,
 	static std::vector<int> succOldIndices{};
 	static auto findIt = std::begin(types);
 	static std::valarray<double> fbVal(0., def::numOfClasses());
+
+	/// if bad window
+	if(newSpectre.size() == 0)
+	{
+//		return; // do nothing
+
+		/// decrease frame
+		fbVal *= def::inertiaCoef;
+		/// + (0.5, 0, 0.5) or (0.33, 0, 0.33, 0.33)
+		fbVal += 1. / (def::numOfClasses() - 1);
+		fbVal[newType] -= 1. / (def::numOfClasses() - 1);
+
+		qint8 previousFbValue = qint8(std::round(fbVal[newType] / fbVal.sum() * def::numFbGradation) + 1);
+#if VERBOSE_OUTPUT >= 1
+		std::cout << "fb = " << int(previousFbValue) << "\t"
+				  << "vals = " << fbVal << "\t"
+				  << std::endl;
+#endif
+		comPortDataStream << previousFbValue;
+		return;
+	}
 
 	/// dataMatrix is learning matrix
 	std::valarray<double> newData = (newSpectre - averageDatum) / (sigmaVector * loadDataNorm);
@@ -729,16 +760,15 @@ void net::successiveLearning(const std::valarray<double> & newSpectre,
 		/// decide how good classification is
 		/// 1 - no class,
 		/// def::numFbGradation + 1 - max
-		qint8 a = qint8(std::round(fbVal[newType] / fbVal.sum() * def::numFbGradation) + 1);
+		qint8 previousFbValue = qint8(std::round(fbVal[newType] / fbVal.sum() * def::numFbGradation) + 1);
 #if VERBOSE_OUTPUT >= 1
-		std::cout << "fb = " << int(a) << "\t"
+		std::cout << "fb = " << int(previousFbValue) << "\t"
 				  << "vals = " << fbVal << "\t"
 					 ;
 #endif
-		comPortDataStream << a;
+		comPortDataStream << previousFbValue;
 	}
 	std::cout << std::endl;
-
 
 	static std::vector<int> passed(3, 0);
 
@@ -748,7 +778,7 @@ void net::successiveLearning(const std::valarray<double> & newSpectre,
 	{
 #if NEW_SUCC
 		findIt = std::find(findIt, std::end(types), newType);
-		int num = findIt - std::begin(types);
+		int num = std::distance(std::begin(types), findIt);
 		succOldIndices.push_back(num);
 		++findIt;
 #else
@@ -775,24 +805,28 @@ void net::successiveLearning(const std::valarray<double> & newSpectre,
 		eraseData(succOldIndices);
 		successiveRelearn();
 
-		/// both part
-		succOldIndices.clear();
-		def::solved = def::solveType::notYet;
-		findIt = std::begin(types);
-		fbVal = 0.;
-//		comPortDataStream << qint8(1);
-	}
-	else if(def::solved == def::solveType::wrong)
-	{
-		/// erase all last added
-		eraseData(range<std::vector<int>>(3 * this->learnSetStay, dataMatrix.rows() - 1));
+		/// send right marker
+//		comPortDataStream << 210;
 
 		/// both part
 		succOldIndices.clear();
 		def::solved = def::solveType::notYet;
 		findIt = std::begin(types);
 		fbVal = 0.;
-//		comPortDataStream << qint8(1);
+	}
+	else if(def::solved == def::solveType::wrong)
+	{
+		/// erase all last added
+		eraseData(range<std::vector<int>>(3 * this->learnSetStay, dataMatrix.rows() - 1));
+
+		/// send right marker
+//		comPortDataStream << 211;
+
+		/// both part
+		succOldIndices.clear();
+		def::solved = def::solveType::notYet;
+		findIt = std::begin(types);
+		fbVal = 0.;
 	}
 #else
 	if(numGoodNew == numGoodNewLimit)
@@ -1079,11 +1113,23 @@ void net::loadData(const QString & spectraPath,
 
 			readFileInLine(spectraPath + "/" + fileName,
 						   tempArr);
-//			std::cout << tempArr.size() << std::endl;
+
+			/// dropChannels - needed or not?
+			if(1)
+			{
+				for(int ch : def::dropChannels)
+				{
+					std::fill(std::begin(tempArr) + (ch - 1) * def::spLength(),
+							  std::begin(tempArr) + ch * def::spLength(),
+							  0.);
+				}
+			}
 
 			pushBackDatum(tempArr, i, fileName);
 		}
 	}
+
+
 #if 1
 	averageDatum = dataMatrix.averageRow();
 	for(int i = 0; i < dataMatrix.rows(); ++i)

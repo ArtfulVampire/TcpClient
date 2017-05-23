@@ -15,4 +15,8 @@ int numOfWind = 0;
 bool pauseFlag = 0;
 int ns = 24;
 solveType solved = solveType::notYet;
+
+double amplitudeThreshold = 400.;
+double spectreBetaThreshold = 100.;
+double spectreThetaThreshold = 80.;
 }
