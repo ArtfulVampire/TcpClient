@@ -298,9 +298,9 @@ void net::writeWts(const QString & outPath)
 		//        {
 		//            ++wtsCounter;
 		//        }
-		wtsPath = def::workPath + "/weights/" +
-				  def::ExpName + "_" +
-				  QString::number(wtsCounter++) + ".wts";
+		wtsPath = def::wtsPath
+				  + "/" + def::ExpName
+				  + "_" + QString::number(wtsCounter++) + ".wts";
 	}
 	else
 	{
@@ -409,21 +409,22 @@ void net::successivePreclean(const QString & spectraPath)
 		}
 	}
 
-	// clean by learnSetStay
-	std::cout << "clean by learnSetStay" << std::endl;
-	std::vector<QStringList> leest2;
-	makeFileLists(spectraPath, leest2);
+//	/// clean by learnSetStay - no need
+//	std::cout << "clean by learnSetStay" << std::endl;
+//	std::vector<QStringList> leest2;
+//	makeFileLists(spectraPath, leest2);
 
-	for(int j = 0; j < def::numOfClasses(); ++j)
-	{
-		auto it = std::begin(leest2[j]);
-		for(int i = 0;
-			i < leest2[j].size() - learnSetStay * 1.3; /// consts generality
-			++i, ++it)
-		{
-			QFile::remove(spectraPath + "/" + (*it));
-		}
-	}
+//	for(int j = 0; j < def::numOfClasses(); ++j)
+//	{
+//		auto it = std::begin(leest2[j]);
+//		for(int i = 0;
+//			i < leest2[j].size() - learnSetStay * 1.3; /// consts generality
+//			++i, ++it)
+//		{
+//			QFile::remove(spectraPath + "/" + (*it));
+//		}
+//	}
+
 	Source = source::winds;
 	Mode = myMode::N_fold;
 
@@ -443,7 +444,6 @@ void net::successivePreclean(const QString & spectraPath)
 
 void net::successiveProcessing(const QString & spectraPath)
 {
-	std::vector<int> eraseIndices{};
 
 	numGoodNew = 0;
 	confusionMatrix.fill(0.);
@@ -457,7 +457,7 @@ void net::successiveProcessing(const QString & spectraPath)
 			return "*.0" + QString::number(in) + ".psd";
 		};
 		QStringList filts;
-		for(int i = 0; i <= 1; ++i) filts << filt(i);
+		for(int i = 0; i <= 1; ++i) { filts << filt(i); }
 		windowsList = QDir(spectraPath).entryList(filts);
 	}
 	for(const QString & name : windowsList)
@@ -465,7 +465,7 @@ void net::successiveProcessing(const QString & spectraPath)
 		QFile::remove(spectraPath + "/" + name);
 	}
 
-	/// load
+	/// load newest by date
 	loadData(spectraPath, {".psd"});
 
 	if(*std::min_element(std::begin(classCount), std::end(classCount))
@@ -476,25 +476,8 @@ void net::successiveProcessing(const QString & spectraPath)
 		exit(0);
 	}
 
-	/// reduce learning set to (NumClasses * suc::learnSetStay)
-	std::cout << "reduce learning set" << std::endl;
-	std::vector<double> count = classCount;
-	for(int i = dataMatrix.rows() - 1; i > 0; --i)
-	{
-		if(count[ types[i] ] > learnSetStay)
-		{
-			eraseIndices.push_back(i);
-			count[ types[i] ] -= 1.;
-		}
-
-	}
-	eraseData(eraseIndices);
-	eraseIndices.clear();
-
-
 	/// preclean finished
 
-	/// load newest weights or not ???
 
 	/// consts
 	errCrit = 0.05;
@@ -503,8 +486,22 @@ void net::successiveProcessing(const QString & spectraPath)
 	adjustLearnRate(this->lowLimit,
 					this->highLimit);
 
-	std::cout << "get initial weights on train set" << std::endl;
-	learnNet();
+	/// load newest weights or not ???
+	auto wts = QDir(def::wtsPath).entryInfoList({"*.wts"}, QDir::Files, QDir::Time|QDir::Reversed);
+	if(!wts.isEmpty()
+	   && (wts[0].lastModified().date()) == QDate::currentDate() /// modified today
+	   && (wts[0].lastModified().time().secsTo(QTime::currentTime()) < 60 * 5) /// 5- min ago
+	   )
+	{
+		std::cout << "load weights " << wts[0].fileName() << std::endl;
+		reset();
+		readWts(wts[0].absoluteFilePath());
+	}
+	else
+	{
+		std::cout << "get initial weights on train set" << std::endl;
+		learnNet();
+	}
 
 	errCrit = 0.02;
 	learnRate = 0.02;
@@ -531,7 +528,7 @@ void net::successiveProcessing(const QString & spectraPath)
 
 void net::dataCame(eegDataType::iterator a, eegDataType::iterator b)
 {
-	auto t0 = std::chrono::high_resolution_clock::now();
+//	auto t0 = std::chrono::high_resolution_clock::now();
 
 
 	badWindowFlag = false;
@@ -554,7 +551,7 @@ void net::dataCame(eegDataType::iterator a, eegDataType::iterator b)
 						 def::fileMarkers[type] +
 						 "." + rightNumber(def::numOfWind, 2) + ".psd";
 
-#if 0
+#if 01
 	/// spectre
 	writeFileInLine(def::workPath + "/SpectraSmooth/winds/" +
 					name,
@@ -565,7 +562,7 @@ void net::dataCame(eegDataType::iterator a, eegDataType::iterator b)
 	successiveLearning(newSpectre, type, name);
 	++def::numOfWind;
 
-	auto t1 = std::chrono::high_resolution_clock::now();
+//	auto t1 = std::chrono::high_resolution_clock::now();
 //	std::cout << "dataCame() processing = "
 //			  << std::chrono::duration_cast<std::chrono::milliseconds>(t1-t0).count() / 1000.
 //			  << " sec" << std::endl;
@@ -613,7 +610,7 @@ std::valarray<double> net::successiveDataToSpectre(
 					tmpMat[def::eog2] * coeff[i][1];
 		}
 
-#if 01
+#if 0
 		/// eyes - checked, OK
 		writePlainData(def::workPath + "/winds/" +
 					   def::ExpName +
@@ -1124,11 +1121,12 @@ void net::loadData(const QString & spectraPath,
 							  0.);
 				}
 			}
-
 			pushBackDatum(tempArr, i, fileName);
+
+			if(classCount[i] == this->learnSetStay) { break; } /// stop when enough
 		}
 	}
-
+	std::cout << "loadData: classCount = " << classCount << std::endl;
 
 #if 1
 	averageDatum = dataMatrix.averageRow();

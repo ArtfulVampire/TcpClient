@@ -192,7 +192,7 @@ void makeFileLists(const QString & path,
 		}
 		lst.push_back(localDir.entryList(nameFilters,
 										 QDir::Files,
-										 QDir::Time)); /// Time ~ order
+										 QDir::Time|QDir::Reversed)); /// newest first
 	}
 }
 

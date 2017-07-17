@@ -39,9 +39,11 @@
 
 
 
-
+#if !OFFLINE_SUCCESSIVE
 typedef quint8 markerType; /// online
-//typedef quint32 markerType; /// imitation
+#else
+typedef quint32 markerType; /// imitation
+#endif
 
 
 template <typename T> class eegContType : public std::list<T>{}; /// Type Of Container
@@ -152,6 +154,7 @@ const QString workPath = "D:/MichaelAtanov/workData";
 
 /// to read
 const QString spectraPath = workPath + "/SpectraSmooth/winds";
+const QString wtsPath = workPath + "/weights";
 const QString eyesFilePath = workPath + "/eyes.txt";
 
 /// to write
