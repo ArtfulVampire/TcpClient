@@ -85,7 +85,7 @@ MainWindow::MainWindow(QWidget *parent) :
 
 
 	/// thresholds spinBoxes
-	ui->amplSpinBox->setMaximum(500);
+	ui->amplSpinBox->setMaximum(1000);
 	ui->amplSpinBox->setMinimum(100);
 	ui->amplSpinBox->setValue(def::amplitudeThreshold);
 	ui->amplSpinBox->setSingleStep(20);
@@ -96,7 +96,7 @@ MainWindow::MainWindow(QWidget *parent) :
 	}
 	);
 
-	ui->thetaSpinBox->setMaximum(500);
+	ui->thetaSpinBox->setMaximum(1000);
 	ui->thetaSpinBox->setMinimum(50);
 	ui->thetaSpinBox->setValue(def::spectreThetaThreshold);
 	ui->thetaSpinBox->setSingleStep(10);
@@ -107,7 +107,7 @@ MainWindow::MainWindow(QWidget *parent) :
 	}
 	);
 
-	ui->betaSpinBox->setMaximum(500);
+	ui->betaSpinBox->setMaximum(1000);
 	ui->betaSpinBox->setMinimum(50);
 	ui->betaSpinBox->setValue(def::spectreBetaThreshold);
 	ui->betaSpinBox->setSingleStep(10);

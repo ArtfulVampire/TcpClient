@@ -40,8 +40,8 @@
 
 
 
-//typedef quint8 markerType; /// online
-typedef quint32 markerType; /// imitation
+typedef quint8 markerType; /// online
+//typedef quint32 markerType; /// imitation
 
 
 template <typename T> class eegContType : public std::list<T>{}; /// Type Of Container
@@ -102,12 +102,13 @@ constexpr int numOfSmooth = 5;
 const QSet<int> dropChannels{
 	1, 2		// Fp1, Fp2
 	,3, 7		// F7, F8
-	,8, 12		// T3, T4
+//	,8, 12		// T3, T4
 //	,13, 17		// T5, T6
+//	,18, 19		// O1, O2
 }; /// from 1
 
-const QString rightKey = QObject::tr("z");
-const QString wrongKey = QObject::tr("x");
+const QString rightKey = QObject::tr("r");
+const QString wrongKey = QObject::tr("w");
 
 const errorNetType errType = errorNetType::SME; /// how to calculate
 constexpr double errorThreshold = 0.5;
@@ -117,10 +118,14 @@ const QStringList fileMarkers{"_241", "_247", "_254"}; /// needed?
 
 constexpr double freq = 250.;
 constexpr int fftLength = 1024;
-constexpr int timeShift = 25; /// should be lower as much as possible
 constexpr int windowLength = 1024;
 constexpr double leftFreq = 5.;
 constexpr double rightFreq = 20.;
+constexpr int timeShift = 125; /// should be lower as much as possible
+
+const int numFbGradation = 50;
+constexpr int numPrevResInertia = 15; /// depends on timeShift (product ~1500)
+constexpr double inertiaCoef = exp(-5. / numPrevResInertia);
 
 /// CHECK THESE VALUES WHAAAAAAT
 #if 01
@@ -134,9 +139,6 @@ const double spectreThetaThreshold = 800.;
 #endif
 
 
-const int numFbGradation = 50;
-constexpr int numPrevResInertia = 50; /// depends on timeShift
-constexpr double inertiaCoef = exp(-5. / numPrevResInertia);
 
 
 /// make GUI for these variables ?
