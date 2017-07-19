@@ -33,6 +33,10 @@ MainWindow::MainWindow(QWidget *parent) :
 					 this, SLOT(serverAddressSlot(int)));
 	QObject::connect(ui->serverAddressComboBox, SIGNAL(currentIndexChanged(int)),
 					 this, SLOT(serverAddressSlot(int)));
+	QObject::connect(ui->pauseSetPushButton, &QPushButton::clicked,
+					 [](){ def::pauseFlag = 1; });
+	QObject::connect(ui->pauseUnsetPushButton, &QPushButton::clicked,
+					 [](){ def::pauseFlag = 0; });
 
 	ui->serverAddressComboBox->setCurrentText("pew"); /// fix via router, always 192.168.0.104
 

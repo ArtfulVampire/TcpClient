@@ -314,6 +314,11 @@ void DataReader::markerCame()
 			def::pauseFlag = 0;
 			break;
 		}
+//		case 203:
+//		{
+//			def::pauseFlag = 1;
+//			break;
+//		}
 		case 241:
 		{
 			def::currentType = 0;
@@ -344,7 +349,7 @@ void DataReader::markerCame()
 		{
 			def::currentType = 2;
 			def::slicesCame = 0;
-			def::numOfReal = 2; /// right after "sta"
+			def::numOfReal = 1; /// right after "sta"
 			def::numOfWind = 0;
 			break;
 		}

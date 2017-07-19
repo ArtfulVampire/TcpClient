@@ -33,12 +33,12 @@
      <bool>true</bool>
     </property>
    </widget>
-   <widget class="QWidget" name="">
+   <widget class="QWidget" name="layoutWidget">
     <property name="geometry">
      <rect>
       <x>34</x>
       <y>41</y>
-      <width>297</width>
+      <width>311</width>
       <height>309</height>
      </rect>
     </property>
@@ -80,30 +80,10 @@
        </property>
       </widget>
      </item>
-     <item row="2" column="2">
-      <widget class="QPushButton" name="comPortSendOnePushButton">
-       <property name="text">
-        <string>send 1</string>
-       </property>
-       <property name="shortcut">
-        <string>1</string>
-       </property>
-      </widget>
-     </item>
      <item row="3" column="0">
       <widget class="QPushButton" name="initSpectraPushButton">
        <property name="text">
         <string>init spectra</string>
-       </property>
-      </widget>
-     </item>
-     <item row="3" column="2">
-      <widget class="QPushButton" name="comPortSendTwoPushButton">
-       <property name="text">
-        <string>send 2</string>
-       </property>
-       <property name="shortcut">
-        <string>2</string>
        </property>
       </widget>
      </item>
@@ -243,6 +223,40 @@
      <item row="10" column="2">
       <widget class="QSpinBox" name="betaSpinBox"/>
      </item>
+     <item row="3" column="2">
+      <widget class="QPushButton" name="comPortSendTwoPushButton">
+       <property name="text">
+        <string>send 2</string>
+       </property>
+       <property name="shortcut">
+        <string>2</string>
+       </property>
+      </widget>
+     </item>
+     <item row="2" column="2">
+      <widget class="QPushButton" name="comPortSendOnePushButton">
+       <property name="text">
+        <string>send 1</string>
+       </property>
+       <property name="shortcut">
+        <string>1</string>
+       </property>
+      </widget>
+     </item>
+     <item row="9" column="0">
+      <widget class="QPushButton" name="pauseSetPushButton">
+       <property name="text">
+        <string>set pause</string>
+       </property>
+      </widget>
+     </item>
+     <item row="10" column="0">
+      <widget class="QPushButton" name="pauseUnsetPushButton">
+       <property name="text">
+        <string>unset pause</string>
+       </property>
+      </widget>
+     </item>
     </layout>
    </widget>
   </widget>
@@ -252,7 +266,7 @@
      <x>0</x>
      <y>0</y>
      <width>902</width>
-     <height>21</height>
+     <height>19</height>
     </rect>
    </property>
   </widget>

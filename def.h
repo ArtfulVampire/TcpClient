@@ -89,7 +89,7 @@ extern QHostAddress hostAddress;
 extern int hostPort;
 extern bool fullDataFlag;
 extern QString comPortName;
-extern int numOfReal;				/// number of a current real (starts from 2)
+extern int numOfReal;				/// number of a current real (from 1)
 extern int numOfWind;				/// number of a current window
 extern bool pauseFlag;				/// to detect presentation pause signal
 extern int ns;						/// number of all transmissed channels

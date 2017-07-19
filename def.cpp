@@ -10,7 +10,7 @@ QHostAddress hostAddress("127.0.0.1");
 int hostPort{120};
 bool fullDataFlag{true};
 QString comPortName{"COM5"};
-int numOfReal = 0;
+int numOfReal = 1;
 int numOfWind = 0;
 bool pauseFlag = 0;
 int ns = 24;
