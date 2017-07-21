@@ -31,7 +31,6 @@
 #include <QSerialPort>
 #include <QSerialPortInfo>
 
-#define OFFLINE_SUCCESSIVE 0
 
 /// 0 1 2 3
 #define VERBOSE_OUTPUT 1
@@ -39,6 +38,7 @@
 
 
 
+#define OFFLINE_SUCCESSIVE 01
 #if !OFFLINE_SUCCESSIVE
 typedef quint8 markerType; /// online
 #else

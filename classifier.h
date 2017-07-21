@@ -38,6 +38,7 @@ private:
 	double kappa = 0.; // Cohen's
 
 	bool tallCleanFlag  = false;
+	bool writeWtsFlag = true;
 
 	/// previously from UI
 	int epoch = 0;

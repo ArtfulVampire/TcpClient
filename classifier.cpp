@@ -123,7 +123,7 @@ double net::adjustLearnRate(int lowLimit,
 		++counter;
 	} while (counter < 15);
 	std::cout << std::endl;
-	this->learnRate = doubleRound(this->learnRate, 3);
+//	this->learnRate = doubleRound(this->learnRate, 3);
 	return res;
 }
 
@@ -483,14 +483,18 @@ void net::successiveProcessing(const QString & spectraPath)
 	errCrit = 0.05;
 	learnRate = 0.005;
 
+	this->writeWtsFlag = false;
 	adjustLearnRate(this->lowLimit,
 					this->highLimit);
+	this->writeWtsFlag = true;
 
-	/// load newest weights or not ???
-	auto wts = QDir(def::wtsPath).entryInfoList({"*.wts"}, QDir::Files, QDir::Time|QDir::Reversed);
+
+	/// load newest weights or not
+	auto wts = QDir(def::wtsPath).entryInfoList({"*.wts"}, QDir::Files, QDir::Time);
 	if(!wts.isEmpty()
 	   && (wts[0].lastModified().date()) == QDate::currentDate() /// modified today
 	   && (wts[0].lastModified().time().secsTo(QTime::currentTime()) < 60 * 5) /// 5- min ago
+//	   && 0
 	   )
 	{
 		std::cout << "load weights " << wts[0].fileName() << std::endl;
@@ -509,7 +513,7 @@ void net::successiveProcessing(const QString & spectraPath)
 	std::cout << "successive: initial learn done" << std::endl;
 	std::cout << "successive itself" << std::endl;
 
-#if OFFLINE_SUCCESSIVE
+#if OFFLINE_SUCCESSIVE && 0
 	std::valarray<double> tempArr;
 	int type = -1;
 	const QString testMarker = "_test";
@@ -1092,9 +1096,13 @@ void net::loadData(const QString & spectraPath,
 {
 	std::vector<QStringList> leest;
 	makeFileLists(spectraPath, leest, filters);
-//	std::cout << leest[0].size() << std::endl;
-//	std::cout << leest[1].size() << std::endl;
-//	std::cout << leest[2].size() << std::endl;
+//	for(auto a : leest)
+//	{
+//		for(auto in : a)
+//		{
+//			std::cout << in << std::endl;
+//		}
+//	}
 
 	dataMatrix = matrix();
 	classCount.resize(def::numOfClasses(), 0.);
@@ -1110,6 +1118,7 @@ void net::loadData(const QString & spectraPath,
 
 			readFileInLine(spectraPath + "/" + fileName,
 						   tempArr);
+			if(tempArr.size() != 1197) { continue; }
 
 			/// dropChannels - needed or not?
 			if(1)
@@ -1325,7 +1334,10 @@ void net::learnNetIndices(std::vector<int> mixNum,
 	}
 	//    std::cout << "epoch = " << epoch << "\terror = " << doubleRound(currentError, 4) << std::endl;
 
-	writeWts();
+	if(this->writeWtsFlag)
+	{
+		writeWts();
+	}
 
 	//    printData();
 }

@@ -192,7 +192,7 @@ void makeFileLists(const QString & path,
 		}
 		lst.push_back(localDir.entryList(nameFilters,
 										 QDir::Files,
-										 QDir::Time|QDir::Reversed)); /// newest first
+										 QDir::Time)); /// newest first
 	}
 }
 
@@ -227,7 +227,7 @@ void makeFullFileList(const QString & path,
 	}
 	lst = localDir.entryList(nameFilters,
 							 QDir::Files,
-							 QDir::Time); /// Time ~ order
+							 QDir::Time); /// newest first
 }
 
 void readMatrixFile(const QString & filePath,
