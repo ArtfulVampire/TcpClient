@@ -38,7 +38,7 @@
 
 
 
-#define OFFLINE_SUCCESSIVE 01
+#define OFFLINE_SUCCESSIVE 0
 #if !OFFLINE_SUCCESSIVE
 typedef quint8 markerType; /// online
 #else
@@ -102,8 +102,8 @@ constexpr int eog1 = 22;
 constexpr int eog2 = 23;
 constexpr int numOfSmooth = 5;
 const QSet<int> dropChannels{
-	1, 2		// Fp1, Fp2
-	,3, 7		// F7, F8
+//	1, 2		// Fp1, Fp2
+//	,3, 7		// F7, F8
 //	,8, 12		// T3, T4
 //	,13, 17		// T5, T6
 //	,18, 19		// O1, O2
@@ -123,7 +123,7 @@ constexpr int fftLength = 1024;
 constexpr int windowLength = 1024;
 constexpr double leftFreq = 5.;
 constexpr double rightFreq = 20.;
-constexpr int timeShift = 125; /// should be lower as much as possible
+constexpr int timeShift = 100; /// should be lower as much as possible
 
 const int numFbGradation = 50;
 constexpr int numPrevResInertia = 15; /// depends on timeShift (product ~1500)
@@ -139,9 +139,6 @@ const double amplitudeThreshold = 1500.;
 const double spectreBetaThreshold = 1000.;
 const double spectreThetaThreshold = 800.;
 #endif
-
-
-
 
 /// make GUI for these variables ?
 const QString ExpName = "XXX_feedback";
@@ -168,11 +165,12 @@ constexpr int fftLimit(const double & inFreq)
 {
 	return ceil(inFreq / def::freq * def::fftLength - 0.5);
 }
-inline int numOfClasses() {return def::fileMarkers.length();}
-constexpr double spStep() {return def::freq / def::fftLength;}
-constexpr int left()  {return fftLimit(def::leftFreq);}
-constexpr int right() {return fftLimit(def::rightFreq) + 1;}
-constexpr int spLength() {return (def::right() - def::left());}
+inline int numOfClasses() { return def::fileMarkers.length(); }
+constexpr double spStep() { return def::freq / def::fftLength; }
+constexpr int left()  { return fftLimit(def::leftFreq); }
+constexpr int right() { return fftLimit(def::rightFreq) + 1; }
+constexpr int spLength() { return (def::right() - def::left()); }
+void setTask(int typ);
 }
 
 

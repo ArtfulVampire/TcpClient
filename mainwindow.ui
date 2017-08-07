@@ -33,13 +33,13 @@
      <bool>true</bool>
     </property>
    </widget>
-   <widget class="QWidget" name="layoutWidget">
+   <widget class="QWidget" name="">
     <property name="geometry">
      <rect>
-      <x>34</x>
-      <y>41</y>
-      <width>311</width>
-      <height>309</height>
+      <x>35</x>
+      <y>42</y>
+      <width>297</width>
+      <height>398</height>
      </rect>
     </property>
     <layout class="QGridLayout" name="gridLayout">
@@ -80,10 +80,30 @@
        </property>
       </widget>
      </item>
+     <item row="2" column="2">
+      <widget class="QPushButton" name="comPortSendOnePushButton">
+       <property name="text">
+        <string>send 1</string>
+       </property>
+       <property name="shortcut">
+        <string>1</string>
+       </property>
+      </widget>
+     </item>
      <item row="3" column="0">
       <widget class="QPushButton" name="initSpectraPushButton">
        <property name="text">
         <string>init spectra</string>
+       </property>
+      </widget>
+     </item>
+     <item row="3" column="2">
+      <widget class="QPushButton" name="comPortSendTwoPushButton">
+       <property name="text">
+        <string>send 2</string>
+       </property>
+       <property name="shortcut">
+        <string>2</string>
        </property>
       </widget>
      </item>
@@ -169,6 +189,13 @@
      <item row="8" column="2">
       <widget class="QSpinBox" name="amplSpinBox"/>
      </item>
+     <item row="9" column="0">
+      <widget class="QPushButton" name="pauseSetPushButton">
+       <property name="text">
+        <string>set pause</string>
+       </property>
+      </widget>
+     </item>
      <item row="9" column="1">
       <layout class="QHBoxLayout" name="horizontalLayout_2">
        <item>
@@ -195,6 +222,13 @@
      </item>
      <item row="9" column="2">
       <widget class="QSpinBox" name="thetaSpinBox"/>
+     </item>
+     <item row="10" column="0">
+      <widget class="QPushButton" name="pauseUnsetPushButton">
+       <property name="text">
+        <string>unset pause</string>
+       </property>
+      </widget>
      </item>
      <item row="10" column="1">
       <layout class="QHBoxLayout" name="horizontalLayout">
@@ -223,37 +257,24 @@
      <item row="10" column="2">
       <widget class="QSpinBox" name="betaSpinBox"/>
      </item>
-     <item row="3" column="2">
-      <widget class="QPushButton" name="comPortSendTwoPushButton">
+     <item row="11" column="0">
+      <widget class="QPushButton" name="setSpatPushButton">
        <property name="text">
-        <string>send 2</string>
-       </property>
-       <property name="shortcut">
-        <string>2</string>
+        <string>set spat</string>
        </property>
       </widget>
      </item>
-     <item row="2" column="2">
-      <widget class="QPushButton" name="comPortSendOnePushButton">
+     <item row="12" column="0">
+      <widget class="QPushButton" name="setVerbPushButton">
        <property name="text">
-        <string>send 1</string>
-       </property>
-       <property name="shortcut">
-        <string>1</string>
+        <string>set verb</string>
        </property>
       </widget>
      </item>
-     <item row="9" column="0">
-      <widget class="QPushButton" name="pauseSetPushButton">
+     <item row="13" column="0">
+      <widget class="QPushButton" name="setRestPushButton">
        <property name="text">
-        <string>set pause</string>
-       </property>
-      </widget>
-     </item>
-     <item row="10" column="0">
-      <widget class="QPushButton" name="pauseUnsetPushButton">
-       <property name="text">
-        <string>unset pause</string>
+        <string>set rest</string>
        </property>
       </widget>
      </item>
@@ -266,7 +287,7 @@
      <x>0</x>
      <y>0</y>
      <width>902</width>
-     <height>19</height>
+     <height>21</height>
     </rect>
    </property>
   </widget>

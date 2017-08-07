@@ -19,4 +19,12 @@ solveType solved = solveType::notYet;
 double amplitudeThreshold = 400.;
 double spectreBetaThreshold = 100.;
 double spectreThetaThreshold = 80.;
+
+void setTask(int typ)
+{
+	def::currentType = typ;
+	def::slicesCame = 0;
+	def::numOfWind = 0;
+	++def::numOfReal;
+}
 }

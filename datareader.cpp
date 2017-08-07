@@ -321,28 +321,19 @@ void DataReader::markerCame()
 //		}
 		case 241:
 		{
-			def::currentType = 0;
-			def::slicesCame = 0;
-			++def::numOfReal;
-			def::numOfWind = 0;
+			def::setTask(0);
 			def::solved = def::solveType::right;
 			break;
 		}
 		case 247:
 		{
-			def::currentType = 1;
-			def::slicesCame = 0;
-			++def::numOfReal;
-			def::numOfWind = 0;
+			def::setTask(1);
 			def::solved = def::solveType::right;
 			break;
 		}
 		case 254:
 		{
-			def::currentType = 2;
-			def::slicesCame = 0;
-			++def::numOfReal;
-			def::numOfWind = 0;
+			def::setTask(2);
 			break;
 		}
 		case 200:

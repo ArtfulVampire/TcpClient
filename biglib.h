@@ -3,8 +3,6 @@
 
 #include "matrix.h"
 
-
-
 #define TIME(arg)\
 	do{\
 	auto t0 = std::chrono::high_resolution_clock::now();\

@@ -23,7 +23,7 @@ net::net(QObject * par)
 		std::cout << "dataTerminalReady: " << comPort->isDataTerminalReady() << std::endl;
 		std::cout << "flowControl: " << comPort->flowControl() << std::endl;
 		std::cout << "requestToSend: " << comPort->isRequestToSend() << std::endl;
-		std::cout << "stopBits: " << comPort->stopBits() << endl << std::endl;
+		std::cout << "stopBits: " << comPort->stopBits() << std::endl << std::endl;
 	}
 
 }

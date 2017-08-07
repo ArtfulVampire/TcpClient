@@ -33,10 +33,18 @@ MainWindow::MainWindow(QWidget *parent) :
 					 this, SLOT(serverAddressSlot(int)));
 	QObject::connect(ui->serverAddressComboBox, SIGNAL(currentIndexChanged(int)),
 					 this, SLOT(serverAddressSlot(int)));
+	/// pause/unpause
 	QObject::connect(ui->pauseSetPushButton, &QPushButton::clicked,
 					 [](){ def::pauseFlag = 1; });
 	QObject::connect(ui->pauseUnsetPushButton, &QPushButton::clicked,
 					 [](){ def::pauseFlag = 0; });
+	/// manual task type set
+	QObject::connect(ui->setSpatPushButton, &QPushButton::clicked,
+					 [](){ def::setTask(0); });
+	QObject::connect(ui->setVerbPushButton, &QPushButton::clicked,
+					 [](){ def::setTask(1); });
+	QObject::connect(ui->setRestPushButton, &QPushButton::clicked,
+					 [](){ def::setTask(2); });
 
 	ui->serverAddressComboBox->setCurrentText("pew"); /// fix via router, always 192.168.0.104
 
