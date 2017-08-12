@@ -555,11 +555,14 @@ void net::dataCame(eegDataType::iterator a, eegDataType::iterator b)
 						 def::fileMarkers[type] +
 						 "." + rightNumber(def::numOfWind, 2) + ".psd";
 
-#if 01
-	/// spectre
-	writeFileInLine(def::workPath + "/SpectraSmooth/winds/" +
-					name,
-					newSpectre);
+#if 0
+	/// spectre - moved to successiveLearning (write only good spectra)
+	if(newSpectre != std::valarray<double>{})
+	{
+		writeFileInLine(def::workPath + "/SpectraSmooth/winds/" +
+						name,
+						newSpectre);
+	}
 #endif
 
 
@@ -636,12 +639,22 @@ std::valarray<double> net::successiveDataToSpectre(
 	}
 
 	/// check amplitudes
-	if(tmpMat.maxAbsVal() > def::amplitudeThreshold)
+	for(int i = 0; i < tmpMat.rows(); ++i)
 	{
-		this->badWindowFlag = true;
-		std::cout << "ampl : " << tmpMat.maxAbsVal() << "\t";
-		return {};
+		double b = std::abs(tmpMat[i]).max();
+		if(b > def::amplitudeThreshold)
+		{
+			this->badWindowFlag = true;
+			std::cout << "ampl (ch = " << i << ") : " << b << "\t";
+		}
 	}
+//	if(tmpMat.maxAbsVal() > def::amplitudeThreshold)
+//	{
+//		this->badWindowFlag = true;
+//		std::cout << "ampl : " << tmpMat.maxAbsVal() << "\t";
+//		return {};
+//	}
+	if(this->badWindowFlag) return {};
 
 	std::valarray<double> res(0., def::eegNs * def::spLength());
 	/// count spectra, take 5-20 HZ only
@@ -677,7 +690,7 @@ std::valarray<double> net::successiveDataToSpectre(
 				{
 					this->badWindowFlag = true;
 					std::cout << "theta (ch = " << i << ") : " << b << "\t";
-					return {};
+//					return {};
 				}
 				if(this->badWindowFlag) return {};
 
@@ -773,6 +786,7 @@ void net::successiveLearning(const std::valarray<double> & newSpectre,
 
 	static std::vector<int> passed(3, 0);
 
+	/// if good classification
 	if((outType == newType && outError < def::errorThreshold)
 	   || passed[newType] < learnSetStay
 	   )
@@ -789,6 +803,10 @@ void net::successiveLearning(const std::valarray<double> & newSpectre,
 		eraseDatum(num);
 		++numGoodNew;
 #endif
+
+		writeFileInLine(def::workPath + "/SpectraSmooth/winds/" +
+						newFileName,
+						newSpectre);
 
 	}
 	else

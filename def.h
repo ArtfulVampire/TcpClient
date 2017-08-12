@@ -102,11 +102,13 @@ constexpr int eog1 = 22;
 constexpr int eog2 = 23;
 constexpr int numOfSmooth = 5;
 const QSet<int> dropChannels{
-//	1, 2		// Fp1, Fp2
-//	,3, 7		// F7, F8
+	1, 2		// Fp1, Fp2
+	,3			// F7
+//	,7			// F8
 //	,8, 12		// T3, T4
 //	,13, 17		// T5, T6
-//	,18, 19		// O1, O2
+//	,18			// O1
+	,19		// O2
 }; /// from 1
 
 const QString rightKey = QObject::tr("r");
